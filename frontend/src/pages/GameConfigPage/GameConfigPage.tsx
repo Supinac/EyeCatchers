@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getGameByKey, getGameDifficulties } from "../../api/gamesApi";
 import { PageLayout } from "../../components/layout/PageLayout";
 import { ScreenContainer } from "../../components/layout/ScreenContainer";
 import { Button } from "../../components/ui/Button";
+import { ButtonLink } from "../../components/ui/ButtonLink";
 import { Card } from "../../components/ui/Card";
 import { DifficultySelector } from "../../components/ui/DifficultySelector";
 import type { GameCatalogItem, GameDifficulty } from "../../games/core/types/GameDefinition";
@@ -18,8 +19,8 @@ export function GameConfigPage() {
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
 
   useEffect(() => {
-    getGameByKey(gameKey).then(setGame);
-    getGameDifficulties(gameKey).then((items) => {
+    void getGameByKey(gameKey).then(setGame);
+    void getGameDifficulties(gameKey).then((items) => {
       setDifficulties(items);
       setDifficulty(items[0] ?? "easy");
     });
@@ -36,14 +37,7 @@ export function GameConfigPage() {
   }
 
   return (
-    <PageLayout
-      title={game?.name ?? "Game"}
-      actions={
-        <Link to="/">
-          <Button variant="ghost">Back</Button>
-        </Link>
-      }
-    >
+    <PageLayout title={game?.name ?? "Game"} actions={<ButtonLink to="/" variant="ghost">Back</ButtonLink>}>
       <ScreenContainer>
         <Card>
           <p>{subtitle}</p>

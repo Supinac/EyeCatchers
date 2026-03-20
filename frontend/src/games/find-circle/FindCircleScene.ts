@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Circle, Container, Graphics, Rectangle, Text, TextStyle } from "pixi.js";
 import { createPixiApp } from "../pixi/PixiAppFactory";
 import { getGameSize } from "../pixi/PixiResize";
 import { PixiTheme } from "../pixi/PixiTheme";
@@ -25,11 +25,10 @@ function drawShape(kind: ShapeKind, size: number) {
     graphic.lineTo(0, -size / 2);
   }
 
-  graphic.endFill();
   return graphic;
 }
 
-export async function mountFindCircleScene({
+export function mountFindCircleScene({
   mountElement,
   difficulty,
   onComplete,
@@ -38,37 +37,47 @@ export async function mountFindCircleScene({
   difficulty: GameDifficulty;
   onComplete: (result: GameResult) => void;
 }) {
-  const app = await createPixiApp(mountElement);
+  const app = createPixiApp(mountElement);
   const { width, height } = getGameSize(mountElement);
   const shapes = buildFindCircleRound(difficulty);
   let completed = false;
 
   const root = new Container();
   app.stage.addChild(root);
+  app.stage.hitArea = new Rectangle(0, 0, app.screen.width, app.screen.height);
 
-  const title = new Text("Tap the circle", new TextStyle({
-    fill: "#ffffff",
-    fontSize: 28,
-    fontFamily: "Arial",
-  }));
+  const title = new Text(
+    "Tap the circle",
+    new TextStyle({
+      fill: "#ffffff",
+      fontSize: 28,
+      fontFamily: "Arial",
+    }),
+  );
   title.x = 24;
   title.y = 24;
   root.addChild(title);
 
-  const hint = new Text("One correct answer. Calm, no animation.", new TextStyle({
-    fill: "#cfcfcf",
-    fontSize: 16,
-    fontFamily: "Arial",
-  }));
+  const hint = new Text(
+    "One correct answer. Calm, no animation.",
+    new TextStyle({
+      fill: "#cfcfcf",
+      fontSize: 16,
+      fontFamily: "Arial",
+    }),
+  );
   hint.x = 24;
   hint.y = 62;
   root.addChild(hint);
 
-  const feedback = new Text("", new TextStyle({
-    fill: "#ffffff",
-    fontSize: 20,
-    fontFamily: "Arial",
-  }));
+  const feedback = new Text(
+    "",
+    new TextStyle({
+      fill: "#ffffff",
+      fontSize: 20,
+      fontFamily: "Arial",
+    }),
+  );
   feedback.x = 24;
   feedback.y = 100;
   root.addChild(feedback);
@@ -87,6 +96,7 @@ export async function mountFindCircleScene({
     item.y = 180 + gapY * row;
     item.eventMode = "static";
     item.cursor = "pointer";
+    item.hitArea = shape.kind === "circle" ? new Circle(0, 0, 50) : new Rectangle(-50, -50, 100, 100);
 
     item.on("pointertap", () => {
       if (completed) return;
@@ -102,7 +112,7 @@ export async function mountFindCircleScene({
             maxScore: 1,
             success: true,
           });
-        }, 500);
+        }, 400);
       } else {
         feedback.text = "Try again";
       }
