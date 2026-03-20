@@ -1,0 +1,21 @@
+.wrap {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.item {
+  min-width: 110px;
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.active {
+  background: #fff;
+  color: #000;
+}

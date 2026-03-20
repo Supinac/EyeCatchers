@@ -1,0 +1,25 @@
+.link {
+  display: block;
+}
+
+.card {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.icon {
+  font-size: 30px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 14px;
+}
