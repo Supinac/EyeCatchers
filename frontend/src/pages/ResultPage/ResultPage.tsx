@@ -1,7 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { PageLayout } from "../../components/layout/PageLayout";
 import { ScreenContainer } from "../../components/layout/ScreenContainer";
-import { Button } from "../../components/ui/Button";
+import { ButtonLink } from "../../components/ui/ButtonLink";
 import { Card } from "../../components/ui/Card";
 import type { GameResult } from "../../games/core/types/GameResult";
 
@@ -20,14 +20,8 @@ export function ResultPage() {
             Score: {result?.score ?? 0} / {result?.maxScore ?? 1}
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 24 }}>
-            <Link to="/">
-              <Button>Home</Button>
-            </Link>
-            {result?.gameKey ? (
-              <Link to={`/game/${result.gameKey}`}>
-                <Button variant="secondary">Play Again</Button>
-              </Link>
-            ) : null}
+            <ButtonLink to="/">Home</ButtonLink>
+            {result?.gameKey ? <ButtonLink to={`/game/${result.gameKey}`} variant="secondary">Play Again</ButtonLink> : null}
           </div>
         </Card>
       </ScreenContainer>
