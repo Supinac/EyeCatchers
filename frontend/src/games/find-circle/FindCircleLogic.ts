@@ -1,6 +1,6 @@
 import type { ContentMode, FigureSizeMode, GridSize } from "../core/types/GameConfig";
 import { getRandomInt } from "../core/utils/random";
-import { getFindCircleCorrectCount } from "./FindCircleConfig";
+import { getFindCircleCorrectCount, getFigureSizePercent } from "./FindCircleConfig";
 
 export type ShapeKind = "circle" | "square" | "triangle" | "diamond" | "star";
 export type SymbolContentType = "shape" | "text";
@@ -17,10 +17,20 @@ export type FindCircleItem = {
   scale: number;
 };
 
-function getRandomScale(sizeMode: FigureSizeMode) {
-  if (sizeMode === "static") return 1;
-  const scales = [0.55, 0.75, 1, 1.25, 1.5];
-  return scales[getRandomInt(0, scales.length - 1)] ?? 1;
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getItemScale(sizeMode: FigureSizeMode, sizePercent: number) {
+  const baseScale = getFigureSizePercent(sizePercent) / 100;
+
+  if (sizeMode === "fixed") {
+    return baseScale;
+  }
+
+  const randomFactors = [0.72, 0.86, 1, 1.16, 1.32];
+  const factor = randomFactors[getRandomInt(0, randomFactors.length - 1)] ?? 1;
+  return clamp(baseScale * factor, 0.35, 1.35);
 }
 
 function shuffle<T>(items: T[]) {
@@ -61,11 +71,13 @@ function getPoolByMode(contentMode: ContentMode) {
 export function buildFindCircleRound({
   gridSize,
   sizeMode,
+  sizePercent,
   correctCount,
   contentMode,
 }: {
   gridSize: GridSize;
   sizeMode: FigureSizeMode;
+  sizePercent: number;
   correctCount: number;
   contentMode: ContentMode;
 }) {
@@ -80,7 +92,7 @@ export function buildFindCircleRound({
     value: targetValue,
     contentType: source.contentType,
     isCorrect: true,
-    scale: getRandomScale(sizeMode),
+    scale: getItemScale(sizeMode, sizePercent),
   }));
 
   const wrongItems: FindCircleItem[] = Array.from({ length: cellCount - normalizedCorrectCount }, (_, index) => ({
@@ -88,7 +100,7 @@ export function buildFindCircleRound({
     value: wrongPool[getRandomInt(0, wrongPool.length - 1)] ?? wrongPool[0] ?? targetValue,
     contentType: source.contentType,
     isCorrect: false,
-    scale: getRandomScale(sizeMode),
+    scale: getItemScale(sizeMode, sizePercent),
   }));
 
   return {

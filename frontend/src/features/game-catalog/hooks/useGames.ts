@@ -9,10 +9,10 @@ const games: GameCardViewModel[] = [
     icon: "strategy",
   },
   {
-    key: "memory-pairs",
-    name: "Memory Pairs",
-    description: "Match simple pairs with a slow, predictable rhythm and minimal distractions.",
-    implemented: false,
+    key: "track-the-circle",
+    name: "Track the Circle",
+    description: "Follow the moving circle as it changes direction and speed.",
+    implemented: true,
     icon: "puzzle",
   },
   {

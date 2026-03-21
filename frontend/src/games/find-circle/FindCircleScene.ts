@@ -5,11 +5,11 @@ import { buildFindCircleRound, type FindCircleItem, type ShapeKind } from "./Fin
 import type { GameDifficulty } from "../core/types/GameDefinition";
 import type { GameResult } from "../core/types/GameResult";
 import type { FindCircleGameConfig } from "../core/types/GameConfig";
+import { isUnlimitedTime } from "./FindCircleConfig";
 
 const COLORS = {
   white: 0xffffff,
-  panel: 0x060606,
-  panelBorder: 0x2a2a2a,
+  muted: 0xbdbdbd,
   correct: 0x22c55e,
   wrong: 0xef4444,
 };
@@ -21,6 +21,10 @@ type ItemPosition = {
 
 function getRounded(value: number) {
   return Math.round(value);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function shuffle<T>(items: T[]) {
@@ -48,15 +52,15 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   if (kind === "square") {
-    const rectWidth = getRounded(roundedSize * 1.14);
-    const rectHeight = getRounded(roundedSize * 0.78);
+    const rectWidth = getRounded(roundedSize * 1.12);
+    const rectHeight = getRounded(roundedSize * 0.76);
     graphic.drawRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
     graphic.endFill();
     return;
   }
 
   if (kind === "triangle") {
-    const points = [new Point(0, -half), new Point(half, half), new Point(-half, half)];
+    const points = [new Point(0, -half), new Point(half * 0.94, half), new Point(-half * 0.94, half)];
     graphic.drawPolygon(points);
     graphic.endFill();
     return;
@@ -70,7 +74,7 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   const outerRadius = half;
-  const innerRadius = roundedSize / 4.4;
+  const innerRadius = roundedSize / 4.2;
   const points: Point[] = [];
 
   for (let index = 0; index < 10; index += 1) {
@@ -80,14 +84,6 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   graphic.drawPolygon(points);
-  graphic.endFill();
-}
-
-function drawCard(graphic: Graphics, size: number, borderColor: number) {
-  graphic.clear();
-  graphic.beginFill(COLORS.panel, 1);
-  graphic.lineStyle(3, borderColor, 1);
-  graphic.drawRoundedRect(-size / 2, -size / 2, size, size, Math.max(18, size * 0.14));
   graphic.endFill();
 }
 
@@ -108,7 +104,7 @@ function createTextSymbol(value: string, size: number, color: number) {
     value,
     new TextStyle({
       fill: color,
-      fontSize: Math.max(28, Math.round(size)),
+      fontSize: Math.max(32, Math.round(size)),
       fontFamily: "Arial",
       fontWeight: "900",
       align: "center",
@@ -140,34 +136,32 @@ function createPreviewDisplay(value: string, isShape: boolean, size: number, col
 
 function createGridItem({
   item,
-  cellSize,
+  slotSize,
   canInteract,
   onTap,
 }: {
   item: FindCircleItem;
-  cellSize: number;
+  slotSize: number;
   canInteract: () => boolean;
   onTap: (item: FindCircleItem, updateState: (state: "correct" | "wrong") => void) => void;
 }) {
   const container = new Container();
-  const card = new Graphics();
   const symbolLayer = new Container();
-  const symbolSize = cellSize * (item.contentType === "shape" ? 0.58 : 0.54) * item.scale;
+  const isShape = item.contentType === "shape";
+  const symbolSize = slotSize * (isShape ? 0.94 : 0.9) * item.scale;
+  const hitSize = clamp(slotSize * (isShape ? 0.78 : 0.72) * Math.max(0.82, item.scale), 46, slotSize * 1.02);
 
   function paint(state: "idle" | "correct" | "wrong") {
-    const borderColor = state === "correct" ? COLORS.correct : state === "wrong" ? COLORS.wrong : COLORS.panelBorder;
     const symbolColor = state === "correct" ? COLORS.correct : state === "wrong" ? COLORS.wrong : COLORS.white;
-
-    drawCard(card, cellSize, borderColor);
     symbolLayer.removeChildren().forEach((child) => child.destroy());
     symbolLayer.addChild(createSymbolDisplay(item, symbolSize, symbolColor));
   }
 
   paint("idle");
-  container.addChild(card, symbolLayer);
+  container.addChild(symbolLayer);
   container.eventMode = "static";
   container.cursor = "pointer";
-  container.hitArea = new Rectangle(-cellSize / 2, -cellSize / 2, cellSize, cellSize);
+  container.hitArea = new Rectangle(-hitSize / 2, -hitSize / 2, hitSize, hitSize);
 
   let locked = false;
 
@@ -230,7 +224,7 @@ function getGridPositions({
     };
   });
 
-  return { positions, itemSize: cellSize };
+  return { positions, itemSize: cellSize * 0.96 };
 }
 
 function getRandomPositions({
@@ -257,26 +251,25 @@ function getRandomPositions({
   const playWidth = playRight - playLeft;
   const playHeight = playBottom - playTop;
   const areaSide = Math.min(playWidth, playHeight);
-  const sizeBoost =
-    count <= 4 ? 1.28 : count <= 9 ? 1.16 : count <= 16 ? 1.06 : 1;
+  const sizeBoost = count <= 4 ? 1.36 : count <= 9 ? 1.2 : count <= 16 ? 1.08 : 1;
   const desiredSize = Math.max(
-    78,
+    82,
     Math.min(
       baseSize * sizeBoost,
-      areaSide * (count <= 4 ? 0.35 : count <= 9 ? 0.245 : count <= 16 ? 0.185 : 0.15),
+      areaSide * (count <= 4 ? 0.37 : count <= 9 ? 0.255 : count <= 16 ? 0.19 : 0.155),
     ),
   );
 
   function tryPlace(itemSize: number) {
     const positions: ItemPosition[] = [];
     const half = itemSize / 2;
-    const gap = Math.max(14, Math.min(26, itemSize * 0.12));
+    const gap = Math.max(18, Math.min(30, itemSize * 0.16));
     const minCenterDistance = itemSize + gap;
 
     for (let index = 0; index < count; index += 1) {
       let placed = false;
 
-      for (let attempt = 0; attempt < 1600; attempt += 1) {
+      for (let attempt = 0; attempt < 1800; attempt += 1) {
         const x = playLeft + half + Math.random() * Math.max(1, playWidth - itemSize);
         const y = playTop + half + Math.random() * Math.max(1, playHeight - itemSize);
 
@@ -301,7 +294,7 @@ function getRandomPositions({
     return positions;
   }
 
-  const fallbackMinSize = Math.max(78, Math.min(baseSize * 0.9, areaSide * 0.13));
+  const fallbackMinSize = Math.max(80, Math.min(baseSize * 0.88, areaSide * 0.14));
 
   for (let size = desiredSize; size >= fallbackMinSize; size -= 8) {
     const positions = tryPlace(size);
@@ -313,8 +306,8 @@ function getRandomPositions({
   const safeSize = fallbackMinSize;
   const columns = Math.max(1, Math.ceil(Math.sqrt(count)));
   const rows = Math.max(1, Math.ceil(count / columns));
-  const xStep = Math.max(safeSize + 12, playWidth / columns);
-  const yStep = Math.max(safeSize + 12, playHeight / rows);
+  const xStep = Math.max(safeSize + 18, playWidth / columns);
+  const yStep = Math.max(safeSize + 18, playHeight / rows);
   const startX = playLeft + Math.min(playWidth, xStep * columns) / (columns * 2);
   const startY = playTop + Math.min(playHeight, yStep * rows) / (rows * 2);
 
@@ -345,6 +338,7 @@ export function mountFindCircleScene({
   const round = buildFindCircleRound({
     gridSize: config.gridSize,
     sizeMode: config.figureSizeMode,
+    sizePercent: config.figureSizePercent,
     correctCount: config.correctObjectCount,
     contentMode: config.contentMode,
   });
@@ -355,7 +349,7 @@ export function mountFindCircleScene({
   let wrongCount = 0;
   let totalTaps = 0;
   let previewLeft = config.previewSeconds;
-  let gameTimeLeft = config.maxGameSeconds;
+  let gameTimeLeft = isUnlimitedTime(config.maxGameSeconds) ? Number.POSITIVE_INFINITY : config.maxGameSeconds;
   let gameStartedAt = 0;
 
   const timers: number[] = [];
@@ -383,7 +377,7 @@ export function mountFindCircleScene({
   previewLayer.addChild(previewTitle);
 
   const previewHint = new Text(
-    "It will disappear, then select every matching item on the screen.",
+    "It will disappear, then tap every matching item on the screen.",
     new TextStyle({
       fill: "#bdbdbd",
       fontSize: Math.max(16, Math.min(22, width * 0.018)),
@@ -398,17 +392,10 @@ export function mountFindCircleScene({
   previewHint.y = 92;
   previewLayer.addChild(previewHint);
 
-  const previewCard = new Graphics();
-  const previewCardSize = Math.min(width * 0.38, height * 0.42, 340);
-  drawCard(previewCard, previewCardSize, COLORS.white);
-  previewCard.x = width / 2;
-  previewCard.y = height / 2;
-  previewLayer.addChild(previewCard);
-
   const previewDisplay = createPreviewDisplay(
     round.targetValue,
     round.items[0]?.contentType === "shape",
-    previewCardSize * (round.items[0]?.contentType === "shape" ? 0.56 : 0.62),
+    Math.min(width * 0.28, height * 0.34, 280),
     COLORS.white,
   );
   previewDisplay.x = width / 2;
@@ -465,7 +452,7 @@ export function mountFindCircleScene({
   counterText.y = 108;
   gameLayer.addChild(counterText);
 
-  const timeLeftText = makeCounterLabel(`Time left ${gameTimeLeft}s`);
+  const timeLeftText = makeCounterLabel(isUnlimitedTime(config.maxGameSeconds) ? "Unlimited time" : `Time left ${gameTimeLeft}s`);
   timeLeftText.anchor.set(0.5, 0);
   timeLeftText.x = width / 2;
   timeLeftText.y = 136;
@@ -520,11 +507,12 @@ export function mountFindCircleScene({
           totalTaps,
           accuracyPercent,
           elapsedSeconds,
-          remainingSeconds: Math.max(gameTimeLeft, 0),
+          remainingSeconds: Number.isFinite(gameTimeLeft) ? Math.max(gameTimeLeft, 0) : 0,
           previewSeconds: config.previewSeconds,
           maxGameSeconds: config.maxGameSeconds,
           gridSize: config.gridSize,
           figureSizeMode: config.figureSizeMode,
+          figureSizePercent: config.figureSizePercent,
           correctObjectCount: round.correctCount,
           contentMode: config.contentMode,
           placementMode: config.placementMode,
@@ -543,7 +531,7 @@ export function mountFindCircleScene({
   round.items.forEach((item, index) => {
     const gridItem = createGridItem({
       item,
-      cellSize: layout.itemSize,
+      slotSize: layout.itemSize,
       canInteract,
       onTap: (clickedItem, updateState) => {
         totalTaps += 1;
@@ -577,6 +565,11 @@ export function mountFindCircleScene({
 
   function startGameTimer() {
     gameStartedAt = Date.now();
+
+    if (isUnlimitedTime(config.maxGameSeconds)) {
+      timeLeftText.text = "Unlimited time";
+      return;
+    }
 
     const timerInterval = window.setInterval(() => {
       if (completed || disposed) {

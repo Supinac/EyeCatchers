@@ -1,4 +1,4 @@
-# Autism React + Pixi Starter
+# React + Pixi Starter
 
 This starter uses **React for screens** and **PixiJS only inside the game area**.
 

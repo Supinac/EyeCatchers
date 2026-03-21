@@ -3,6 +3,7 @@ import type { GameResult } from "../types/GameResult";
 import type { GameConfig } from "../types/GameConfig";
 import { FindCircleGame } from "../../find-circle/FindCircleGame";
 import { PlaceholderGame } from "../../placeholder/PlaceholderGame";
+import { TrackTheCircleGame } from "../../track-the-circle/TrackTheCircleGame";
 
 export type RegisteredGame = {
   key: string;
@@ -16,11 +17,7 @@ export type RegisteredGame = {
 
 const registry: Record<string, RegisteredGame> = {
   "find-circle": FindCircleGame,
-  "memory-pairs": PlaceholderGame("memory-pairs", "Memory Pairs"),
-  "shape-match": PlaceholderGame("shape-match", "Shape Match"),
-  "count-items": PlaceholderGame("count-items", "Count Items"),
-  "find-different": PlaceholderGame("find-different", "Find Different"),
-  "repeat-sequence": PlaceholderGame("repeat-sequence", "Repeat Sequence"),
+  "track-the-circle": TrackTheCircleGame,
 };
 
 export function getRegisteredGame(gameKey: string): RegisteredGame | null {

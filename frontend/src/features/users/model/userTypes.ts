@@ -1,5 +1,6 @@
 import type { AuthRole } from "../../auth/model/authTypes";
 import type { GameDifficulty } from "../../../games/core/types/GameDefinition";
+import type { GameResultStats } from "../../../games/core/types/GameResult";
 
 export type UserRecord = {
   id: string;
@@ -21,6 +22,7 @@ export type StoredGameSession = {
   maxScore: number;
   success: boolean;
   playedAt: string;
+  stats?: GameResultStats;
 };
 
 export type UserStatsRow = {

@@ -1,33 +1,58 @@
-import type { ContentMode, FigureSizeMode, FindCircleGameConfig, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds } from "../core/types/GameConfig";
+import type {
+  ContentMode,
+  FigureSizeMode,
+  FindCircleGameConfig,
+  GridSize,
+  MaxGameSeconds,
+  PlacementMode,
+  PreviewSeconds,
+} from "../core/types/GameConfig";
 
 export const defaultFindCircleConfig: FindCircleGameConfig = {
   previewSeconds: 5,
   maxGameSeconds: 60,
   gridSize: 3,
   correctObjectCount: 3,
-  figureSizeMode: "static",
+  figureSizeMode: "fixed",
+  figureSizePercent: 85,
   contentMode: "figures",
   placementMode: "grid",
 };
 
-export function getPreviewSeconds(value: number | null | undefined): PreviewSeconds {
-  if (value === 1 || value === 2 || value === 5 || value === 10) return value;
+export function getPreviewSeconds(value: number | string | null | undefined): PreviewSeconds {
+  const normalizedValue = typeof value === "string" ? Number(value) : value;
+  if (normalizedValue === 1 || normalizedValue === 2 || normalizedValue === 5 || normalizedValue === 10) return normalizedValue;
   return defaultFindCircleConfig.previewSeconds;
 }
 
-export function getMaxGameSeconds(value: number | null | undefined): MaxGameSeconds {
-  if (value === 30 || value === 60 || value === 90 || value === 120) return value;
+export function getMaxGameSeconds(value: number | string | null | undefined): MaxGameSeconds {
+  if (value === "unlimited") return value;
+  const normalizedValue = typeof value === "string" ? Number(value) : value;
+  if (normalizedValue === 30 || normalizedValue === 60 || normalizedValue === 90) return normalizedValue;
   return defaultFindCircleConfig.maxGameSeconds;
 }
 
-export function getGridSize(value: number | null | undefined): GridSize {
-  if (value === 2 || value === 3 || value === 4 || value === 5) return value;
+export function isUnlimitedTime(value: MaxGameSeconds) {
+  return value === "unlimited";
+}
+
+export function getGridSize(value: number | string | null | undefined): GridSize {
+  const normalizedValue = typeof value === "string" ? Number(value) : value;
+  if (normalizedValue === 2 || normalizedValue === 3 || normalizedValue === 4 || normalizedValue === 5) return normalizedValue;
   return defaultFindCircleConfig.gridSize;
 }
 
 export function getFigureSizeMode(value: string | null | undefined): FigureSizeMode {
-  if (value === "random" || value === "static") return value;
+  if (value === "random" || value === "fixed") return value;
+  if (value === "static") return "fixed";
   return defaultFindCircleConfig.figureSizeMode;
+}
+
+export function getFigureSizePercent(value: number | string | null | undefined) {
+  const normalizedValue = typeof value === "string" ? Number(value) : value;
+  const fallback = defaultFindCircleConfig.figureSizePercent;
+  const rounded = Number.isFinite(normalizedValue) ? Math.round(Number(normalizedValue)) : fallback;
+  return Math.min(100, Math.max(40, rounded));
 }
 
 export function getContentMode(value: string | null | undefined): ContentMode {
