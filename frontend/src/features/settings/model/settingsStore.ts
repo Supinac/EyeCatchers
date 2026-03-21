@@ -1,6 +1,6 @@
 import type { SettingsState } from "./settingsTypes";
 
-const STORAGE_KEY = "autism_game_settings";
+const STORAGE_KEY = "game_settings";
 
 export function saveSettingsState(value: SettingsState) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));

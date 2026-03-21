@@ -4,7 +4,7 @@ import { getAuthState } from "../../auth/model/authStore";
 import type { AuthRole } from "../../auth/model/authTypes";
 import type { StoredGameSession, UserRecord, UserStatsRow, UserStoreData } from "./userTypes";
 
-const STORAGE_KEY = "autism_users_store_v1";
+const STORAGE_KEY = "users_store_v1";
 
 const GAME_TITLES: Record<string, string> = {
   "find-circle": "Find Circle",

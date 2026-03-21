@@ -1,6 +1,6 @@
 import type { AuthState } from "./authTypes";
 
-const STORAGE_KEY = "autism_auth_session";
+const STORAGE_KEY = "auth_session";
 
 function normalizeAuthState(value: unknown): AuthState | null {
   if (!value || typeof value !== "object") {
