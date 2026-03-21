@@ -90,6 +90,12 @@ export function GameConfigPage() {
   const [swapDurationMs, setSwapDurationMs] = useState<SwapDurationMs>(600);
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
   const [symbolSize, setSymbolSize] = useState<SymbolSize>(52);
+  const [keysGridSize, setKeysGridSize] = useState<GridSize>(3);
+  const [targetTeethCount, setTargetTeethCount] = useState<number>(2);
+  const [requiredMatches, setRequiredMatches] = useState<number>(2);
+  const [rotationEnabled, setRotationEnabled] = useState<string>("true");
+  const [mirroringEnabled, setMirroringEnabled] = useState<string>("true");
+  const [scaleVariation, setScaleVariation] = useState<number>(10);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -106,8 +112,20 @@ export function GameConfigPage() {
       gameKey,
       difficulty,
       findCircle: { previewSeconds, maxGameSeconds, gridSize, correctObjectCount, figureSizeMode, figureSizePercent, contentMode, placementMode },
-      trackTheCircle: { swapCount, symbolSize, swapDurationMs },
+      trackTheCircle: { swapCount, symbolSize, swapDurationMs }, // <-- TADY NESMÍ CHYBĚT ČÁRKA
+      keys: {
+        gridSize: keysGridSize,
+        targetTeethCount,
+        // Automaticky vygeneruje pole distraktorů (1-5) bez cílového zubu
+        distractorTeethPool: [1, 2, 3, 4, 5].filter(t => t !== targetTeethCount),
+        requiredMatches,
+        rotationEnabled: rotationEnabled === "true",
+        mirroringEnabled: mirroringEnabled === "true",
+        scaleVariation: scaleVariation / 100,
+        maxGameSeconds: maxGameSeconds // Využívá již existující proměnnou ze začátku souboru
+}
     });
+    
 
     const params = new URLSearchParams({
       preview: String(previewSeconds),
@@ -123,6 +141,14 @@ export function GameConfigPage() {
       swapDurationMs: String(swapDurationMs),
       difficulty,
     });
+    if (gameKey === "keys") {
+    params.set("grid", String(keysGridSize));
+    params.set("teeth", String(targetTeethCount));
+    params.set("matches", String(requiredMatches));
+    params.set("rot", rotationEnabled);
+    params.set("mir", mirroringEnabled);
+    params.set("scale", String(scaleVariation));
+  }
 
     navigate(`/play/${gameKey}?${params.toString()}`);
   }
@@ -194,6 +220,56 @@ export function GameConfigPage() {
             </ConfigSlider>
           </>
         )}
+        {gameKey === "keys" && (
+  <>
+    <ConfigTileGroup title="Grid size" options={gridOptions} selected={keysGridSize} onChange={setKeysGridSize} />
+    
+    <ConfigSlider
+      title="Target teeth count"
+      hint="Počet zubů definujících správný klíč."
+      min={1} max={5} step={1}
+      value={targetTeethCount}
+      onChange={setTargetTeethCount}
+    />
+    
+    <ConfigSlider
+      title="Required matches"
+      hint="Počet stejných klíčů nutných k vítězství."
+      min={2} max={keysGridSize * keysGridSize - 1} step={1}
+      value={requiredMatches}
+      onChange={setRequiredMatches}
+    />
+
+    <ConfigTileGroup 
+      title="Rotation noise" 
+      options={[
+        { id: "true", label: "Enabled", description: "Náhodná 360° rotace." },
+        { id: "false", label: "Disabled", description: "Fixní horizontální poloha." }
+      ]} 
+      selected={rotationEnabled} 
+      onChange={setRotationEnabled} 
+    />
+
+    <ConfigTileGroup 
+      title="Mirroring noise" 
+      options={[
+        { id: "true", label: "Enabled", description: "Náhodná orientace zubů." },
+        { id: "false", label: "Disabled", description: "Fixní orientace zubů." }
+      ]} 
+      selected={mirroringEnabled} 
+      onChange={setMirroringEnabled} 
+    />
+
+    <ConfigSlider
+      title="Scale variation"
+      hint="Maximální procentuální odchylka velikosti klíče."
+      min={0} max={50} step={5}
+      value={scaleVariation}
+      onChange={setScaleVariation}
+      formatValue={(v) => `±${v}%`}
+    />
+  </>
+)}
       </div>
 
       <button type="button" onClick={handleStart} className={styles.startButton}>

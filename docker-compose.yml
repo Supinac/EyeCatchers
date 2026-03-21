@@ -1,6 +1,6 @@
 services:
   db:
-    image: mysql:8.0
+    image: docker.io/mysql:8.0
     container_name: eyecatchers-db
     environment:
       MYSQL_DATABASE: eyecatchers
@@ -22,7 +22,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: eyecatchers-backend
+    container_name: eyecatchers-backend3
     environment:
       DB_HOST: db
       DB_PORT: 3306
@@ -34,7 +34,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "80:80"
+      - "8080:80"
     restart: unless-stopped
     networks:
       - backend

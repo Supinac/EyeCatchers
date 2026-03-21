@@ -4,6 +4,7 @@ import type { GameConfig } from "../types/GameConfig";
 import { FindCircleGame } from "../../find-circle/FindCircleGame";
 import { PlaceholderGame } from "../../placeholder/PlaceholderGame";
 import { TrackTheCircleGame } from "../../track-the-circle/TrackTheCircleGame";
+import { KeysGame } from "../../keys/KeysGame";
 
 export type RegisteredGame = {
   key: string;
@@ -18,6 +19,7 @@ export type RegisteredGame = {
 const registry: Record<string, RegisteredGame> = {
   "find-circle": FindCircleGame,
   "track-the-circle": TrackTheCircleGame,
+  "keys": KeysGame
 };
 
 export function getRegisteredGame(gameKey: string): RegisteredGame | null {

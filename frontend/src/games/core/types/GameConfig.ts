@@ -1,4 +1,5 @@
 import type { GameDifficulty } from "./GameDefinition";
+import type { KeysGameConfig } from "../../keys/KeysGameConfig";
 
 export type PreviewSeconds = 1 | 2 | 5 | 10;
 export type MaxGameSeconds = 30 | 60 | 90 | "unlimited";
@@ -32,4 +33,6 @@ export type GameConfig = {
   difficulty: GameDifficulty;
   findCircle?: FindCircleGameConfig;
   trackTheCircle?: TrackTheCircleGameConfig;
+  keys?: KeysGameConfig;
 };
+
