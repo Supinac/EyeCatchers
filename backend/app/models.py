@@ -52,10 +52,11 @@ class GameType(str, Enum):
     moving_shapes = "moving_shapes"
 
 class ScoreSubmit(BaseModel):
-    success_rate: float = Field(ge=0)
+    # success_rate: float = Field(ge=0)
     game_type: GameType
-    difficulty: int = Field(ge=1, le=3)
+    # difficulty: int = Field(ge=1, le=3)
     settings: dict = Field(default_factory=dict)
+    results: dict = Field(default_factory=dict)
 
     @field_serializer("settings")
     def serialize_settings(self, settings: dict) -> str:
@@ -73,4 +74,21 @@ class ScoreSubmit(BaseModel):
             return value
         else:
             raise ValueError("Settings must be a JSON string or a dictionary")
+    
+    @field_serializer("results")
+    def serialize_results(self, results: dict) -> str:
+        return json.dumps(results)
+    
+    @field_validator("results", mode="before")
+    @classmethod
+    def validate_results(cls, value) -> dict:
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON string for results")
+        elif isinstance(value, dict):
+            return value
+        else:
+            raise ValueError("Results must be a JSON string or a dictionary")
 

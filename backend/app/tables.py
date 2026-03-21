@@ -23,14 +23,15 @@ class Admin(Base):
 
 class UserScore(Base):
     __tablename__ = "score"
-    __table_args__ = (
-        CheckConstraint("difficulty >= 1 AND difficulty <= 3", name="ck_score_difficulty_range"),
-    )
+    # __table_args__ = (
+    #     CheckConstraint("difficulty >= 1 AND difficulty <= 3", name="ck_score_difficulty_range"),
+    # )
     id:             Mapped[int]         = mapped_column(primary_key=True, init=False)
     user_id:        Mapped[int]         = mapped_column()
     game_type:      Mapped[GameType]    = mapped_column(SqlEnum(GameType, name="game_type_enum"), nullable=False)
-    success_rate:   Mapped[float]       = mapped_column()
-    difficulty:     Mapped[int]         = mapped_column(nullable=False)
+    # success_rate:   Mapped[float]       = mapped_column()
+    # difficulty:     Mapped[int]         = mapped_column(nullable=False)
     settings:       Mapped[dict]        = mapped_column(JSON, nullable=False, default_factory=dict)
+    results:        Mapped[dict]        = mapped_column(JSON, nullable=False, default_factory=dict)
     created_at:     Mapped[datetime]    = mapped_column(server_default=func.now(), init=False)
     
