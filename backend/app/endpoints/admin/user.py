@@ -37,7 +37,7 @@ def register_user(user: UserCreate, session: Session = Depends(db.session), curr
 @router.patch("/{id}", status_code=200, response_model=UserResponse)
 def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
     check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
-    if check_user:
+    if not check_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
@@ -55,7 +55,7 @@ def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session
 @router.delete("/{id}", status_code=204, response_model=None)
 def delete_user(id: int, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
     check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
-    if check_user:
+    if not check_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",

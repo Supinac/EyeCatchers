@@ -18,9 +18,9 @@ class AdminCreate(BaseModel):
     password:   str                     = Field(min_length=8, max_length=255)
 
 class AdminUpdate(BaseModel):
-    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    password:   str | None              = Field(min_length=8, max_length=255)
+    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    password:   str | None              = Field(min_length=8, max_length=255, default=None)
 
 
 
@@ -40,8 +40,8 @@ class UserCreate(BaseModel):
     login:      str                     = Field(min_length=4, max_length=MAX_STRING_LENGTH)
 
 class UserUpdate(BaseModel):
-    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
+    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
 
 class UserLogin(BaseModel):
     login:      str                     = Field(min_length=4, max_length=MAX_STRING_LENGTH)
