@@ -16,6 +16,8 @@ services:
       timeout: 5s
       retries: 20
     restart: unless-stopped
+    networks:
+      - backend
 
   backend:
     build:
@@ -36,3 +38,10 @@ services:
     ports:
       - "80:80"
     restart: unless-stopped
+    networks:
+      - backend
+
+      
+networks:
+  backend:
+    driver: bridge
