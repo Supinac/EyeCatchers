@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_LOGIN: str = "admin"
     DEFAULT_ADMIN_PASSWORD: str = "admin12345"
 
+    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost", "http://localhost:8000"]
+
     model_config = SettingsConfigDict(env_file='.env')
 
 settings = Settings() # type: ignore
