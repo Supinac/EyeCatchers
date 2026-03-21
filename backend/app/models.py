@@ -75,9 +75,3 @@ class ScoreSubmit(BaseModel):
         else:
             raise ValueError("Settings must be a JSON string or a dictionary")
 
-# Response schema (never expose the password hash)
-class UserResponse(BaseModel):
-    id:         int
-    login:  str
-    name:       str
-
