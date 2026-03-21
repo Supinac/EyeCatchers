@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { adminLogin } from "../../../api/authApi";
 import { getApiErrorMessage } from "../../../api/client";
 import { useAuth } from "./useAuth";
+import { validateLogin, validatePassword } from "../utils/authValidation";
 
 export function useAdminLogin() {
   const { login } = useAuth();
@@ -13,8 +14,15 @@ export function useAdminLogin() {
       const trimmedLogin = loginValue.trim();
       const trimmedPassword = passwordValue.trim();
 
-      if (!trimmedLogin || !trimmedPassword) {
-        setError("Please enter login and password.");
+      const loginError = validateLogin(trimmedLogin, "Login");
+      if (loginError) {
+        setError(loginError);
+        return false;
+      }
+
+      const passwordError = validatePassword(trimmedPassword, "Password");
+      if (passwordError) {
+        setError(passwordError);
         return false;
       }
 

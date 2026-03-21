@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAdminLogin } from "../../features/auth/hooks/useAdminLogin";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { AUTH_LOGIN_MIN_LENGTH, AUTH_PASSWORD_MIN_LENGTH, AUTH_TEXT_MAX_LENGTH } from "../../features/auth/utils/authValidation";
 import styles from "./AdminLoginPage.module.css";
 
 export function AdminLoginPage() {
@@ -54,6 +55,8 @@ export function AdminLoginPage() {
               }}
               placeholder="Enter admin login"
               autoComplete="username"
+              minLength={AUTH_LOGIN_MIN_LENGTH}
+              maxLength={AUTH_TEXT_MAX_LENGTH}
               disabled={isLoading}
             />
           </div>
@@ -71,6 +74,8 @@ export function AdminLoginPage() {
               }}
               placeholder="Enter password"
               autoComplete="current-password"
+              minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_TEXT_MAX_LENGTH}
               disabled={isLoading}
             />
           </div>
