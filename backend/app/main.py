@@ -4,7 +4,7 @@ import socket
 from fastapi import FastAPI, Request, Response
 from .config import settings
 from . import db
-from . import users
+from endpoints import admin
 
 
 if not db.ping(host=settings.DB_HOST, port=int(settings.DB_PORT)):
@@ -37,4 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users.router)
+
+app.include_router(admin.user.router)
+app.include_router(admin.admin.router)
