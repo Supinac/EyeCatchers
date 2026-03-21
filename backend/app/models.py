@@ -10,20 +10,24 @@ from .db import Base
 class User(Base):
     __tablename__ = "user"
     id:         Mapped[int]       = mapped_column(primary_key=True, init=False)
-    name:       Mapped[str]       = mapped_column(String(50), unique=True)
+    name:       Mapped[str]       = mapped_column(String(50))
+    user_name:  Mapped[str]       = mapped_column(String(50), unique=True)
+    created_at: Mapped[datetime]  = mapped_column(server_default=func.now(), init=False)
+
+class Admin(Base):
+    __tablename__ = "admin"
+    id:         Mapped[int]       = mapped_column(primary_key=True, init=False)
+    user_name:  Mapped[str]       = mapped_column(String(50), unique=True)
     password:   Mapped[str]       = mapped_column(String(255))  # stored as bcrypt hash
-    top_score:  Mapped[int]       = mapped_column(default=0, init=False)
-    last_score: Mapped[int]       = mapped_column(default=0, init=False)
     created_at: Mapped[datetime]  = mapped_column(server_default=func.now(), init=False)
 
 # Request schemas
 class UserRegister(BaseModel):
-    name:       str               = Field(min_length=2, max_length=50)
-    password:   str               = Field(min_length=4, max_length=128)
+    name:       str               = Field(min_length=4, max_length=40)
+    user_name:  str               = Field(min_length=4, max_length=40)
 
 class UserLogin(BaseModel):
-    name:       str
-    password:   str
+    user_name:  str               = Field(min_length=4, max_length=40)
 
 class ScoreSubmit(BaseModel):
     score:      int               = Field(ge=0)
