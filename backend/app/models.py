@@ -2,16 +2,41 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 # Request schemas
+class AdminRegister(BaseModel):
+    name:       str                     = Field(min_length=4, max_length=40)
+    login:      str                     = Field(min_length=4, max_length=40)
+    password:   str                     = Field(min_length=8, max_length=255)
+
+class AdminLogin(BaseModel):
+    login:      str                     = Field(min_length=4, max_length=40)
+    password:   str                     = Field(min_length=8, max_length=255)
+
+class AdminUpdate(BaseModel):
+    name:       str | None              = Field(min_length=4, max_length=40)
+    login:      str | None              = Field(min_length=4, max_length=40)
+    password:   str | None              = Field(min_length=8, max_length=255)
+
+class AdminResponse(BaseModel):
+    id:         int
+    login:      str
+    name:       str
+
+
 class UserRegister(BaseModel):
-    name:       str               = Field(min_length=4, max_length=40)
-    login:  str               = Field(min_length=4, max_length=40)
+    name:       str                     = Field(min_length=4, max_length=40)
+    login:      str                     = Field(min_length=4, max_length=40)
 
 class UserLogin(BaseModel):
-    login:  str               = Field(min_length=4, max_length=40)
+    login:      str                     = Field(min_length=4, max_length=40)
 
 class UserUpdate(BaseModel):
-    name:       str               = Field(min_length=4, max_length=40)
-    login:  str               = Field(min_length=4, max_length=40)
+    name:       str | None              = Field(min_length=4, max_length=40)
+    login:      str | None              = Field(min_length=4, max_length=40)
+
+class UserResponse(BaseModel):
+    id:         int
+    login:      str
+    name:       str
 
 
 class GameType(str, Enum):
