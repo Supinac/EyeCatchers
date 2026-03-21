@@ -206,3 +206,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 frontend/node_modules
+
+# file for developer
+ctx.py
