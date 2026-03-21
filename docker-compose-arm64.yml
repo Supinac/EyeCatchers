@@ -30,7 +30,7 @@ services:
   client:
     build:
       context: ./frontend
-      platform: linux/arm64
+    platform: linux/arm64
     environment:
       VITE_API_BASE_URL: http://192.168.50.1/api
     restart: unless-stopped
@@ -48,7 +48,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      platform: linux/arm64
+    platform: linux/arm64
     command: ["--root-path", "/api"]
     environment:
       DB_HOST: db
