@@ -8,6 +8,7 @@ const games: GameCatalogItem[] = [
   { key: "count-items", name: "Count Items", enabled: true, implemented: false },
   { key: "find-different", name: "Find Different", enabled: true, implemented: false },
   { key: "repeat-sequence", name: "Repeat Sequence", enabled: true, implemented: false },
+  { key: "track-the-circle", name: "Sleduj kruh", enabled: true, implemented: true },
 ];
 
 const difficultyConfig: Record<string, GameDifficulty[]> = {
@@ -17,6 +18,7 @@ const difficultyConfig: Record<string, GameDifficulty[]> = {
   "count-items": ["easy", "medium", "hard"],
   "find-different": ["easy", "medium", "hard"],
   "repeat-sequence": ["easy", "medium", "hard"],
+  "track-the-circle": ["easy", "medium", "hard"],
 };
 
 export async function getGames(): Promise<GameCatalogItem[]> {
