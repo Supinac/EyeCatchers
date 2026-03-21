@@ -45,7 +45,7 @@ def update_admin(id: int, user: AdminUpdate, session: Session = Depends(db.sessi
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Admin not found",
         )
-    for key, value in user.dict(exclude_unset=True).items():
+    for key, value in user.model_dump(exclude_unset=True).items():
         setattr(AdminUpdate, key, value)
     session.add(AdminUpdate)
     session.commit()
