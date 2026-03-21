@@ -1,0 +1,134 @@
+.page {
+  min-height: 100vh;
+  padding: 28px;
+  display: grid;
+  gap: 28px;
+  background: #000;
+}
+
+.topbar,
+.header,
+.statsGrid,
+.tableWrap {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logoutButton {
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  color: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+  cursor: pointer;
+}
+
+.userBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.76);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.header {
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(255,255,255,0.64);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.statCard {
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  display: grid;
+  gap: 8px;
+}
+
+.statCard span {
+  color: rgba(255,255,255,0.6);
+}
+
+.statCard strong {
+  font-size: 2rem;
+}
+
+.tableWrap {
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 18px 20px;
+}
+
+.table thead {
+  background: rgba(255,255,255,0.04);
+}
+
+.table th {
+  color: rgba(255,255,255,0.62);
+  font-weight: 600;
+}
+
+.table tbody tr {
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+@media (max-width: 800px) {
+  .page {
+    padding: 20px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableWrap {
+    overflow-x: auto;
+  }
+}

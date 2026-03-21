@@ -1,1 +1,226 @@
-.placeholder {}
+.page {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 56px;
+  position: relative;
+}
+
+.backButton {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.58);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.backButton:hover,
+.backButton:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.backArrow {
+  flex: 0 0 auto;
+}
+
+.header {
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.iconBox {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.gameIcon {
+  width: 34px;
+  height: 34px;
+  color: #fff;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(36px, 4.6vw, 56px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 20px);
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.panel {
+  width: 100%;
+  max-width: 1120px;
+}
+
+.section + .section {
+  margin-top: 30px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  font: inherit;
+}
+
+.tile:hover,
+.tile:focus-visible {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.22);
+  outline: none;
+}
+
+.tileSelected {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.tileLabel {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 650;
+}
+
+.tileDescription {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.startButton {
+  margin-top: 42px;
+  border: none;
+  border-radius: 18px;
+  background: #fff;
+  color: #000;
+  padding: 18px 36px;
+  min-width: 240px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.startButton:hover,
+.startButton:focus-visible {
+  transform: translateY(-1px);
+  opacity: 0.94;
+  outline: none;
+}
+
+@media (max-width: 900px) {
+  .page {
+    justify-content: flex-start;
+    padding-top: 88px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header,
+  .panel {
+    max-width: 680px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 80px 16px 28px;
+  }
+
+  .backButton {
+    top: 18px;
+    left: 12px;
+  }
+
+  .header {
+    align-items: flex-start;
+    text-align: left;
+    margin-bottom: 28px;
+  }
+
+  .iconBox {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 34px;
+  }
+
+  .subtitle {
+    max-width: 28ch;
+  }
+
+  .tile {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .startButton {
+    width: 100%;
+    margin-top: 28px;
+  }
+}

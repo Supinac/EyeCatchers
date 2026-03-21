@@ -2,16 +2,57 @@
   min-height: 100vh;
   background: #000;
   color: #fff;
-  padding: 56px 24px 48px;
+  padding: 32px 24px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.header {
+.topbar,
+.header,
+.gridWrap {
   width: 100%;
   max-width: 1200px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 48px;
+}
+
+.userBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.logoutButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+}
+
+.header {
   text-align: center;
   margin-bottom: 56px;
 }
@@ -29,11 +70,6 @@
   font-size: clamp(18px, 2vw, 22px);
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.54);
-}
-
-.gridWrap {
-  width: 100%;
-  max-width: 1200px;
 }
 
 .footerHint {
@@ -59,8 +95,12 @@
 
 @media (max-width: 700px) {
   .page {
-    padding: 28px 16px 24px;
+    padding: 20px 16px 24px;
     justify-content: flex-start;
+  }
+
+  .topbar {
+    margin-bottom: 28px;
   }
 
   .header {

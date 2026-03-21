@@ -1,7 +1,10 @@
 export const routes = {
-  home: "/",
+  entry: "/",
+  games: "/games",
   settings: "/settings",
   gameConfig: "/game/:gameKey",
   gamePlay: "/play/:gameKey",
   result: "/result",
+  adminLogin: "/admin/login",
+  adminDashboard: "/admin",
 } as const;

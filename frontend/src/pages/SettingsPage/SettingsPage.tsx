@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { routes } from "../../app/router/routes";
 import { PageLayout } from "../../components/layout/PageLayout";
 import { ScreenContainer } from "../../components/layout/ScreenContainer";
 import { Button } from "../../components/ui/Button";
@@ -12,7 +13,7 @@ export function SettingsPage() {
     <PageLayout
       title="Settings"
       actions={
-        <Link to="/">
+        <Link to={routes.games}>
           <Button variant="ghost">Back</Button>
         </Link>
       }
