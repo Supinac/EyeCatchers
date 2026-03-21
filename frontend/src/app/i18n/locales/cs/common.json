@@ -64,8 +64,7 @@
     "session": {
       "statusFinished": "Dokončeno",
       "statusNotFinished": "Nedokončeno",
-      "playedAt": "Hráno {{value}}",
-      "correctFound": "Správně nalezeno",
+            "correctFound": "Správně nalezeno",
       "accuracy": "Přesnost",
       "correctTaps": "Správná kliknutí",
       "wrongTaps": "Špatná kliknutí",
@@ -103,7 +102,7 @@
       "userResults": "Výsledky uživatele",
       "createdAt": "Vytvořeno {{value}}",
       "playedGames": "Odehrané hry",
-      "historySubtitle": "Každé kolo nyní používá stejný jazyk statistik jako aktivní zobrazení výsledků hry.",
+      "historySubtitle": "Přehled odehraných her a jejich nastavení.",
       "total": "Celkem {{value}}",
       "noGames": "Tento uživatel ještě neodehrál žádnou hru."
     }
