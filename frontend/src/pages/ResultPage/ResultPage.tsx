@@ -1,71 +1,59 @@
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
 import { ButtonLink } from "../../components/ui/ButtonLink";
+import { formatTokenLabel, translateGameTitle, translateValue } from "../../app/i18n/text";
 import type { GameResult } from "../../games/core/types/GameResult";
 import styles from "./ResultPage.module.css";
 
-function formatLabel(value: string | undefined) {
-  if (!value) return "—";
-  if (value === "letters") return "Czech letters";
-  if (value === "figures") return "Figures";
-  if (value === "numbers") return "Numbers";
-  if (value === "grid") return "Grid";
-  if (value === "random") return "Random positions";
-  if (value === "fixed") return "Fixed";
-  return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+function formatDuration(value: string | number | undefined) {
+  if (value == null || value === "") return "—";
+  return value === "unlimited" ? translateValue("unlimited") : `${value} s`;
 }
 
-function formatMaxTime(value: string | number | undefined) {
-  if (!value) return null;
-  return value === "unlimited" ? "Max time: Unlimited" : `Max time: ${value}s`;
-}
-
-function getConfigPills(result: GameResult): string[] {
+function getConfigPills(result: GameResult, t: ReturnType<typeof useTranslation>["t"]): string[] {
   if (result.gameKey === "find-circle") {
     return [
-      `Game: Find Circle`,
-      result.stats?.previewSeconds ? `Preview: ${result.stats.previewSeconds}s` : null,
-      formatMaxTime(result.stats?.maxGameSeconds),
-      result.stats?.contentMode ? `Mode: ${formatLabel(result.stats.contentMode)}` : null,
-      result.stats?.placementMode ? `Layout: ${formatLabel(result.stats.placementMode)}` : null,
-      result.stats?.gridSize ? `Grid size: ${result.stats.gridSize} × ${result.stats.gridSize}` : null,
-      result.stats?.correctObjectCount ? `Right objects: ${result.stats.correctObjectCount}` : null,
-      result.stats?.figureSizePercent ? `Figure size: ${result.stats.figureSizePercent}%` : null,
-      result.stats?.figureSizeMode ? `Size mode: ${formatLabel(result.stats.figureSizeMode)}` : null,
+      t("resultPage.pills.game", { value: translateGameTitle("find-circle") }),
+      result.difficulty ? t("resultPage.pills.difficulty", { value: translateValue(result.difficulty) }) : null,
+      result.stats?.previewSeconds != null ? t("resultPage.pills.previewTime", { value: `${result.stats.previewSeconds} s` }) : null,
+      result.stats?.maxGameSeconds != null ? t("resultPage.pills.maxGameTime", { value: formatDuration(result.stats.maxGameSeconds) }) : null,
+      result.stats?.contentMode ? t("resultPage.pills.contentMode", { value: formatTokenLabel(result.stats.contentMode) }) : null,
+      result.stats?.placementMode ? t("resultPage.pills.placementMode", { value: formatTokenLabel(result.stats.placementMode) }) : null,
+      result.stats?.gridSize ? t("resultPage.pills.gridSize", { value: `${result.stats.gridSize} × ${result.stats.gridSize}` }) : null,
+      result.stats?.correctObjectCount ? t("resultPage.pills.correctObjectCount", { value: result.stats.correctObjectCount }) : null,
+      result.stats?.figureSizePercent ? t("resultPage.pills.figureSizePercent", { value: `${result.stats.figureSizePercent}%` }) : null,
+      result.stats?.figureSizeMode ? t("resultPage.pills.figureSizeMode", { value: formatTokenLabel(result.stats.figureSizeMode) }) : null,
     ].filter(Boolean) as string[];
   }
 
   if (result.gameKey === "track-the-circle") {
     return [
-      `Game: Track The Circle`,
-      `Obtížnost: ${result.difficulty}`,
-      result.stats?.swapCount ? `Přehození: ${result.stats.swapCount}` : null,
-      result.stats?.swapDurationMs ? `Rychlost: ${result.stats.swapDurationMs}ms` : null,
-      result.stats?.symbolSize ? `Symboly: ${result.stats.symbolSize}px` : null,
+      t("resultPage.pills.game", { value: translateGameTitle("track-the-circle") }),
+      result.difficulty ? t("resultPage.pills.difficulty", { value: translateValue(result.difficulty) }) : null,
+      result.stats?.swapCount != null ? t("resultPage.pills.swapCount", { value: result.stats.swapCount }) : null,
+      result.stats?.swapDurationMs != null ? t("resultPage.pills.swapDurationMs", { value: `${(result.stats.swapDurationMs / 1000).toFixed(1).replace(".", ",")} s` }) : null,
+      result.stats?.symbolSize != null ? t("resultPage.pills.symbolSize", { value: `${result.stats.symbolSize} px` }) : null,
     ].filter(Boolean) as string[];
   }
 
-  return [`Game: ${formatLabel(result.gameKey)}`];
+  return [t("resultPage.pills.game", { value: translateGameTitle(result.gameKey) })];
 }
 
-function getSubtitle(result: GameResult): string {
+function getSubtitle(result: GameResult, t: ReturnType<typeof useTranslation>["t"]): string {
   if (result.gameKey === "track-the-circle") {
-    return result.success
-      ? "Správně! Sledoval/a jsi cíl až do konce."
-      : "Tentokrát to nevyšlo. Zkus to znovu.";
+    return result.success ? t("resultPage.subtitleTrackSuccess") : t("resultPage.subtitleTrackFail");
   }
-  return result.success
-    ? "You found all correct items. Here is a bigger overview of how the round went."
-    : "The round has ended. Check the main results below and start another try.";
+
+  return result.success ? t("resultPage.subtitleFindCircleSuccess") : t("resultPage.subtitleFindCircleFail");
 }
 
 function getCorrectFoundLabel(result: GameResult): string {
   if (result.gameKey === "track-the-circle") {
     return result.success ? "✓" : "✗";
   }
-  return result.stats
-    ? `${result.stats.correctHits}/${result.maxScore}`
-    : `${result.score}/${result.maxScore}`;
+
+  return result.stats ? `${result.stats.correctHits}/${result.maxScore}` : `${result.score}/${result.maxScore}`;
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -79,6 +67,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 export function ResultPage() {
   const location = useLocation();
+  const { t } = useTranslation();
   const result = (location.state as GameResult | undefined) ?? null;
 
   if (!result) {
@@ -86,13 +75,13 @@ export function ResultPage() {
       <main className={styles.page}>
         <section className={styles.panel}>
           <div className={styles.hero}>
-            <div className={styles.badge}>No result yet</div>
-            <h1 className={styles.title}>Start a game first</h1>
-            <p className={styles.subtitle}>There is no finished round to show on this screen.</p>
+            <div className={styles.badge}>{t("resultPage.emptyBadge")}</div>
+            <h1 className={styles.title}>{t("resultPage.emptyTitle")}</h1>
+            <p className={styles.subtitle}>{t("resultPage.emptySubtitle")}</p>
           </div>
           <div className={styles.actions}>
             <ButtonLink to={routes.games} variant="secondary" className={`${styles.actionButton} ${styles.actionButtonSecondary}`}>
-              Back to games
+              {t("resultPage.actions.backToGames")}
             </ButtonLink>
           </div>
         </section>
@@ -100,30 +89,30 @@ export function ResultPage() {
     );
   }
 
-  const configPills = getConfigPills(result);
-  const subtitle = getSubtitle(result);
+  const configPills = getConfigPills(result, t);
+  const subtitle = getSubtitle(result, t);
   const correctFoundLabel = getCorrectFoundLabel(result);
 
   const accuracyLabel = result.stats ? `${result.stats.accuracyPercent}%` : "—";
   const correctTapsLabel = result.stats ? String(result.stats.correctHits) : String(result.score);
   const wrongLabel = result.stats ? String(result.stats.wrongHits) : "0";
-  const elapsedLabel = result.stats ? `${result.stats.elapsedSeconds}s` : "—";
+  const elapsedLabel = result.stats ? `${result.stats.elapsedSeconds} s` : "—";
 
   return (
     <main className={styles.page}>
       <section className={styles.panel}>
         <div className={styles.hero}>
           <div className={`${styles.badge} ${result.success ? styles.badgeSuccess : styles.badgeFail}`.trim()}>
-            {result.success ? "You won" : "Try again"}
+            {result.success ? t("resultPage.badgeSuccess") : t("resultPage.badgeFail")}
           </div>
-          <h1 className={styles.title}>{result.success ? "Great job" : "Round finished"}</h1>
+          <h1 className={styles.title}>{result.success ? t("resultPage.titleSuccess") : t("resultPage.titleFail")}</h1>
           <p className={styles.subtitle}>{subtitle}</p>
         </div>
 
         <div className={styles.summaryBlock}>
           <div>
             <span className={styles.summaryLabel}>
-              {result.gameKey === "track-the-circle" ? "Výsledek" : "Correct found"}
+              {result.gameKey === "track-the-circle" ? t("resultPage.summaryResult") : t("resultPage.summaryCorrectFound")}
             </span>
             <div className={styles.summaryValue}>{correctFoundLabel}</div>
           </div>
@@ -138,26 +127,26 @@ export function ResultPage() {
 
         {result.gameKey !== "track-the-circle" && (
           <div className={styles.statsGrid}>
-            <StatCard label="Accuracy" value={accuracyLabel} />
-            <StatCard label="Correct taps" value={correctTapsLabel} />
-            <StatCard label="Wrong taps" value={wrongLabel} />
-            <StatCard label="Time used" value={elapsedLabel} />
+            <StatCard label={t("resultPage.stats.accuracy")} value={accuracyLabel} />
+            <StatCard label={t("resultPage.stats.correctTaps")} value={correctTapsLabel} />
+            <StatCard label={t("resultPage.stats.wrongTaps")} value={wrongLabel} />
+            <StatCard label={t("resultPage.stats.timeUsed")} value={elapsedLabel} />
           </div>
         )}
 
         <div className={styles.actions}>
           <ButtonLink to={routes.games} variant="secondary" className={`${styles.actionButton} ${styles.actionButtonSecondary}`}>
-            Home
+            {t("resultPage.actions.home")}
           </ButtonLink>
           <button
             type="button"
             className={`${styles.actionButton} ${styles.actionButtonSecondary}`}
           >
-            Stáhnout PDF
+            {t("resultPage.actions.downloadPdf")}
           </button>
           {result.gameKey ? (
             <ButtonLink to={`/game/${result.gameKey}`} className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
-              Play again
+              {t("resultPage.actions.playAgain")}
             </ButtonLink>
           ) : (
             <span />

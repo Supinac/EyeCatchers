@@ -1,4 +1,5 @@
 import { request } from "./client";
+import { translateGameTitle } from "../app/i18n/text";
 import type { GameResult } from "../games/core/types/GameResult";
 
 export type SubmitScoreEntry = {
@@ -58,16 +59,6 @@ const API_GAME_TO_FRONTEND_KEY: Record<string, string> = Object.entries(GAME_TYP
   return accumulator;
 }, {});
 
-const GAME_TITLE_MAP: Record<string, string> = {
-  "find-circle": "Najdi stejné",
-  "track-the-circle": "Sleduj kruh",
-  "memory-pairs": "Pexeso",
-  "shape-match": "Přiřaď tvary",
-  "count-items": "Počítání objektů",
-  "find-different": "Najdi rozdíl",
-  "repeat-sequence": "Opakuj sekvenci",
-};
-
 function formatTitle(value: string) {
   return value
     .replace(/[_-]+/g, " ")
@@ -78,7 +69,8 @@ function formatTitle(value: string) {
 }
 
 function mapGameTitle(gameKey: string) {
-  return GAME_TITLE_MAP[gameKey] ?? formatTitle(gameKey);
+  const title = translateGameTitle(gameKey);
+  return title && title !== gameKey ? title : formatTitle(gameKey);
 }
 
 function mapGameType(gameKey: string) {

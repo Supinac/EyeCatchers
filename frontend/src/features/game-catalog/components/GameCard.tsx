@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styles from "./GameCard.module.css";
 import type { GameCardViewModel } from "../types";
 import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "./GameIcons";
@@ -11,6 +12,7 @@ function getIcon(icon: GameCardViewModel["icon"]) {
 
 export function GameCard({ game }: { game: GameCardViewModel }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isLocked = !game.implemented;
 
   return (
@@ -18,7 +20,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
       type="button"
       className={`${styles.card} ${isLocked ? styles.cardLocked : ""}`}
       onClick={isLocked ? undefined : () => navigate(`/game/${game.key}`)}
-      aria-label={`${game.name}. ${game.implemented ? "Ready to open" : ""}`}
+      aria-label={`${game.name}. ${game.implemented ? t("games.readyToOpen") : ""}`}
       disabled={isLocked}
     >
       <div className={styles.iconBox}>{getIcon(game.icon)}</div>
@@ -29,7 +31,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
       </div>
 
       <div className={styles.playWrap}>
-        <span className={styles.playText}>{game.implemented ? "Play" : "Locked"}</span>
+        <span className={styles.playText}>{game.implemented ? t("games.play") : t("games.locked")}</span>
         <svg className={styles.playArrow} width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path
             d="M6 12L10 8L6 4"

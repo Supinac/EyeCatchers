@@ -6,7 +6,7 @@ export type ShapeKind = "circle" | "square" | "triangle" | "diamond" | "star";
 export type SymbolContentType = "shape" | "text";
 
 const shapePool: ShapeKind[] = ["circle", "square", "triangle", "diamond", "star"];
-const letterPool = ["A", "B", "C", "Č", "D", "Ď", "E", "Ě", "F", "G", "H", "I", "J", "K", "L", "M", "N", "Ň", "O", "P", "R", "Ř", "S", "Š", "T", "Ť", "U", "Ů", "V", "Y", "Z", "Ž"];
+const letterPool = ["A", "B", "C", "Č", "D", "E", "Ě", "F", "G", "H", "I", "J", "K", "L", "M", "N", "Ň", "O", "P", "R", "Ř", "S", "Š", "T", "U", "V", "Y", "Z", "Ž"];
 const numberPool = "0123456789".split("");
 
 export type FindCircleItem = {
