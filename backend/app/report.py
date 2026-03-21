@@ -5,7 +5,28 @@ Pure stdlib, no external dependencies.
 
 import csv
 import io
+import json
 from datetime import datetime
+
+
+def _ensure_dict(value) -> dict:
+    """Handle string-encoded JSON at any nesting level."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _ensure_entry(entry) -> dict:
+    """Each entry inside settings/results might also be a JSON string."""
+    if isinstance(entry, str):
+        try:
+            entry = json.loads(entry)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    return entry if isinstance(entry, dict) else {}
 
 
 def _fmt_value(v: str) -> str:
@@ -26,8 +47,12 @@ def _fmt_date(dt: datetime | str | None) -> str:
 
 
 def _section_rows_html(section: dict) -> str:
+    section = _ensure_dict(section)
     rows = ""
     for i, entry in enumerate(section.values()):
+        entry = _ensure_entry(entry)
+        if not entry:
+            continue
         bg = "#f0f0f8" if i % 2 == 0 else "#ffffff"
         label = entry.get("tranlations", entry.get("key", ""))
         val = _fmt_value(str(entry.get("value", "")))
@@ -70,6 +95,10 @@ def record_to_html(
 <p class="meta">ID: {record_id} | Uživatel: {user_name} (#{user_id}) | Datum: {date}</p>
 """
     if settings:
+        settings = _ensure_dict(settings)
+    if results:
+        results = _ensure_dict(results)
+    if settings:
         html += f"<h2>Nastavení hry</h2>\n<table>\n<tr><th>Parametr</th><th>Hodnota</th></tr>\n{_section_rows_html(settings)}</table>\n"
     if results:
         html += f"<h2>Výsledky</h2>\n<table>\n<tr><th>Parametr</th><th>Hodnota</th></tr>\n{_section_rows_html(results)}</table>\n"
@@ -107,8 +136,8 @@ def records_to_html(records: list[dict]) -> str:
         parts.append(f'<div class="record">\n<h2>{game}</h2>\n')
         parts.append(f'<p class="meta">ID: {r["id"]} | Uživatel: {r.get("user_name", "?")} (#{r["user_id"]}) | Datum: {date}</p>\n')
 
-        settings = r.get("settings") or {}
-        results = r.get("results") or {}
+        settings = _ensure_dict(r.get("settings") or {})
+        results = _ensure_dict(r.get("results") or {})
         if settings:
             parts.append(f"<h3>Nastavení</h3>\n<table><tr><th>Parametr</th><th>Hodnota</th></tr>\n{_section_rows_html(settings)}</table>\n")
         if results:
@@ -135,8 +164,11 @@ def records_to_csv(records: list[dict]) -> str:
         user_label = f'{r.get("user_name", "?")} (#{r["user_id"]})'
 
         for section_name, section_key in [("Nastavení", "settings"), ("Výsledky", "results")]:
-            section = r.get(section_key) or {}
+            section = _ensure_dict(r.get(section_key) or {})
             for entry in section.values():
+                entry = _ensure_entry(entry)
+                if not entry:
+                    continue
                 w.writerow([
                     r["id"],
                     user_label,
