@@ -8,8 +8,6 @@ services:
       MYSQL_USER: eyecatchers
       MYSQL_PASSWORD: pja98fbe
       MYSQL_ROOT_PASSWORD: pja98fbe
-    ports:
-      - "3306:3306"
     volumes:
       - ./db-data:/var/lib/mysql
     healthcheck:
