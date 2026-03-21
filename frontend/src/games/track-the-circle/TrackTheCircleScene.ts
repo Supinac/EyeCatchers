@@ -19,29 +19,21 @@ import {
 import type { GameDifficulty } from "../core/types/GameDefinition";
 import type { GameResult } from "../core/types/GameResult";
 
-const CIRCLE_RADIUS = 48;
-const SYMBOL_FONT_SIZE = 32;
-
 // ── Kreslení symbolů ─────────────────────────────────────
 
-function drawCircleRing(g: Graphics, color: number) {
-  g.clear();
-  g.lineStyle(3, color, 1);
-  g.drawCircle(0, 0, CIRCLE_RADIUS);
-}
-
-function drawSymbol(symbolType: string, symbol: string, container: Container) {
+function drawSymbol(symbolType: string, symbol: string, container: Container, size: number) {
   if (symbolType === "shape") {
     const g = new Graphics();
     g.beginFill(PixiTheme.foreground);
+    const s = size * 0.4; // tvar trochu menší než font
     if (symbol === "circle") {
-      g.drawCircle(0, 0, 20);
+      g.drawCircle(0, 0, s);
     } else if (symbol === "square") {
-      g.drawRect(-18, -18, 36, 36);
+      g.drawRect(-s, -s, s * 2, s * 2);
     } else if (symbol === "triangle") {
-      g.moveTo(0, -20);
-      g.lineTo(20, 18);
-      g.lineTo(-20, 18);
+      g.moveTo(0, -s);
+      g.lineTo(s, s * 0.9);
+      g.lineTo(-s, s * 0.9);
       g.closePath();
     }
     g.endFill();
@@ -49,7 +41,7 @@ function drawSymbol(symbolType: string, symbol: string, container: Container) {
   } else {
     const t = new Text(symbol, new TextStyle({
       fill: PixiTheme.foreground,
-      fontSize: SYMBOL_FONT_SIZE,
+      fontSize: size,
       fontFamily: "Arial",
       fontWeight: "bold",
     }));
@@ -91,16 +83,25 @@ export function mountTrackTheCircleScene({
   mountElement,
   difficulty,
   swapCount,
+  symbolSize,
   onComplete,
 }: {
   mountElement: HTMLDivElement;
   difficulty: GameDifficulty;
   swapCount: number;
+  symbolSize: number;
   onComplete: (result: GameResult) => void;
 }) {
   const app = createPixiApp(mountElement);
   const { width, height } = getGameSize(mountElement);
   let destroyed = false;
+  const CIRCLE_RADIUS = Math.max(48, symbolSize * 0.8);
+
+  function drawCircleRing(g: Graphics, color: number) {
+    g.clear();
+    g.lineStyle(3, color, 1);
+    g.drawCircle(0, 0, CIRCLE_RADIUS);
+  }
 
   const root = new Container();
   app.stage.addChild(root);
@@ -122,7 +123,7 @@ export function mountTrackTheCircleScene({
     drawCircleRing(ring, circle.isTarget ? 0xff3333 : PixiTheme.foreground);
     container.addChild(ring);
 
-    drawSymbol(circle.symbolType, circle.symbol, container);
+    drawSymbol(circle.symbolType, circle.symbol, container, symbolSize);
 
     root.addChild(container);
     sprites.set(circle.id, container);

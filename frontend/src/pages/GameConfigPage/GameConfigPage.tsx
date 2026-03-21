@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds, SwapCount } from "../../games/core/types/GameConfig";
+import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds, SwapCount, SymbolSize } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
 import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
@@ -96,6 +96,7 @@ export function GameConfigPage() {
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
   const [swapCount, setSwapCount] = useState<SwapCount>(15);
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
+  const [symbolSize, setSymbolSize] = useState<SymbolSize>(52);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -106,7 +107,7 @@ export function GameConfigPage() {
       gameKey,
       difficulty,
       findCircle: { previewSeconds, maxGameSeconds, gridSize, figureSizeMode },
-      trackTheCircle: { swapCount },
+      trackTheCircle: { swapCount, symbolSize },
     });
 
     const params = new URLSearchParams({
@@ -115,6 +116,7 @@ export function GameConfigPage() {
       grid: String(gridSize),
       sizeMode: figureSizeMode,
       swapCount: String(swapCount),
+      symbolSize: String(symbolSize),
       difficulty,
     });
 
@@ -197,6 +199,34 @@ export function GameConfigPage() {
                 ))}
               </div>
             </section>
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Velikost symbolů</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+                  <input
+                    type="range"
+                    min={32}
+                    max={144}
+                    step={4}
+                    value={symbolSize}
+                    onChange={(e) => setSymbolSize(Number(e.target.value) as SymbolSize)}
+                    style={{ flex: 6, accentColor: "#fff", height: 6 }}
+                  />
+                  <div style={{ flex: 4, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 24, height: 144, overflow: "hidden" }}>
+                    <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>
+                      3
+                    </span>
+                    <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>
+                      A
+                    </span>
+                    <svg width={symbolSize} height={symbolSize} viewBox="0 0 100 100" style={{ flexShrink: 0 }}>
+                      <rect x="10" y="10" width="80" height="80" fill="#fff" />
+                    </svg>
+                  </div>
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 6 }}>
+                  Velikost: {symbolSize}px
+                </div>
+              </section>
           </>
         )}
       </div>

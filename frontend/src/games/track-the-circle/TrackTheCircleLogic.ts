@@ -57,28 +57,36 @@ export function buildInitialState(
 }
 
 export function generatePositions(count: number): { x: number; y: number }[] {
-  const positions: { x: number; y: number }[] = [];
-  const margin = 0.15;
-  const usable = 1 - margin * 2;
-
-  if (count <= 4) {
-    for (let i = 0; i < count; i++) {
-      positions.push({
-        x: margin + (usable / (count - 1 || 1)) * i,
-        y: 0.5,
-      });
-    }
-  } else {
-    for (let i = 0; i < count; i++) {
-      const angle = (2 * Math.PI * i) / count - Math.PI / 2;
-      positions.push({
-        x: 0.5 + 0.35 * Math.cos(angle),
-        y: 0.5 + 0.35 * Math.sin(angle),
-      });
-    }
+  if (count === 3) {
+    // Rovnostranný trojúhelník – vrchol nahoře
+    const cx = 0.5;
+    const cy = 0.5;
+    const r = 0.28;
+    return [
+      { x: cx,                         y: cy - r },           // vrchol
+      { x: cx - r * Math.sin(Math.PI / 3), y: cy + r * 0.5 }, // levý dolní
+      { x: cx + r * Math.sin(Math.PI / 3), y: cy + r * 0.5 }, // pravý dolní
+    ];
   }
 
-  return positions;
+  if (count <= 4) {
+    // Řada
+    const margin = 0.15;
+    const usable = 1 - margin * 2;
+    return Array.from({ length: count }, (_, i) => ({
+      x: margin + (usable / (count - 1)) * i,
+      y: 0.5,
+    }));
+  }
+
+  // Kruh pro 5+
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+    return {
+      x: 0.5 + 0.35 * Math.cos(angle),
+      y: 0.5 + 0.35 * Math.sin(angle),
+    };
+  });
 }
 
 export function pickSwapPair(circles: CircleItem[], state: GameState): SwapPair {
