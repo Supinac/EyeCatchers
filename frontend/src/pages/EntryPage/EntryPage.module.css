@@ -5,8 +5,8 @@
   justify-content: center;
   padding: 32px;
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 34%),
-    #000;
+          radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 34%),
+          #000;
 }
 
 .shell {
@@ -19,6 +19,7 @@
   text-align: center;
   display: grid;
   gap: 14px;
+  margin-bottom: 2rem;
 }
 
 .badge {
@@ -58,8 +59,13 @@
 }
 
 .label {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.95rem;
+  display: block;
+  text-align: center;
+  color: #fff;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  padding-bottom: 0.5em;
 }
 
 .input {

@@ -37,36 +37,41 @@ export function EntryPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <div className={styles.headerBlock}>
-          <div className={styles.badge}>Welcome</div>
-          <h1 className={styles.title}>Who is playing today?</h1>
-          <p className={styles.subtitle}>For a child, enter only the login name. For an admin, open the admin login screen.</p>
-        </div>
-
-        <section className={styles.panel}>
-          <label htmlFor="child-login" className={styles.label}>Child login</label>
-          <input
-            id="child-login"
-            className={styles.input}
-            value={login}
-            onChange={(event) => {
-              setLogin(event.target.value);
-              if (error) setError("");
-            }}
-            placeholder="Enter name or login"
-            autoComplete="off"
-          />
-
-          {error ? <p className={styles.error}>{error}</p> : <p className={styles.hint}></p>}
-
-          <div className={styles.actions}>
-            <button type="button" className={styles.secondaryButton} onClick={handleKidEnter}>Enter as child</button>
-            <button type="button" className={styles.secondaryButton} onClick={handleAdminClick}>Admin</button>
+      <main className={styles.page}>
+        <div className={styles.shell}>
+          <div className={styles.headerBlock}>
+            <div className={styles.badge}>Welcome</div>
+            <h1 className={styles.title}>Who is playing today?</h1>
+            <p className={styles.subtitle}>For a child, enter only the login name. For an admin, open the admin login screen.</p>
           </div>
-        </section>
-      </div>
-    </main>
+
+          <section className={styles.panel}>
+            <label htmlFor="child-login" className={styles.label}>Login</label>
+            <input
+                id="child-login"
+                className={`${styles.input} ${error ? styles.inputError : ""}`}
+                value={login}
+                onChange={(event) => {
+                  setLogin(event.target.value);
+                  if (error) setError("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    handleKidEnter();
+                  }
+                }}
+                placeholder="Enter login"
+                autoComplete="off"
+            />
+
+            {error ? <div className={styles.errorBadge}>{error}</div> : null}
+
+            <div className={styles.actions}>
+              <button type="button" className={styles.secondaryButton} onClick={handleKidEnter}>Continue</button>
+              <button type="button" className={styles.secondaryButton} onClick={handleAdminClick}>Admin</button>
+            </div>
+          </section>
+        </div>
+      </main>
   );
 }

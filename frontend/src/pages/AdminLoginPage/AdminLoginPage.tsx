@@ -82,7 +82,7 @@ export function AdminLoginPage() {
 
         {error ? <p className={styles.error}>{error}</p> : <p className={styles.hint}>Demo login: admin / admin</p>}
 
-        <button type="submit" className={styles.submitButton}>Login</button>
+        <button type="submit" className={styles.secondaryButton}>Login</button>
       </form>
     </main>
   );
