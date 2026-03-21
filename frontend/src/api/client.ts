@@ -33,10 +33,28 @@ function isValidationError(value: unknown): value is ApiValidationError {
 }
 
 async function parseResponseBody(response: Response) {
+  if (response.status === 204 || response.status === 205 || response.status === 304) {
+    return null;
+  }
+
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === "0") {
+    return null;
+  }
+
   const contentType = response.headers.get("content-type") ?? "";
 
   if (contentType.includes("application/json")) {
-    return response.json();
+    const text = await response.text();
+    if (!text.trim()) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return null;
+    }
   }
 
   const text = await response.text();

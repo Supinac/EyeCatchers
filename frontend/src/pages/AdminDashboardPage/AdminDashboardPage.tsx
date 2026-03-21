@@ -54,6 +54,8 @@ function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
   });
 }
 
+type DashboardRow = ReturnType<typeof mapApiUsersToRows>[number];
+
 function isSameAdminAccount(
   auth: ReturnType<ReturnType<typeof useAuth>["getAuthState"]>,
   candidate: { id?: number | string; login?: string; role?: AuthRole },
@@ -141,7 +143,8 @@ export function AdminDashboardPage() {
   const [viewedUserId, setViewedUserId] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string>("");
+  const [deleteTarget, setDeleteTarget] = useState<DashboardRow | null>(null);
+  const [hiddenDeletedIds, setHiddenDeletedIds] = useState<string[]>([]);
   const [login, setLogin] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -150,13 +153,20 @@ export function AdminDashboardPage() {
   const [version, setVersion] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [studentRows, setStudentRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
-  const [adminRows, setAdminRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
+  const [studentRows, setStudentRows] = useState<DashboardRow[]>([]);
+  const [adminRows, setAdminRows] = useState<DashboardRow[]>([]);
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [tableError, setTableError] = useState("");
 
-  const allTableRows = useMemo(() => [...studentRows, ...adminRows], [adminRows, studentRows]);
-  const filteredRows = useMemo(() => (selectedRole === "admin" ? adminRows : studentRows), [adminRows, selectedRole, studentRows]);
+  const hiddenDeletedIdsSet = useMemo(() => new Set(hiddenDeletedIds), [hiddenDeletedIds]);
+  const allTableRows = useMemo(
+    () => [...studentRows, ...adminRows].filter((row) => !hiddenDeletedIdsSet.has(row.id)),
+    [adminRows, hiddenDeletedIdsSet, studentRows],
+  );
+  const filteredRows = useMemo(
+    () => (selectedRole === "admin" ? adminRows : studentRows).filter((row) => !hiddenDeletedIdsSet.has(row.id)),
+    [adminRows, hiddenDeletedIdsSet, selectedRole, studentRows],
+  );
   const viewedUser = useMemo(
     () => (viewedUserId ? getUserById(viewedUserId) : undefined),
     [viewedUserId, version],
@@ -165,17 +175,14 @@ export function AdminDashboardPage() {
     () => (viewedUser ? getSessionsForUser(viewedUser.id) : []),
     [viewedUser, version],
   );
-  const deleteTarget = useMemo(
-    () => (deleteTargetId ? allTableRows.find((row) => row.id === deleteTargetId) : undefined),
-    [allTableRows, deleteTargetId],
-  );
 
-  async function loadUsers() {
+  async function loadUsers(hiddenIdsOverride?: string[]) {
     setIsTableLoading(true);
     setTableError("");
 
     try {
       const [studentsResponse, adminsResponse] = await Promise.all([getStudents(), getAdmins()]);
+      const hiddenIds = new Set(hiddenIdsOverride ?? hiddenDeletedIds);
 
       studentsResponse.forEach((user) => {
         upsertUserFromApi({
@@ -195,9 +202,10 @@ export function AdminDashboardPage() {
         });
       });
 
-      const visibleAdmins = adminsResponse.filter((user) => !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
+      const visibleStudents = studentsResponse.filter((user) => !hiddenIds.has(String(user.id)));
+      const visibleAdmins = adminsResponse.filter((user) => !hiddenIds.has(String(user.id)) && !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
 
-      setStudentRows(mapApiUsersToRows("child", studentsResponse));
+      setStudentRows(mapApiUsersToRows("child", visibleStudents));
       setAdminRows(mapApiUsersToRows("admin", visibleAdmins));
     } catch (apiError) {
       setTableError(getApiErrorMessage(apiError, "Failed to load users."));
@@ -237,32 +245,36 @@ export function AdminDashboardPage() {
   function handleOpenDeleteModal(userId: string) {
     const targetRow = allTableRows.find((row) => row.id === userId);
 
-    if (isSameAdminAccount(auth, { id: userId, login: targetRow?.login, role: targetRow?.role })) {
+    if (!targetRow) {
+      return;
+    }
+
+    if (isSameAdminAccount(auth, { id: userId, login: targetRow.login, role: targetRow.role })) {
       setMessage("You cannot remove your own admin account.");
       setMessageType("error");
       return;
     }
 
-    setDeleteTargetId(userId);
+    setDeleteTarget(targetRow);
   }
 
   function handleCloseDeleteModal() {
-    setDeleteTargetId("");
+    setDeleteTarget(null);
   }
 
   async function handleDeleteUser() {
-    if (!deleteTargetId || !deleteTarget) {
+    if (!deleteTarget) {
       return;
     }
 
-    if (isSameAdminAccount(auth, { id: deleteTargetId, login: deleteTarget.login, role: deleteTarget.role })) {
+    if (isSameAdminAccount(auth, { id: deleteTarget.id, login: deleteTarget.login, role: deleteTarget.role })) {
       setMessage("You cannot remove your own admin account.");
       setMessageType("error");
       handleCloseDeleteModal();
       return;
     }
 
-    const targetId = deleteTargetId;
+    const targetId = deleteTarget.id;
     const targetRole = deleteTarget.role;
     const targetLogin = deleteTarget.login;
     const deletedOwnAccount = isSameAdminAccount(auth, { id: targetId, login: targetLogin, role: targetRole });
@@ -285,18 +297,21 @@ export function AdminDashboardPage() {
         setIsUserModalOpen(false);
       }
 
+      const nextHiddenDeletedIds = [...new Set([...hiddenDeletedIds, targetId])];
+      setHiddenDeletedIds(nextHiddenDeletedIds);
+
       if (targetRole === "admin") {
         setAdminRows((current) => current.filter((row) => row.id !== targetId));
       } else {
         setStudentRows((current) => current.filter((row) => row.id !== targetId));
       }
 
-      handleCloseDeleteModal();
+      setDeleteTarget(null);
       setVersion((current) => current + 1);
       setMessage(`${targetRole === "admin" ? "Admin" : "Student"} ${targetLogin} was removed.`);
       setMessageType("success");
 
-      await loadUsers();
+      await loadUsers(nextHiddenDeletedIds);
 
       if (deletedOwnAccount) {
         logout();
