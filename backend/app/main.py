@@ -38,10 +38,3 @@ app.add_middleware(
 )
 
 app.include_router(users.router)
-
-@app.middleware("http")
-async def add_served_by_header(request: Request, call_next):
-    response: Response = await call_next(request)
-    hostname = socket.gethostname()
-    response.headers["X-Served-By"] = hostname
-    return response
