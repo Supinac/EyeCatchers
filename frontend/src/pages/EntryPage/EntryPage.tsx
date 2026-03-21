@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { getUserByLogin } from "../../features/users/model/userStore";
+import { useStudentLogin } from "../../features/auth/hooks/useStudentLogin";
 import styles from "./EntryPage.module.css";
 
 export function EntryPage() {
-  const [login, setLogin] = useState("");
-  const [error, setError] = useState("");
+  const [studentLoginValue, setStudentLoginValue] = useState("");
   const navigate = useNavigate();
-  const { login: saveLogin, getAuthState } = useAuth();
+  const { getAuthState } = useAuth();
+  const { submit, isLoading, error, clearError } = useStudentLogin();
 
   useEffect(() => {
     const existing = getAuthState();
@@ -22,26 +22,13 @@ export function EntryPage() {
     }
   }, [getAuthState, navigate]);
 
-  function handleKidEnter() {
-    const trimmed = login.trim();
-    if (!trimmed) {
-      setError("Please enter student login.");
-      return;
-    }
+  async function handleStudentSubmit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    const success = await submit(studentLoginValue);
 
-    const student = getUserByLogin(trimmed, "child");
-    if (!student) {
-      setError("Student login was not found.");
-      return;
+    if (success) {
+      navigate(routes.games);
     }
-
-    saveLogin({
-      userId: student.id,
-      login: student.login,
-      displayName: `${student.name} ${student.surname}`,
-      role: "child",
-    });
-    navigate(routes.games);
   }
 
   function handleAdminClick() {
@@ -57,32 +44,32 @@ export function EntryPage() {
           <p className={styles.subtitle}>Students enter only their login. Administrators use the separate admin screen.</p>
         </div>
 
-        <section className={styles.panel}>
+        <form className={styles.panel} onSubmit={handleStudentSubmit}>
           <label htmlFor="child-login" className={styles.label}>Login</label>
           <input
             id="child-login"
             className={`${styles.input} ${error ? styles.inputError : ""}`}
-            value={login}
+            value={studentLoginValue}
             onChange={(event) => {
-              setLogin(event.target.value);
-              if (error) setError("");
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                handleKidEnter();
-              }
+              setStudentLoginValue(event.target.value);
+              if (error) clearError();
             }}
             placeholder="Enter login"
-            autoComplete="off"
+            autoComplete="username"
+            disabled={isLoading}
           />
 
           {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>Use the login created in the admin panel.</div>}
 
           <div className={styles.actions}>
-            <button type="button" className={styles.secondaryButton} onClick={handleKidEnter}>Continue</button>
-            <button type="button" className={styles.secondaryButton} onClick={handleAdminClick}>Admin</button>
+            <button type="submit" className={styles.secondaryButton} disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Continue"}
+            </button>
+            <button type="button" className={styles.secondaryButton} onClick={handleAdminClick} disabled={isLoading}>
+              Admin
+            </button>
           </div>
-        </section>
+        </form>
       </div>
     </main>
   );
