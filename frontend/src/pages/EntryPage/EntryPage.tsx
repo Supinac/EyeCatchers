@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
@@ -7,6 +8,7 @@ import { AUTH_FIELD_MAX_LENGTH, AUTH_LOGIN_MIN_LENGTH } from "../../features/aut
 import styles from "./EntryPage.module.css";
 
 export function EntryPage() {
+  const { t } = useTranslation();
   const [studentLoginValue, setStudentLoginValue] = useState("");
   const navigate = useNavigate();
   const { getAuthState } = useAuth();
@@ -37,43 +39,43 @@ export function EntryPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <div className={styles.headerBlock}>
-          <div className={styles.badge}>Welcome</div>
-          <h1 className={styles.title}>Who is playing today?</h1>
-          <p className={styles.subtitle}>Students enter only their login. Administrators use the separate admin screen.</p>
-        </div>
-
-        <form className={styles.panel} onSubmit={handleStudentSubmit}>
-          <label htmlFor="child-login" className={styles.label}>Login</label>
-          <input
-            id="child-login"
-            className={`${styles.input} ${error ? styles.inputError : ""}`}
-            value={studentLoginValue}
-            onChange={(event) => {
-              setStudentLoginValue(event.target.value);
-              if (error) clearError();
-            }}
-            placeholder="Enter login"
-            autoComplete="username"
-            minLength={AUTH_LOGIN_MIN_LENGTH}
-            maxLength={AUTH_FIELD_MAX_LENGTH}
-            disabled={isLoading}
-          />
-
-          {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>Use the login created in the admin panel.</div>}
-
-          <div className={styles.actions}>
-            <button type="submit" className={styles.secondaryButton} disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Continue"}
-            </button>
-            <button type="button" className={styles.secondaryButton} onClick={handleAdminClick} disabled={isLoading}>
-              Admin
-            </button>
+      <main className={styles.page}>
+        <div className={styles.shell}>
+          <div className={styles.headerBlock}>
+            <div className={styles.badge}>{t("entry.badge")}</div>
+            <h1 className={styles.title}>{t("entry.title")}</h1>
+            <p className={styles.subtitle}>{t("entry.subtitle")}</p>
           </div>
-        </form>
-      </div>
-    </main>
+
+          <form className={styles.panel} onSubmit={handleStudentSubmit}>
+            <label htmlFor="child-login" className={styles.label}>{t("entry.loginLabel")}</label>
+            <input
+                id="child-login"
+                className={`${styles.input} ${error ? styles.inputError : ""}`}
+                value={studentLoginValue}
+                onChange={(event) => {
+                  setStudentLoginValue(event.target.value);
+                  if (error) clearError();
+                }}
+                placeholder={t("entry.loginPlaceholder")}
+                autoComplete="username"
+                minLength={AUTH_LOGIN_MIN_LENGTH}
+                maxLength={AUTH_FIELD_MAX_LENGTH}
+                disabled={isLoading}
+            />
+
+            {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>{t("entry.helper")}</div>}
+
+            <div className={styles.actions}>
+              <button type="submit" className={styles.secondaryButton} disabled={isLoading}>
+                {isLoading ? t("entry.signingIn") : t("entry.continue")}
+              </button>
+              <button type="button" className={styles.secondaryButton} onClick={handleAdminClick} disabled={isLoading}>
+                {t("entry.admin")}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
   );
 }
