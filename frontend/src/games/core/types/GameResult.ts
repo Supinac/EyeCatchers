@@ -17,6 +17,9 @@ export type GameResultStats = {
   contentMode?: ContentMode;
   placementMode?: PlacementMode;
   targetValue?: string;
+  swapCount?: number;
+  swapDurationMs?: number;
+  symbolSize?: number;
 };
 
 export type GameResult = {

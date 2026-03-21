@@ -211,13 +211,24 @@ export function mountTrackTheCircleScene({
 
         window.setTimeout(() => {
           if (destroyed) return;
-          onComplete({
+            onComplete({
             gameKey: "track-the-circle",
             difficulty,
             score: calculateBinaryScore(correct),
             maxScore: 1,
             success: correct,
-          });
+            stats: {
+              correctHits: correct ? 1 : 0,
+              wrongHits: correct ? 0 : 1,
+              totalTaps: 1,
+              accuracyPercent: correct ? 100 : 0,
+              elapsedSeconds: 0,
+              remainingSeconds: 0,
+              swapCount,
+              swapDurationMs,
+              symbolSize,
+            },
+            });
         }, 1200);
       });
     }
