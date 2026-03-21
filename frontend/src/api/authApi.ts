@@ -84,3 +84,16 @@ export function deleteAdmin(adminId: number) {
     method: "DELETE",
   });
 }
+
+
+export function adminLogout() {
+  return request<null>("/admin/logout", {
+    method: "POST",
+  });
+}
+
+export function userLogout() {
+  return request<null>("/user/logout", {
+    method: "POST",
+  });
+}

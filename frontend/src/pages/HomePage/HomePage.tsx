@@ -13,9 +13,9 @@ export function HomePage() {
   const { getAuthState, logout } = useAuth();
   const auth = getAuthState();
 
-  function handleLogout() {
-    logout();
-    navigate(routes.entry);
+  async function handleLogout() {
+    await logout("child");
+    navigate(routes.entry, { replace: true });
   }
 
   const displayName = auth?.displayName || t("home.childFallback");
