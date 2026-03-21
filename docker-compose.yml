@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: eyecatchers-db
+    environment:
+      MYSQL_DATABASE: eyecatchers
+      MYSQL_USER: eyecatchers
+      MYSQL_PASSWORD: pja98fbe
+      MYSQL_ROOT_PASSWORD: pja98fbe
+    volumes:
+      - ./db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eyecatchers-backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: eyecatchers
+      DB_USER: eyecatchers
+      DB_PASSWORD: pja98fbe
+      CORS_ORIGIN: http://localhost:80
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - backend
+
+      
+networks:
+  backend:
+    driver: bridge

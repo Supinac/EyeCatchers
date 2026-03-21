@@ -26,6 +26,12 @@ export type RegisterAdminRequest = {
   password: string;
 };
 
+export type UserListItemResponse = {
+  id: number;
+  login: string;
+  name: string;
+};
+
 export function studentLogin(payload: StudentLoginRequest) {
   return request<AuthUserResponse>("/user/login", {
     method: "POST",
@@ -51,5 +57,30 @@ export function registerAdmin(payload: RegisterAdminRequest) {
   return request<AuthUserResponse>("/admin/admin", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+export function getStudents() {
+  return request<UserListItemResponse[]>("/admin/user", {
+    method: "GET",
+  });
+}
+
+export function getAdmins() {
+  return request<UserListItemResponse[]>("/admin/admin", {
+    method: "GET",
+  });
+}
+
+
+
+export function deleteStudent(userId: number) {
+  return request<null>(`/admin/user/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export function deleteAdmin(adminId: number) {
+  return request<null>(`/admin/admin/${adminId}`, {
+    method: "DELETE",
   });
 }

@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { registerAdmin, registerStudent } from "../../api/authApi";
+import { deleteAdmin, deleteStudent, getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
 import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
   formatDateTime,
   getSessionsForUser,
   getUserById,
-  getUserStatsRows,
   upsertUserFromApi,
 } from "../../features/users/model/userStore";
 import type { StoredGameSession } from "../../features/users/model/userTypes";
@@ -30,6 +30,45 @@ function formatLabel(value: string | undefined) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
+  return users.map((user) => {
+    const sessions = getSessionsForUser(String(user.id));
+    const bestSession = sessions.reduce<StoredGameSession | null>((best, current) => {
+      if (!best) {
+        return current;
+      }
+
+      const bestRatio = best.maxScore === 0 ? 0 : best.score / best.maxScore;
+      const currentRatio = current.maxScore === 0 ? 0 : current.score / current.maxScore;
+      return currentRatio > bestRatio ? current : best;
+    }, null);
+
+    return {
+      id: String(user.id),
+      role,
+      login: user.login,
+      fullName: user.name?.trim() || "—",
+      gamesPlayed: sessions.length,
+      bestScoreLabel: bestSession ? `${bestSession.score}/${bestSession.maxScore}` : "—",
+      lastPlayed: sessions[0]?.playedAt ? formatDateTime(sessions[0].playedAt) : "—",
+    };
+  });
+}
+
+type DashboardRow = ReturnType<typeof mapApiUsersToRows>[number];
+
+function isSameAdminAccount(
+  auth: ReturnType<ReturnType<typeof useAuth>["getAuthState"]>,
+  candidate: { id?: number | string; login?: string; role?: AuthRole },
+) {
+  if (!auth || auth.role !== "admin") {
+    return false;
+  }
+
+  const candidateId = candidate.id == null ? "" : String(candidate.id);
+  return candidateId === auth.userId || candidate.login === auth.login;
+}
+
 function AdminStatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.sessionStatCard}>
@@ -40,6 +79,7 @@ function AdminStatCard({ label, value }: { label: string; value: string }) {
 }
 
 function SessionResultCard({ session }: { session: StoredGameSession }) {
+  const { t } = useTranslation();
   const accuracyLabel = session.stats ? `${session.stats.accuracyPercent}%` : "—";
   const correctFoundLabel = session.stats ? `${session.stats.correctHits}/${session.maxScore}` : `${session.score}/${session.maxScore}`;
   const correctTapsLabel = session.stats ? String(session.stats.correctHits) : String(session.score);
@@ -47,15 +87,15 @@ function SessionResultCard({ session }: { session: StoredGameSession }) {
   const elapsedLabel = session.stats ? `${session.stats.elapsedSeconds}s` : "—";
 
   const configPills = [
-    `Game: ${formatLabel(session.gameKey)}`,
-    `Difficulty: ${formatLabel(session.difficulty)}`,
-    session.stats?.previewSeconds ? `Preview: ${session.stats.previewSeconds}s` : null,
-    session.stats?.maxGameSeconds ? `Max time: ${session.stats.maxGameSeconds}s` : null,
-    session.stats?.contentMode ? `Mode: ${formatLabel(session.stats.contentMode)}` : null,
-    session.stats?.gridSize ? `Grid size: ${session.stats.gridSize} × ${session.stats.gridSize}` : null,
-    session.stats?.correctObjectCount ? `Right objects: ${session.stats.correctObjectCount}` : null,
-    session.stats?.figureSizeMode ? `Figure size: ${formatLabel(session.stats.figureSizeMode)}` : null,
-    session.stats?.targetValue ? `Target: ${session.stats.targetValue}` : null,
+    t("admin.session.pillGame", { value: formatLabel(session.gameKey) }),
+    t("admin.session.pillDifficulty", { value: formatLabel(session.difficulty) }),
+    session.stats?.previewSeconds ? t("admin.session.pillPreview", { value: session.stats.previewSeconds }) : null,
+    session.stats?.maxGameSeconds ? t("admin.session.pillMaxTime", { value: session.stats.maxGameSeconds }) : null,
+    session.stats?.contentMode ? t("admin.session.pillMode", { value: formatLabel(session.stats.contentMode) }) : null,
+    session.stats?.gridSize ? t("admin.session.pillGridSize", { value: `${session.stats.gridSize} × ${session.stats.gridSize}` }) : null,
+    session.stats?.correctObjectCount ? t("admin.session.pillRightObjects", { value: session.stats.correctObjectCount }) : null,
+    session.stats?.figureSizeMode ? t("admin.session.pillFigureSize", { value: formatLabel(session.stats.figureSizeMode) }) : null,
+    session.stats?.targetValue ? t("admin.session.pillTarget", { value: session.stats.targetValue }) : null,
   ].filter(Boolean) as string[];
 
   return (
@@ -65,15 +105,15 @@ function SessionResultCard({ session }: { session: StoredGameSession }) {
           <div
             className={`${styles.sessionBadge} ${session.success ? styles.sessionBadgeSuccess : styles.sessionBadgeFail}`.trim()}
           >
-            {session.success ? "Finished" : "Not finished"}
+            {session.success ? t("admin.session.statusFinished") : t("admin.session.statusNotFinished")}
           </div>
           <div>
             <h4 className={styles.sessionTitle}>{session.gameTitle}</h4>
-            <p className={styles.sessionMetaLine}>Played {formatDateTime(session.playedAt)}</p>
+            <p className={styles.sessionMetaLine}>{t("admin.session.playedAt", { value: formatDateTime(session.playedAt) })}</p>
           </div>
         </div>
         <div className={styles.sessionScoreBlock}>
-          <span className={styles.sessionScoreLabel}>Correct found</span>
+          <span className={styles.sessionScoreLabel}>{t("admin.session.correctFound")}</span>
           <strong className={styles.sessionScoreValue}>{correctFoundLabel}</strong>
         </div>
       </div>
@@ -87,10 +127,10 @@ function SessionResultCard({ session }: { session: StoredGameSession }) {
       </div>
 
       <div className={styles.sessionStatsGrid}>
-        <AdminStatCard label="Accuracy" value={accuracyLabel} />
-        <AdminStatCard label="Correct taps" value={correctTapsLabel} />
-        <AdminStatCard label="Wrong taps" value={wrongLabel} />
-        <AdminStatCard label="Time used" value={elapsedLabel} />
+        <AdminStatCard label={t("admin.session.accuracy")} value={accuracyLabel} />
+        <AdminStatCard label={t("admin.session.correctTaps")} value={correctTapsLabel} />
+        <AdminStatCard label={t("admin.session.wrongTaps")} value={wrongLabel} />
+        <AdminStatCard label={t("admin.session.timeUsed")} value={elapsedLabel} />
       </div>
     </article>
   );
@@ -98,6 +138,7 @@ function SessionResultCard({ session }: { session: StoredGameSession }) {
 
 export function AdminDashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { getAuthState, logout } = useAuth();
   const auth = getAuthState();
 
@@ -105,7 +146,8 @@ export function AdminDashboardPage() {
   const [viewedUserId, setViewedUserId] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string>("");
+  const [deleteTarget, setDeleteTarget] = useState<DashboardRow | null>(null);
+  const [hiddenDeletedIds, setHiddenDeletedIds] = useState<string[]>([]);
   const [login, setLogin] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -113,11 +155,20 @@ export function AdminDashboardPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [version, setVersion] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [studentRows, setStudentRows] = useState<DashboardRow[]>([]);
+  const [adminRows, setAdminRows] = useState<DashboardRow[]>([]);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [tableError, setTableError] = useState("");
 
-  const rows = useMemo(() => getUserStatsRows(), [version]);
+  const hiddenDeletedIdsSet = useMemo(() => new Set(hiddenDeletedIds), [hiddenDeletedIds]);
+  const allTableRows = useMemo(
+    () => [...studentRows, ...adminRows].filter((row) => !hiddenDeletedIdsSet.has(row.id)),
+    [adminRows, hiddenDeletedIdsSet, studentRows],
+  );
   const filteredRows = useMemo(
-    () => rows.filter((row) => row.role === selectedRole),
-    [rows, selectedRole],
+    () => (selectedRole === "admin" ? adminRows : studentRows).filter((row) => !hiddenDeletedIdsSet.has(row.id)),
+    [adminRows, hiddenDeletedIdsSet, selectedRole, studentRows],
   );
   const viewedUser = useMemo(
     () => (viewedUserId ? getUserById(viewedUserId) : undefined),
@@ -127,10 +178,52 @@ export function AdminDashboardPage() {
     () => (viewedUser ? getSessionsForUser(viewedUser.id) : []),
     [viewedUser, version],
   );
-  const deleteTarget = useMemo(
-    () => (deleteTargetId ? getUserById(deleteTargetId) : undefined),
-    [deleteTargetId, version],
-  );
+
+  async function loadUsers(hiddenIdsOverride?: string[]) {
+    setIsTableLoading(true);
+    setTableError("");
+
+    try {
+      const [studentsResponse, adminsResponse] = await Promise.all([getStudents(), getAdmins()]);
+      const hiddenIds = new Set(hiddenIdsOverride ?? hiddenDeletedIds);
+
+      studentsResponse.forEach((user) => {
+        upsertUserFromApi({
+          id: user.id,
+          role: "child",
+          login: user.login,
+          name: user.name,
+        });
+      });
+
+      adminsResponse.forEach((user) => {
+        upsertUserFromApi({
+          id: user.id,
+          role: "admin",
+          login: user.login,
+          name: user.name,
+        });
+      });
+
+      const visibleStudents = studentsResponse.filter((user) => !hiddenIds.has(String(user.id)));
+      const visibleAdmins = adminsResponse.filter((user) => !hiddenIds.has(String(user.id)) && !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
+
+      setStudentRows(mapApiUsersToRows("child", visibleStudents));
+      setAdminRows(mapApiUsersToRows("admin", visibleAdmins));
+    } catch (apiError) {
+      setTableError(getApiErrorMessage(apiError, "Failed to load users."));
+    } finally {
+      setIsTableLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadUsers();
+  }, []);
+
+  const getRoleLabel = (role: AuthRole) => (role === "admin" ? t("admin.roleAdmin") : t("admin.roleStudent"));
+  const getRoleLabelLower = (role: AuthRole) => (role === "admin" ? t("admin.roleAdminLower") : t("admin.roleStudentLower"));
+  const selectedRolePlural = selectedRole === "admin" ? t("admin.roleAdmins") : t("admin.roleStudents");
 
   function handleLogout() {
     logout();
@@ -157,41 +250,85 @@ export function AdminDashboardPage() {
   }
 
   function handleOpenDeleteModal(userId: string) {
-    setDeleteTargetId(userId);
-  }
+    const targetRow = allTableRows.find((row) => row.id === userId);
 
-  function handleCloseDeleteModal() {
-    setDeleteTargetId("");
-  }
-
-  function handleDeleteUser() {
-    if (!deleteTargetId) {
+    if (!targetRow) {
       return;
     }
 
-    const result = deleteUser(deleteTargetId);
-    if (!result.ok) {
-      setMessage(result.message);
+    if (isSameAdminAccount(auth, { id: userId, login: targetRow.login, role: targetRow.role })) {
+      setMessage("You cannot remove your own admin account.");
+      setMessageType("error");
+      return;
+    }
+
+    setDeleteTarget(targetRow);
+  }
+
+  function handleCloseDeleteModal() {
+    setDeleteTarget(null);
+  }
+
+  async function handleDeleteUser() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    if (isSameAdminAccount(auth, { id: deleteTarget.id, login: deleteTarget.login, role: deleteTarget.role })) {
+      setMessage("You cannot remove your own admin account.");
       setMessageType("error");
       handleCloseDeleteModal();
       return;
     }
 
-    const deletedOwnAccount = auth?.userId === deleteTargetId;
+    const targetId = deleteTarget.id;
+    const targetRole = deleteTarget.role;
+    const targetLogin = deleteTarget.login;
+    const deletedOwnAccount = isSameAdminAccount(auth, { id: targetId, login: targetLogin, role: targetRole });
 
-    if (viewedUserId === deleteTargetId) {
-      setViewedUserId("");
-      setIsUserModalOpen(false);
-    }
+    setIsDeleting(true);
+    setMessage("");
+    setMessageType("");
 
-    setVersion((current) => current + 1);
-    setMessage(`${deleteTarget?.role === "admin" ? "Admin" : "Student"} ${deleteTarget?.login ?? "user"} was removed.`);
-    setMessageType("success");
-    handleCloseDeleteModal();
+    try {
+      if (targetRole === "admin") {
+        await deleteAdmin(Number(targetId));
+      } else {
+        await deleteStudent(Number(targetId));
+      }
 
-    if (deletedOwnAccount) {
-      logout();
-      navigate(routes.entry);
+      deleteUser(targetId);
+
+      if (viewedUserId === targetId) {
+        setViewedUserId("");
+        setIsUserModalOpen(false);
+      }
+
+      const nextHiddenDeletedIds = [...new Set([...hiddenDeletedIds, targetId])];
+      setHiddenDeletedIds(nextHiddenDeletedIds);
+
+      if (targetRole === "admin") {
+        setAdminRows((current) => current.filter((row) => row.id !== targetId));
+      } else {
+        setStudentRows((current) => current.filter((row) => row.id !== targetId));
+      }
+
+      setDeleteTarget(null);
+      setVersion((current) => current + 1);
+      setMessage(`${targetRole === "admin" ? "Admin" : "Student"} ${targetLogin} was removed.`);
+      setMessageType("success");
+
+      await loadUsers(nextHiddenDeletedIds);
+
+      if (deletedOwnAccount) {
+        logout();
+        navigate(routes.entry);
+      }
+    } catch (apiError) {
+      setMessage(getApiErrorMessage(apiError, `Failed to remove ${deleteTarget.role === "admin" ? "admin" : "student"}.`));
+      setMessageType("error");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -250,6 +387,15 @@ export function AdminDashboardPage() {
         password: selectedRole === "admin" ? trimmedPassword : undefined,
       });
 
+      const nextRow = mapApiUsersToRows(selectedRole, [response])[0];
+      if (selectedRole === "admin") {
+        if (!isSameAdminAccount(auth, { id: response.id, login: response.login, role: "admin" })) {
+          setAdminRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+        }
+      } else {
+        setStudentRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+      }
+
       setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${response.login} was created.`);
       setMessageType("success");
       setVersion((current) => current + 1);
@@ -261,7 +407,7 @@ export function AdminDashboardPage() {
         setMessageType("");
       }, 500);
     } catch (apiError) {
-      setMessage(getApiErrorMessage(apiError, `Failed to create ${selectedRole === "admin" ? "admin" : "student"}.`));
+      setMessage(getApiErrorMessage(apiError, t("admin.messages.createFailed", { role: getRoleLabelLower(selectedRole) })));
       setMessageType("error");
     } finally {
       setIsCreating(false);
@@ -273,21 +419,21 @@ export function AdminDashboardPage() {
       <div className={styles.frame}>
         <header className={styles.topbar}>
           <div className={styles.headingBlock}>
-            <p className={styles.eyebrow}>Administration</p>
-            <h1 className={styles.title}>Users</h1>
-            <p className={styles.subtitle}>Switch between students and admins, create new accounts, review student results, and remove users when needed.</p>
+            <p className={styles.eyebrow}>{t("admin.eyebrow")}</p>
+            <h1 className={styles.title}>{t("admin.title")}</h1>
+            <p className={styles.subtitle}>{t("admin.subtitle")}</p>
           </div>
 
           <div className={styles.topbarActions}>
             <div className={styles.userBadge}>
               <div className={styles.avatar}>{auth?.displayName?.slice(0, 1).toUpperCase() || "A"}</div>
               <div>
-                <strong>{auth?.displayName || "Admin"}</strong>
-                <span>Administrator</span>
+                <strong>{auth?.displayName || t("admin.roleAdmin")}</strong>
+                <span>{t("admin.userRoleLabel")}</span>
               </div>
             </div>
             <button type="button" className={styles.logoutButton} onClick={handleLogout}>
-              Logout
+              {t("admin.logout")}
             </button>
           </div>
         </header>
@@ -299,31 +445,41 @@ export function AdminDashboardPage() {
               className={`${styles.segmentButton} ${selectedRole === "child" ? styles.segmentButtonActive : ""}`}
               onClick={() => setSelectedRole("child")}
             >
-              Students
+              {t("admin.students")}
             </button>
             <button
               type="button"
               className={`${styles.segmentButton} ${selectedRole === "admin" ? styles.segmentButtonActive : ""}`}
               onClick={() => setSelectedRole("admin")}
             >
-              Admins
+              {t("admin.admins")}
             </button>
           </div>
+
+          {tableError ? (
+            <div className={`${styles.feedback} ${styles.feedbackError}`}>{tableError}</div>
+          ) : null}
 
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Full name</th>
-                  <th>Login</th>
-                  <th>Games played</th>
-                  <th>Best score</th>
-                  <th>Last played</th>
-                  <th className={styles.actionColumn}>Action</th>
+                  <th>{t("admin.table.fullName")}</th>
+                  <th>{t("admin.table.login")}</th>
+                  <th>{t("admin.table.gamesPlayed")}</th>
+                  <th>{t("admin.table.bestScore")}</th>
+                  <th>{t("admin.table.lastPlayed")}</th>
+                  <th className={styles.actionColumn}>{t("admin.table.action")}</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.length ? (
+                {isTableLoading ? (
+                  <tr>
+                    <td colSpan={6} className={styles.emptyTable}>
+                      Loading {selectedRole === "admin" ? "admins" : "students"}...
+                    </td>
+                  </tr>
+                ) : filteredRows.length ? (
                   filteredRows.map((row) => (
                     <tr key={row.id}>
                       <td>{row.fullName.trim() || "—"}</td>
@@ -339,7 +495,7 @@ export function AdminDashboardPage() {
                               className={styles.viewButton}
                               onClick={() => handleOpenUserModal(row.id)}
                             >
-                              View
+                              {t("admin.actions.view")}
                             </button>
                           ) : null}
                           <button
@@ -347,7 +503,7 @@ export function AdminDashboardPage() {
                             className={styles.deleteButton}
                             onClick={() => handleOpenDeleteModal(row.id)}
                           >
-                            Remove
+                            {t("admin.actions.remove")}
                           </button>
                         </div>
                       </td>
@@ -356,7 +512,7 @@ export function AdminDashboardPage() {
                 ) : (
                   <tr>
                     <td colSpan={6} className={styles.emptyTable}>
-                      No {selectedRole === "admin" ? "admins" : "students"} found.
+                      {t("admin.table.empty", { role: selectedRolePlural })}
                     </td>
                   </tr>
                 )}
@@ -366,7 +522,7 @@ export function AdminDashboardPage() {
 
           <div className={styles.tableFooter}>
             <button type="button" className={styles.createButton} onClick={() => handleOpenCreateModal(selectedRole)}>
-              Create new {selectedRole === "admin" ? "admin" : "student"}
+              {t("admin.actions.createNew", { role: getRoleLabelLower(selectedRole) })}
             </button>
           </div>
         </section>
@@ -377,8 +533,8 @@ export function AdminDashboardPage() {
           <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <p className={styles.modalEyebrow}>Create account</p>
-                <h2>Create new {selectedRole === "admin" ? "admin" : "student"}</h2>
+                <p className={styles.modalEyebrow}>{t("admin.modal.createAccount")}</p>
+                <h2>{t("admin.modal.createNew", { role: getRoleLabelLower(selectedRole) })}</h2>
               </div>
               <button type="button" className={styles.closeButton} onClick={() => setIsCreateModalOpen(false)}>
                 ×
@@ -387,12 +543,12 @@ export function AdminDashboardPage() {
 
             <form className={styles.modalForm} onSubmit={handleCreateUser}>
               <div className={styles.fieldGroup}>
-                <label htmlFor="create-login">Login</label>
+                <label htmlFor="create-login">{t("admin.modal.labelLogin")}</label>
                 <input
                   id="create-login"
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
-                  placeholder="e.g. oliver"
+                  placeholder={t("admin.modal.placeholderLogin")}
                   minLength={AUTH_LOGIN_MIN_LENGTH}
                   maxLength={AUTH_FIELD_MAX_LENGTH}
                   disabled={isCreating}
@@ -400,12 +556,12 @@ export function AdminDashboardPage() {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label htmlFor="create-full-name">Full name</label>
+                <label htmlFor="create-full-name">{t("admin.modal.labelFullName")}</label>
                 <input
                   id="create-full-name"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="e.g. Oliver Smith"
+                  placeholder={t("admin.modal.placeholderFullName")}
                   minLength={AUTH_NAME_MIN_LENGTH}
                   maxLength={AUTH_FIELD_MAX_LENGTH}
                   disabled={isCreating}
@@ -414,13 +570,13 @@ export function AdminDashboardPage() {
 
               {selectedRole === "admin" ? (
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="create-password">Password</label>
+                  <label htmlFor="create-password">{t("admin.modal.labelPassword")}</label>
                   <input
                     id="create-password"
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Admin password"
+                    placeholder={t("admin.modal.placeholderPassword")}
                     minLength={AUTH_PASSWORD_MIN_LENGTH}
                     maxLength={AUTH_FIELD_MAX_LENGTH}
                     disabled={isCreating}
@@ -439,16 +595,16 @@ export function AdminDashboardPage() {
               >
                 {message ||
                   (selectedRole === "admin"
-                    ? "Admins require login, full name, and password."
-                    : "Students require login and full name.")}
+                    ? t("admin.modal.helperAdmin")
+                    : t("admin.modal.helperStudent"))}
               </div>
 
               <div className={styles.modalActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setIsCreateModalOpen(false)} disabled={isCreating}>
-                  Cancel
+                  {t("admin.modal.cancel")}
                 </button>
                 <button type="submit" className={styles.primaryButton} disabled={isCreating}>
-                  {isCreating ? "Creating..." : `Create ${selectedRole === "admin" ? "admin" : "student"}`}
+                  {isCreating ? t("admin.modal.creating") : t("admin.modal.create", { role: getRoleLabelLower(selectedRole) })}
                 </button>
               </div>
             </form>
@@ -458,32 +614,32 @@ export function AdminDashboardPage() {
 
 
       {deleteTarget ? (
-        <div className={styles.modalOverlay} onClick={handleCloseDeleteModal}>
+        <div className={styles.modalOverlay} onClick={isDeleting ? undefined : handleCloseDeleteModal}>
           <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <p className={styles.modalEyebrow}>Delete user</p>
-                <h2>Remove {deleteTarget.role === "admin" ? "admin" : "student"}?</h2>
+                <p className={styles.modalEyebrow}>{t("admin.modal.deleteUser")}</p>
+                <h2>{t("admin.modal.removeRole", { role: getRoleLabelLower(deleteTarget.role === "admin" ? "admin" : "child") })}</h2>
                 <p className={styles.detailMeta}>
-                  {`${deleteTarget.name} ${deleteTarget.surname}`.trim() || deleteTarget.login} · @{deleteTarget.login}
+                  {deleteTarget.fullName || deleteTarget.login} · @{deleteTarget.login}
                 </p>
               </div>
-              <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal}>
+              <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>
                 ×
               </button>
             </div>
 
             <div className={styles.deleteModalBody}>
               <p className={styles.deleteText}>
-                This action will permanently remove the user account{deleteTarget.role === "child" ? " and all saved game results" : ""}.
+                {deleteTarget.role === "child" ? t("admin.modal.deleteWarningWithResults") : t("admin.modal.deleteWarning")}
               </p>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal}>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>
                   Cancel
                 </button>
-                <button type="button" className={styles.dangerButton} onClick={handleDeleteUser}>
-                  Remove user
+                <button type="button" className={styles.dangerButton} onClick={handleDeleteUser} disabled={isDeleting}>
+                  {isDeleting ? "Removing..." : "Remove user"}
                 </button>
               </div>
             </div>
@@ -496,10 +652,10 @@ export function AdminDashboardPage() {
           <div className={`${styles.modalCard} ${styles.userModalCard}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <p className={styles.modalEyebrow}>User results</p>
+                <p className={styles.modalEyebrow}>{t("admin.modal.userResults")}</p>
                 <h2>{`${viewedUser.name} ${viewedUser.surname}`.trim() || viewedUser.login}</h2>
                 <p className={styles.detailMeta}>
-                  @{viewedUser.login} · {viewedUser.role === "admin" ? "Admin" : "Student"} · Created {formatDateTime(viewedUser.createdAt)}
+                  @{viewedUser.login} · {getRoleLabel(viewedUser.role === "admin" ? "admin" : "child")} · {t("admin.modal.createdAt", { value: formatDateTime(viewedUser.createdAt) })}
                 </p>
               </div>
               <button type="button" className={styles.closeButton} onClick={() => setIsUserModalOpen(false)}>
@@ -511,10 +667,10 @@ export function AdminDashboardPage() {
               <div className={styles.historyCard}>
                 <div className={styles.historyTitleRow}>
                   <div>
-                    <h3>Played games</h3>
-                    <p className={styles.historySubtitle}>Each round now follows the same stat language as the active game result view.</p>
+                    <h3>{t("admin.modal.playedGames")}</h3>
+                    <p className={styles.historySubtitle}>{t("admin.modal.historySubtitle")}</p>
                   </div>
-                  <span>{viewedSessions.length} total</span>
+                  <span>{t("admin.modal.total", { value: viewedSessions.length })}</span>
                 </div>
 
                 {viewedSessions.length ? (
@@ -524,7 +680,7 @@ export function AdminDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className={styles.emptyState}>This user has not played any games yet.</div>
+                  <div className={styles.emptyState}>{t("admin.modal.noGames")}</div>
                 )}
               </div>
             </div>

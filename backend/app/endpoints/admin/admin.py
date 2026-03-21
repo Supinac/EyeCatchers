@@ -21,46 +21,51 @@ def get_admins(session: Session = Depends(db.session), current_admin: tables.Adm
 
 @router.post("", status_code=201, response_model=AdminResponse)
 def register_admin(user: AdminCreate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
-    admin = session.execute(select(tables.Admin).where(tables.Admin.login == user.login)).scalar_one_or_none()
-    if admin:
+    check_admin = session.execute(select(tables.Admin).where(tables.Admin.login == user.login)).scalar_one_or_none()
+    if check_admin:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Admin already exists",
         )
-    admin = tables.Admin(
+    db_admin = tables.Admin(
         name=user.name,
         login=user.login,
         password=hash_password(user.password),
     )
-    session.add(admin)
+    session.add(db_admin)
     session.commit()
-    session.refresh(admin)
-    return admin
+    session.refresh(db_admin)
+    return db_admin
 
 @router.patch("/{id}", status_code=200, response_model=AdminResponse)
 def update_admin(id: int, user: AdminUpdate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
-    admin = session.execute(select(tables.Admin).where(tables.Admin.id == id)).scalar_one_or_none()
-    if not admin:
+    db_admin = session.execute(select(tables.Admin).where(tables.Admin.id == id)).scalar_one_or_none()
+    if not db_admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Admin not found",
         )
     for key, value in user.model_dump(exclude_unset=True).items():
-        setattr(admin, key, value)
-    session.add(admin)
+        setattr(db_admin, key, value)
+    session.add(db_admin)
     session.commit()
-    session.refresh(admin)
-    return admin
+    session.refresh(db_admin)
+    return db_admin
 
 
 @router.delete("/{id}", status_code=204, response_model=None)
 def remove_admin(id: int, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
-    admin = session.execute(select(tables.Admin).where(tables.Admin.id == id)).scalar_one_or_none()
-    if not admin:
+    db_admin = session.execute(select(tables.Admin).where(tables.Admin.id == id)).scalar_one_or_none()
+    if not db_admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Admin not found",
         )
-    session.delete(admin)
+    if db_admin.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete currently logged in admin",
+        )
+    session.delete(db_admin)
     session.commit()
     return None

@@ -36,17 +36,14 @@ def register_user(user: UserCreate, session: Session = Depends(db.session), curr
 
 @router.patch("/{id}", status_code=200, response_model=UserResponse)
 def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
-    check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
-    if not check_user:
+    db_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
     
-    db_user = session.query(tables.User).filter(tables.User.id == id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    for key, value in user.dict(exclude_unset=True).items():
+    for key, value in user.model_dump(exclude_unset=True).items():
         setattr(db_user, key, value)
     session.commit()
     session.refresh(db_user)
@@ -54,16 +51,13 @@ def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session
 
 @router.delete("/{id}", status_code=204, response_model=None)
 def delete_user(id: int, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
-    check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
-    if not check_user:
+    db_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
     
-    db_user = session.query(tables.User).filter(tables.User.id == id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
     session.delete(db_user)
     # Delete all scores associated with the user
     session.query(tables.UserScore).filter(tables.UserScore.user_id == id).delete()

@@ -18,9 +18,10 @@ def submit_score( score: ScoreSubmit, session: Session = Depends(db.session), us
     userScore = tables.UserScore(
         user_id=user.id,
         game_type=score.game_type,
-        success_rate=score.success_rate,
-        difficulty=score.difficulty,
-        settings=score.settings
+        # success_rate=score.success_rate,
+        # difficulty=score.difficulty,
+        settings=score.settings,
+        results=score.results
     )
     session.add(userScore)
     session.commit()
