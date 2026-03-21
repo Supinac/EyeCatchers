@@ -2,16 +2,99 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { registerAdmin, registerStudent } from "../../api/authApi";
+import { getApiErrorMessage } from "../../api/client";
 import {
-  createUser,
   deleteUser,
   formatDateTime,
   getSessionsForUser,
   getUserById,
   getUserStatsRows,
+  upsertUserFromApi,
 } from "../../features/users/model/userStore";
+import type { StoredGameSession } from "../../features/users/model/userTypes";
 import type { AuthRole } from "../../features/auth/model/authTypes";
+import {
+  AUTH_FIELD_MAX_LENGTH,
+  AUTH_LOGIN_MIN_LENGTH,
+  AUTH_NAME_MIN_LENGTH,
+  AUTH_PASSWORD_MIN_LENGTH,
+  validateLogin,
+  validateName,
+  validatePassword,
+} from "../../features/auth/utils/authValidation";
 import styles from "./AdminDashboardPage.module.css";
+
+function formatLabel(value: string | undefined) {
+  if (!value) return "—";
+  return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function AdminStatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.sessionStatCard}>
+      <span className={styles.sessionStatLabel}>{label}</span>
+      <strong className={styles.sessionStatValue}>{value}</strong>
+    </div>
+  );
+}
+
+function SessionResultCard({ session }: { session: StoredGameSession }) {
+  const accuracyLabel = session.stats ? `${session.stats.accuracyPercent}%` : "—";
+  const correctFoundLabel = session.stats ? `${session.stats.correctHits}/${session.maxScore}` : `${session.score}/${session.maxScore}`;
+  const correctTapsLabel = session.stats ? String(session.stats.correctHits) : String(session.score);
+  const wrongLabel = session.stats ? String(session.stats.wrongHits) : "0";
+  const elapsedLabel = session.stats ? `${session.stats.elapsedSeconds}s` : "—";
+
+  const configPills = [
+    `Game: ${formatLabel(session.gameKey)}`,
+    `Difficulty: ${formatLabel(session.difficulty)}`,
+    session.stats?.previewSeconds ? `Preview: ${session.stats.previewSeconds}s` : null,
+    session.stats?.maxGameSeconds ? `Max time: ${session.stats.maxGameSeconds}s` : null,
+    session.stats?.contentMode ? `Mode: ${formatLabel(session.stats.contentMode)}` : null,
+    session.stats?.gridSize ? `Grid size: ${session.stats.gridSize} × ${session.stats.gridSize}` : null,
+    session.stats?.correctObjectCount ? `Right objects: ${session.stats.correctObjectCount}` : null,
+    session.stats?.figureSizeMode ? `Figure size: ${formatLabel(session.stats.figureSizeMode)}` : null,
+    session.stats?.targetValue ? `Target: ${session.stats.targetValue}` : null,
+  ].filter(Boolean) as string[];
+
+  return (
+    <article className={styles.sessionCard}>
+      <div className={styles.sessionHeader}>
+        <div className={styles.sessionHero}>
+          <div
+            className={`${styles.sessionBadge} ${session.success ? styles.sessionBadgeSuccess : styles.sessionBadgeFail}`.trim()}
+          >
+            {session.success ? "Finished" : "Not finished"}
+          </div>
+          <div>
+            <h4 className={styles.sessionTitle}>{session.gameTitle}</h4>
+            <p className={styles.sessionMetaLine}>Played {formatDateTime(session.playedAt)}</p>
+          </div>
+        </div>
+        <div className={styles.sessionScoreBlock}>
+          <span className={styles.sessionScoreLabel}>Correct found</span>
+          <strong className={styles.sessionScoreValue}>{correctFoundLabel}</strong>
+        </div>
+      </div>
+
+      <div className={styles.sessionPills}>
+        {configPills.map((pill) => (
+          <span key={`${session.id}-${pill}`} className={styles.sessionPill}>
+            {pill}
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.sessionStatsGrid}>
+        <AdminStatCard label="Accuracy" value={accuracyLabel} />
+        <AdminStatCard label="Correct taps" value={correctTapsLabel} />
+        <AdminStatCard label="Wrong taps" value={wrongLabel} />
+        <AdminStatCard label="Time used" value={elapsedLabel} />
+      </div>
+    </article>
+  );
+}
 
 export function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -29,6 +112,7 @@ export function AdminDashboardPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [version, setVersion] = useState(0);
+  const [isCreating, setIsCreating] = useState(false);
 
   const rows = useMemo(() => getUserStatsRows(), [version]);
   const filteredRows = useMemo(
@@ -111,33 +195,77 @@ export function AdminDashboardPage() {
     }
   }
 
-  function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const trimmedFullName = fullName.trim();
+    const trimmedName = fullName.trim();
+    const trimmedLogin = login.trim();
+    const trimmedPassword = password.trim();
 
-    const result = createUser({
-      role: selectedRole,
-      login,
-      fullName: trimmedFullName,
-      password: selectedRole === "admin" ? password : undefined,
-    });
-
-    if (!result.ok) {
-      setMessage(result.message);
+    const nameError = validateName(trimmedName);
+    if (nameError) {
+      setMessage(nameError);
       setMessageType("error");
       return;
     }
 
-    setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${result.user.login} was created.`);
-    setMessageType("success");
-    setVersion((current) => current + 1);
-    resetForm();
-    window.setTimeout(() => {
-      setIsCreateModalOpen(false);
-      setMessage("");
-      setMessageType("");
-    }, 500);
+    const loginError = validateLogin(trimmedLogin);
+    if (loginError) {
+      setMessage(loginError);
+      setMessageType("error");
+      return;
+    }
+
+    if (selectedRole === "admin") {
+      const passwordError = validatePassword(trimmedPassword);
+      if (passwordError) {
+        setMessage(passwordError);
+        setMessageType("error");
+        return;
+      }
+    }
+
+    setIsCreating(true);
+    setMessage("");
+    setMessageType("");
+
+    try {
+      const response =
+        selectedRole === "admin"
+          ? await registerAdmin({
+              name: trimmedName,
+              login: trimmedLogin,
+              password: trimmedPassword,
+            })
+          : await registerStudent({
+              name: trimmedName,
+              login: trimmedLogin,
+            });
+
+      upsertUserFromApi({
+        id: response.id,
+        role: selectedRole,
+        login: response.login,
+        name: response.name,
+        password: selectedRole === "admin" ? trimmedPassword : undefined,
+      });
+
+      setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${response.login} was created.`);
+      setMessageType("success");
+      setVersion((current) => current + 1);
+      resetForm();
+
+      window.setTimeout(() => {
+        setIsCreateModalOpen(false);
+        setMessage("");
+        setMessageType("");
+      }, 500);
+    } catch (apiError) {
+      setMessage(getApiErrorMessage(apiError, `Failed to create ${selectedRole === "admin" ? "admin" : "student"}.`));
+      setMessageType("error");
+    } finally {
+      setIsCreating(false);
+    }
   }
 
   return (
@@ -265,6 +393,9 @@ export function AdminDashboardPage() {
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
                   placeholder="e.g. oliver"
+                  minLength={AUTH_LOGIN_MIN_LENGTH}
+                  maxLength={AUTH_FIELD_MAX_LENGTH}
+                  disabled={isCreating}
                 />
               </div>
 
@@ -275,6 +406,9 @@ export function AdminDashboardPage() {
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   placeholder="e.g. Oliver Smith"
+                  minLength={AUTH_NAME_MIN_LENGTH}
+                  maxLength={AUTH_FIELD_MAX_LENGTH}
+                  disabled={isCreating}
                 />
               </div>
 
@@ -287,6 +421,9 @@ export function AdminDashboardPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Admin password"
+                    minLength={AUTH_PASSWORD_MIN_LENGTH}
+                    maxLength={AUTH_FIELD_MAX_LENGTH}
+                    disabled={isCreating}
                   />
                 </div>
               ) : null}
@@ -307,11 +444,11 @@ export function AdminDashboardPage() {
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setIsCreateModalOpen(false)}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setIsCreateModalOpen(false)} disabled={isCreating}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryButton}>
-                  Create {selectedRole === "admin" ? "admin" : "student"}
+                <button type="submit" className={styles.primaryButton} disabled={isCreating}>
+                  {isCreating ? "Creating..." : `Create ${selectedRole === "admin" ? "admin" : "student"}`}
                 </button>
               </div>
             </form>
@@ -373,26 +510,17 @@ export function AdminDashboardPage() {
             <div className={styles.userModalBody}>
               <div className={styles.historyCard}>
                 <div className={styles.historyTitleRow}>
-                  <h3>Played games</h3>
+                  <div>
+                    <h3>Played games</h3>
+                    <p className={styles.historySubtitle}>Each round now follows the same stat language as the active game result view.</p>
+                  </div>
                   <span>{viewedSessions.length} total</span>
                 </div>
 
                 {viewedSessions.length ? (
                   <div className={styles.historyList}>
                     {viewedSessions.map((session) => (
-                      <article key={session.id} className={styles.historyRow}>
-                        <div className={styles.historyPrimary}>
-                          <strong>{session.gameTitle}</strong>
-                          <span>{formatDateTime(session.playedAt)}</span>
-                        </div>
-                        <div className={styles.historySecondary}>
-                          <span>{session.difficulty}</span>
-                          <span>
-                            {session.score}/{session.maxScore}
-                          </span>
-                          <span>{session.success ? "Finished" : "Not finished"}</span>
-                        </div>
-                      </article>
+                      <SessionResultCard key={session.id} session={session} />
                     ))}
                   </div>
                 ) : (

@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
+import { useAdminLogin } from "../../features/auth/hooks/useAdminLogin";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { validateAdminCredentials } from "../../features/users/model/userStore";
+import { AUTH_FIELD_MAX_LENGTH, AUTH_LOGIN_MIN_LENGTH, AUTH_PASSWORD_MIN_LENGTH } from "../../features/auth/utils/authValidation";
 import styles from "./AdminLoginPage.module.css";
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
-  const { login, getAuthState } = useAuth();
+  const { getAuthState } = useAuth();
+  const { submit, isLoading, error, clearError } = useAdminLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const existing = getAuthState();
@@ -23,32 +24,22 @@ export function AdminLoginPage() {
     }
   }, [getAuthState, navigate]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const admin = validateAdminCredentials(username, password);
-    if (!admin) {
-      setError("Invalid admin credentials.");
-      return;
+    const success = await submit(username, password);
+    if (success) {
+      navigate(routes.adminDashboard);
     }
-
-    login({
-      userId: admin.id,
-      login: admin.login,
-      displayName: `${admin.name} ${admin.surname}`,
-      role: "admin",
-    });
-    navigate(routes.adminDashboard);
   }
 
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-
         <div className={styles.headerBlock}>
           <div className={styles.badge}>Administrator</div>
           <h1 className={styles.title}>Admin access</h1>
-          <p className={styles.subtitle}>Use the same calm login style, but with both login and password for administrators.</p>
+          <p className={styles.subtitle}>Use login and password to enter the administrator dashboard.</p>
         </div>
 
         <form className={styles.panel} onSubmit={handleSubmit}>
@@ -60,10 +51,13 @@ export function AdminLoginPage() {
               value={username}
               onChange={(event) => {
                 setUsername(event.target.value);
-                if (error) setError("");
+                if (error) clearError();
               }}
               placeholder="Enter admin login"
               autoComplete="username"
+              minLength={AUTH_LOGIN_MIN_LENGTH}
+              maxLength={AUTH_FIELD_MAX_LENGTH}
+              disabled={isLoading}
             />
           </div>
 
@@ -76,22 +70,23 @@ export function AdminLoginPage() {
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);
-                if (error) setError("");
+                if (error) clearError();
               }}
               placeholder="Enter password"
               autoComplete="current-password"
+              minLength={AUTH_PASSWORD_MIN_LENGTH}
+              maxLength={AUTH_FIELD_MAX_LENGTH}
+              disabled={isLoading}
             />
           </div>
 
-          {error ? (
-            <div className={styles.errorBadge}>{error}</div>
-          ) : (
-            <div className={styles.helper}>Only administrator accounts can enter here.</div>
-          )}
+          {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>Only administrator accounts can enter here.</div>}
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.secondaryButton}>Login</button>
-            <button type="button" className={styles.secondaryButton} onClick={() => navigate(routes.entry)}>
+            <button type="submit" className={styles.secondaryButton} disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Login"}
+            </button>
+            <button type="button" className={styles.secondaryButton} onClick={() => navigate(routes.entry)} disabled={isLoading}>
               Student login
             </button>
           </div>

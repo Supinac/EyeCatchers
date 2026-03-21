@@ -274,40 +274,156 @@
 }
 
 .historyTitleRow span,
-.historyPrimary span,
-.historySecondary,
 .emptyState,
 .feedback {
   color: rgba(255, 255, 255, 0.58);
 }
 
+.historySubtitle {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
 .historyList {
   display: grid;
-  gap: 10px;
+  gap: 16px;
 }
 
-.historyRow {
-  border-radius: 18px;
-  padding: 16px 18px;
+.sessionCard {
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.07), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+  padding: 22px;
   display: grid;
-  gap: 10px;
+  gap: 18px;
 }
 
-.historyPrimary,
-.historySecondary {
+.sessionHeader {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.sessionHero {
+  display: grid;
+  gap: 14px;
+}
+
+.sessionBadge {
+  align-self: flex-start;
+  min-height: 38px;
+  padding: 0 16px;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sessionBadgeSuccess {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.14);
+  color: #8cf0af;
+}
+
+.sessionBadgeFail {
+  border-color: rgba(239, 68, 68, 0.36);
+  background: rgba(239, 68, 68, 0.14);
+  color: #ffb0b0;
+}
+
+.sessionTitle {
+  margin: 0;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.sessionMetaLine {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.5;
+}
+
+.sessionScoreBlock {
+  min-width: 220px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 8px;
+}
+
+.sessionScoreLabel {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sessionScoreValue {
+  font-size: clamp(2rem, 3vw, 3.4rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.sessionPills {
+  display: flex;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.historyPrimary strong {
-  font-size: 1rem;
+.sessionPill {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.92rem;
 }
 
-.historySecondary {
+.sessionStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sessionStatCard {
+  min-height: 122px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.sessionStatLabel {
+  color: rgba(255, 255, 255, 0.56);
   font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.sessionStatValue {
+  font-size: clamp(1.4rem, 2.1vw, 2.2rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 .emptyState,
@@ -330,27 +446,43 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: clamp(12px, 2vw, 24px);
   background: rgba(0, 0, 0, 0.82);
   z-index: 20;
 }
 
 .modalCard {
   width: min(100%, 520px);
+  max-height: calc(100dvh - 24px);
   border-radius: 28px;
   padding: 22px;
   box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
 }
 
 .userModalCard {
   width: min(100%, 960px);
-  max-height: min(86vh, 900px);
+  height: min(86dvh, 900px);
+  max-height: calc(100dvh - 24px);
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 18px;
 }
 
 .userModalBody {
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+}
+
+.userModalBody::-webkit-scrollbar {
+  width: 10px;
+}
+
+.userModalBody::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
 }
 
 .modalHeader {
@@ -456,7 +588,22 @@
   line-height: 1.5;
 }
 
+@media (max-width: 1100px) {
+  .sessionStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
+  .sessionHeader {
+    flex-direction: column;
+  }
+
+  .sessionScoreBlock {
+    width: 100%;
+    min-width: 0;
+  }
+
   .topbar,
   .historyTitleRow,
   .modalHeader {
@@ -470,6 +617,15 @@
 }
 
 @media (max-width: 700px) {
+  .sessionCard {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .sessionStatsGrid {
+    grid-template-columns: 1fr;
+  }
+
   .page {
     padding: 18px;
   }
@@ -514,5 +670,21 @@
 
   .modalActions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .userModalCard {
+    width: 100%;
+    height: calc(100dvh - 24px);
+    gap: 14px;
+  }
+
+  .modalCard {
+    padding: 18px;
+  }
+
+  .modalHeader {
+    margin-bottom: 12px;
   }
 }

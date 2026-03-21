@@ -1,3 +1,4 @@
+import type { ContentMode, FigureSizeMode, MaxGameSeconds, PlacementMode } from "./GameConfig";
 import type { GameDifficulty } from "./GameDefinition";
 
 export type GameResultStats = {
@@ -8,10 +9,14 @@ export type GameResultStats = {
   elapsedSeconds: number;
   remainingSeconds: number;
   previewSeconds?: number;
-  maxGameSeconds?: number;
+  maxGameSeconds?: MaxGameSeconds;
   gridSize?: number;
-  figureSizeMode?: "static" | "random";
-  targetKind?: string;
+  figureSizeMode?: FigureSizeMode;
+  figureSizePercent?: number;
+  correctObjectCount?: number;
+  contentMode?: ContentMode;
+  placementMode?: PlacementMode;
+  targetValue?: string;
 };
 
 export type GameResult = {

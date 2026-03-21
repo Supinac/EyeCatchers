@@ -4,14 +4,25 @@ import { ButtonLink } from "../../components/ui/ButtonLink";
 import type { GameResult } from "../../games/core/types/GameResult";
 import styles from "./ResultPage.module.css";
 
-function formatShapeLabel(value: string | undefined) {
+function formatLabel(value: string | undefined) {
   if (!value) return "—";
+  if (value === "letters") return "Czech letters";
+  if (value === "figures") return "Figures";
+  if (value === "numbers") return "Numbers";
+  if (value === "grid") return "Grid";
+  if (value === "random") return "Random positions";
+  if (value === "fixed") return "Fixed";
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function StatCard({ label, value, subtle }: { label: string; value: string; subtle?: boolean }) {
+function formatMaxTime(value: string | number | undefined) {
+  if (!value) return null;
+  return value === "unlimited" ? "Max time: Unlimited" : `Max time: ${value}s`;
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`${styles.statCard} ${subtle ? styles.statCardSubtle : ""}`.trim()}>
+    <div className={styles.statCard}>
       <span className={styles.statLabel}>{label}</span>
       <strong className={styles.statValue}>{value}</strong>
     </div>
@@ -33,7 +44,9 @@ export function ResultPage() {
           </div>
 
           <div className={styles.actions}>
-            <ButtonLink to={routes.games}>Back to games</ButtonLink>
+            <ButtonLink to={routes.games} variant="secondary" className={`${styles.actionButton} ${styles.actionButtonSecondary}`}>
+              Back to games
+            </ButtonLink>
           </div>
         </section>
       </main>
@@ -41,62 +54,71 @@ export function ResultPage() {
   }
 
   const accuracyLabel = result.stats ? `${result.stats.accuracyPercent}%` : "—";
+  const correctFoundLabel = result.stats ? `${result.stats.correctHits}/${result.maxScore}` : `${result.score}/${result.maxScore}`;
+  const correctTapsLabel = result.stats ? String(result.stats.correctHits) : String(result.score);
+  const wrongLabel = result.stats ? String(result.stats.wrongHits) : "0";
   const elapsedLabel = result.stats ? `${result.stats.elapsedSeconds}s` : "—";
-  const remainingLabel = result.stats ? `${result.stats.remainingSeconds}s` : "—";
-  const correctLabel = result.stats ? `${result.stats.correctHits}/${result.maxScore}` : `${result.score}/${result.maxScore}`;
-  const wrongLabel = result.stats ? String(result.stats.wrongHits) : "—";
-  const totalTapsLabel = result.stats ? String(result.stats.totalTaps) : "—";
-  const gridLabel = result.stats?.gridSize ? `${result.stats.gridSize} × ${result.stats.gridSize}` : "—";
-  const previewLabel = result.stats?.previewSeconds ? `${result.stats.previewSeconds}s` : "—";
-  const maxTimeLabel = result.stats?.maxGameSeconds ? `${result.stats.maxGameSeconds}s` : "—";
-  const figureSizeLabel = result.stats?.figureSizeMode ? formatShapeLabel(result.stats.figureSizeMode) : "—";
-  const targetShapeLabel = formatShapeLabel(result.stats?.targetKind);
+
+  const configPills = [
+    `Game: ${formatLabel(result.gameKey)}`,
+    result.stats?.previewSeconds ? `Preview: ${result.stats.previewSeconds}s` : null,
+    formatMaxTime(result.stats?.maxGameSeconds),
+    result.stats?.contentMode ? `Mode: ${formatLabel(result.stats.contentMode)}` : null,
+    result.stats?.placementMode ? `Layout: ${formatLabel(result.stats.placementMode)}` : null,
+    result.stats?.gridSize ? `Grid size: ${result.stats.gridSize} × ${result.stats.gridSize}` : null,
+    result.stats?.correctObjectCount ? `Right objects: ${result.stats.correctObjectCount}` : null,
+    result.stats?.figureSizePercent ? `Figure size: ${result.stats.figureSizePercent}%` : null,
+    result.stats?.figureSizeMode ? `Size mode: ${formatLabel(result.stats.figureSizeMode)}` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <main className={styles.page}>
       <section className={styles.panel}>
         <div className={styles.hero}>
           <div className={`${styles.badge} ${result.success ? styles.badgeSuccess : styles.badgeFail}`.trim()}>
-            {result.success ? "You won" : "Time is over"}
+            {result.success ? "You won" : "Try again"}
           </div>
-          <h1 className={styles.title}>{result.success ? "Great job" : "Try again"}</h1>
+          <h1 className={styles.title}>{result.success ? "Great job" : "Round finished"}</h1>
           <p className={styles.subtitle}>
             {result.success
-              ? "You found all correct figures. Here is a bigger overview of how the round went."
-              : "The round has ended. You can review the stats below and start a new try."}
+              ? "You found all correct items. Here is a bigger overview of how the round went."
+              : "The round has ended. Check the main results below and start another try."}
           </p>
         </div>
 
-        <div className={styles.scoreBlock}>
+        <div className={styles.summaryBlock}>
           <div>
-            <span className={styles.scoreLabel}>Score</span>
-            <div className={styles.scoreValue}>
-              {result.score}
-              <span className={styles.scoreMax}> / {result.maxScore}</span>
-            </div>
+            <span className={styles.summaryLabel}>Correct found</span>
+            <div className={styles.summaryValue}>{correctFoundLabel}</div>
           </div>
-          <div className={styles.scoreMeta}>
-            <span className={styles.scorePill}>Game: {formatShapeLabel(result.gameKey)}</span>
-            <span className={styles.scorePill}>Difficulty: {formatShapeLabel(result.difficulty)}</span>
+
+          <div className={styles.summaryMeta}>
+            {configPills.map((pill) => (
+              <span key={pill} className={styles.summaryPill}>
+                {pill}
+              </span>
+            ))}
           </div>
         </div>
 
         <div className={styles.statsGrid}>
-          <StatCard label="Correct found" value={correctLabel} />
+          <StatCard label="Accuracy" value={accuracyLabel} />
+          <StatCard label="Correct taps" value={correctTapsLabel} />
           <StatCard label="Wrong taps" value={wrongLabel} />
-          <StatCard label="Time used" value={elapsedLabel} subtle />
-          <StatCard label="Grid size" value={gridLabel} subtle />
+          <StatCard label="Time used" value={elapsedLabel} />
         </div>
 
         <div className={styles.actions}>
-          <ButtonLink to={routes.games} variant="secondary" className={styles.actionButton}>
+          <ButtonLink to={routes.games} variant="secondary" className={`${styles.actionButton} ${styles.actionButtonSecondary}`}>
             Home
           </ButtonLink>
           {result.gameKey ? (
-            <ButtonLink to={`/game/${result.gameKey}`} className={styles.actionButton}>
+            <ButtonLink to={`/game/${result.gameKey}`} className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
               Play again
             </ButtonLink>
-          ) : null}
+          ) : (
+            <span />
+          )}
         </div>
       </section>
     </main>

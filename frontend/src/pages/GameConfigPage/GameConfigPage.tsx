@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds, SwapCount, SymbolSize } from "../../games/core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds, SwapCount, SymbolSize } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
-import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
-import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
+import {
+  defaultFindCircleConfig,
+  getFigureSizePercent,
+  getFindCircleCorrectCount,
+  getMaxCorrectObjectCount,
+} from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
 import type { GameDifficulty } from "../../games/core/types/GameDefinition";
 
@@ -17,17 +21,17 @@ type ConfigOption<T extends string | number> = {
 };
 
 const previewOptions: ConfigOption<PreviewSeconds>[] = [
-  { id: 5, label: "5 sec", description: "Quick preview before the grid appears." },
-  { id: 10, label: "10 sec", description: "Balanced memory time." },
-  { id: 15, label: "15 sec", description: "More time to look carefully." },
-  { id: 20, label: "20 sec", description: "Longest and calmest preview." },
+  { id: 1, label: "1 sec", description: "Very quick flash before the game starts." },
+  { id: 2, label: "2 sec", description: "Short preview for a harder round." },
+  { id: 5, label: "5 sec", description: "Balanced memory time." },
+  { id: 10, label: "10 sec", description: "Longest and calmest preview." },
 ];
 
 const maxGameTimeOptions: ConfigOption<MaxGameSeconds>[] = [
   { id: 30, label: "30 sec", description: "Fast round with quick decisions." },
   { id: 60, label: "60 sec", description: "Balanced time for most players." },
   { id: 90, label: "90 sec", description: "More time for larger grids." },
-  { id: 120, label: "120 sec", description: "Longest and calmest game timer." },
+  { id: "unlimited", label: "Unlimited", description: "No timer. The round ends only when all correct items are found." },
 ];
 
 const gridOptions: ConfigOption<GridSize>[] = [
@@ -37,9 +41,20 @@ const gridOptions: ConfigOption<GridSize>[] = [
   { id: 5, label: "5 × 5", description: "25 objects on screen." },
 ];
 
+const contentOptions: ConfigOption<ContentMode>[] = [
+  { id: "figures", label: "Figures", description: "Circle, rectangle, triangle and other simple icons." },
+  { id: "letters", label: "Czech letters", description: "Big bold Czech uppercase letters for kids." },
+  { id: "numbers", label: "Numbers", description: "Big bold digits from 0 to 9." },
+];
+
+const placementOptions: ConfigOption<PlacementMode>[] = [
+  { id: "grid", label: "Grid", description: "Objects are placed into a clean grid." },
+  { id: "random", label: "Random positions", description: "Objects are scattered across the whole view." },
+];
+
 const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
-  { id: "static", label: "Static", description: "All figures keep the same size." },
-  { id: "random", label: "Random", description: "Figure sizes vary in the grid." },
+  { id: "fixed", label: "Fixed", description: "All objects keep the same size percent." },
+  { id: "random", label: "Random", description: "Objects still use your chosen size, but some become smaller or bigger." },
 ];
 
 const swapCountOptions: ConfigOption<SwapCount>[] = [
@@ -56,12 +71,6 @@ const difficultyOptions: ConfigOption<GameDifficulty>[] = [
   { id: "medium", label: "Střední", description: "5 kruhů na obrazovce." },
   { id: "hard",   label: "Těžká",   description: "8 kruhů na obrazovce." },
 ];
-
-function getGameIcon(gameKey: string) {
-  if (gameKey === "memory-pairs") return <StrategyIcon className={styles.gameIcon} />;
-  if (gameKey === "shape-match") return <ArcadeIcon className={styles.gameIcon} />;
-  return <PuzzleIcon className={styles.gameIcon} />;
-}
 
 function ConfigTile<T extends string | number>({
   option,
@@ -89,11 +98,19 @@ export function GameConfigPage() {
   const { gameKey = "" } = useParams();
   const navigate = useNavigate();
   const { saveSessionState } = useGameSession();
-  const [game, setGame] = useState<GameCatalogItem | null>(null);
+  const [, setGame] = useState<GameCatalogItem | null>(null);
+
+  // find-circle state
   const [previewSeconds, setPreviewSeconds] = useState<PreviewSeconds>(defaultFindCircleConfig.previewSeconds);
   const [maxGameSeconds, setMaxGameSeconds] = useState<MaxGameSeconds>(defaultFindCircleConfig.maxGameSeconds);
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
+  const [correctObjectCount, setCorrectObjectCount] = useState<number>(defaultFindCircleConfig.correctObjectCount);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
+  const [figureSizePercent, setFigureSizePercent] = useState<number>(defaultFindCircleConfig.figureSizePercent);
+  const [contentMode, setContentMode] = useState<ContentMode>(defaultFindCircleConfig.contentMode);
+  const [placementMode, setPlacementMode] = useState<PlacementMode>(defaultFindCircleConfig.placementMode);
+
+  // track-the-circle state
   const [swapCount, setSwapCount] = useState<SwapCount>(15);
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
   const [symbolSize, setSymbolSize] = useState<SymbolSize>(52);
@@ -102,11 +119,26 @@ export function GameConfigPage() {
     void getGameByKey(gameKey).then(setGame);
   }, [gameKey]);
 
+  const maxCorrectObjectCount = useMemo(() => getMaxCorrectObjectCount(gridSize), [gridSize]);
+
+  useEffect(() => {
+    setCorrectObjectCount((current) => getFindCircleCorrectCount(gridSize, current));
+  }, [gridSize]);
+
   function handleStart() {
     saveSessionState({
       gameKey,
       difficulty,
-      findCircle: { previewSeconds, maxGameSeconds, gridSize, figureSizeMode },
+      findCircle: {
+        previewSeconds,
+        maxGameSeconds,
+        gridSize,
+        correctObjectCount,
+        figureSizeMode,
+        figureSizePercent,
+        contentMode,
+        placementMode,
+      },
       trackTheCircle: { swapCount, symbolSize },
     });
 
@@ -114,7 +146,11 @@ export function GameConfigPage() {
       preview: String(previewSeconds),
       maxTime: String(maxGameSeconds),
       grid: String(gridSize),
+      correctCount: String(correctObjectCount),
       sizeMode: figureSizeMode,
+      sizePercent: String(figureSizePercent),
+      contentMode,
+      placementMode,
       swapCount: String(swapCount),
       symbolSize: String(symbolSize),
       difficulty,
@@ -137,7 +173,7 @@ export function GameConfigPage() {
       </button>
 
       <div className={styles.header}>
-        <h1 className={styles.title}>{"Configuration"}</h1>
+        <h1 className={styles.title}>Configuration</h1>
       </div>
 
       <div className={styles.panel}>
@@ -156,7 +192,7 @@ export function GameConfigPage() {
               <h2 className={styles.sectionTitle}>Max game time</h2>
               <div className={styles.grid}>
                 {maxGameTimeOptions.map((option) => (
-                  <ConfigTile key={option.id} option={option} selected={maxGameSeconds === option.id} onClick={() => setMaxGameSeconds(option.id)} />
+                  <ConfigTile key={String(option.id)} option={option} selected={maxGameSeconds === option.id} onClick={() => setMaxGameSeconds(option.id)} />
                 ))}
               </div>
             </section>
@@ -171,11 +207,79 @@ export function GameConfigPage() {
             </section>
 
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Figure size</h2>
+              <div className={styles.sliderHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Right objects count</h2>
+                  <p className={styles.sliderHint}>Choose how many correct items will appear on the screen.</p>
+                </div>
+                <div className={styles.sliderValue}>{correctObjectCount}</div>
+              </div>
+              <div className={styles.sliderPanel}>
+                <input
+                  className={styles.slider}
+                  type="range"
+                  min={1}
+                  max={maxCorrectObjectCount}
+                  step={1}
+                  value={correctObjectCount}
+                  onChange={(e) => setCorrectObjectCount(getFindCircleCorrectCount(gridSize, Number(e.target.value)))}
+                />
+                <div className={styles.sliderScale}>
+                  <span>1</span>
+                  <span>{maxCorrectObjectCount}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Content mode</h2>
+              <div className={styles.grid}>
+                {contentOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={contentMode === option.id} onClick={() => setContentMode(option.id)} />
+                ))}
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Placement mode</h2>
+              <div className={styles.grid}>
+                {placementOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={placementMode === option.id} onClick={() => setPlacementMode(option.id)} />
+                ))}
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Figure size mode</h2>
               <div className={styles.grid}>
                 {figureSizeOptions.map((option) => (
                   <ConfigTile key={option.id} option={option} selected={figureSizeMode === option.id} onClick={() => setFigureSizeMode(option.id)} />
                 ))}
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <div className={styles.sliderHeader}>
+                <div>
+                  <h2 className={styles.sectionTitle}>Figure size</h2>
+                  <p className={styles.sliderHint}>100% fills almost the whole available object area. 50% makes it about half that size.</p>
+                </div>
+                <div className={styles.sliderValue}>{figureSizePercent}%</div>
+              </div>
+              <div className={styles.sliderPanel}>
+                <input
+                  className={styles.slider}
+                  type="range"
+                  min={40}
+                  max={100}
+                  step={5}
+                  value={figureSizePercent}
+                  onChange={(e) => setFigureSizePercent(getFigureSizePercent(e.target.value))}
+                />
+                <div className={styles.sliderScale}>
+                  <span>40%</span>
+                  <span>100%</span>
+                </div>
               </div>
             </section>
           </>
@@ -191,6 +295,7 @@ export function GameConfigPage() {
                 ))}
               </div>
             </section>
+
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Počet přehození</h2>
               <div className={styles.grid}>
@@ -199,34 +304,31 @@ export function GameConfigPage() {
                 ))}
               </div>
             </section>
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Velikost symbolů</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-                  <input
-                    type="range"
-                    min={32}
-                    max={144}
-                    step={4}
-                    value={symbolSize}
-                    onChange={(e) => setSymbolSize(Number(e.target.value) as SymbolSize)}
-                    style={{ flex: 6, accentColor: "#fff", height: 6 }}
-                  />
-                  <div style={{ flex: 4, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 24, height: 144, overflow: "hidden" }}>
-                    <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>
-                      3
-                    </span>
-                    <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>
-                      A
-                    </span>
-                    <svg width={symbolSize} height={symbolSize} viewBox="0 0 100 100" style={{ flexShrink: 0 }}>
-                      <rect x="10" y="10" width="80" height="80" fill="#fff" />
-                    </svg>
-                  </div>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Velikost symbolů</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+                <input
+                  type="range"
+                  min={32}
+                  max={144}
+                  step={4}
+                  value={symbolSize}
+                  onChange={(e) => setSymbolSize(Number(e.target.value) as SymbolSize)}
+                  style={{ flex: 6, accentColor: "#fff", height: 6 }}
+                />
+                <div style={{ flex: 4, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 24, height: 144, overflow: "hidden" }}>
+                  <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>3</span>
+                  <span style={{ fontSize: symbolSize, color: "#fff", lineHeight: 1, fontFamily: "Arial", fontWeight: "bold" }}>A</span>
+                  <svg width={symbolSize} height={symbolSize} viewBox="0 0 100 100" style={{ flexShrink: 0 }}>
+                    <rect x="10" y="10" width="80" height="80" fill="#fff" />
+                  </svg>
                 </div>
-                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 6 }}>
-                  Velikost: {symbolSize}px
-                </div>
-              </section>
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 6 }}>
+                Velikost: {symbolSize}px
+              </div>
+            </section>
           </>
         )}
       </div>
