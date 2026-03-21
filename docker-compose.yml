@@ -29,8 +29,9 @@ services:
   client:
     build:
       context: ./frontend
-    environment:
-      VITE_API_BASE_URL: http://localhost/api
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
     restart: unless-stopped
     depends_on:
       - api
@@ -40,7 +41,7 @@ services:
       traefik.enable: "true"
       traefik.docker.network: proxy
       traefik.http.routers.client.rule: PathPrefix(`/`) && !PathPrefix(`/api`)
-      traefik.http.services.client.loadbalancer.server.port: 5173
+      traefik.http.services.client.loadbalancer.server.port: 80
 
   api:
     build:
@@ -87,7 +88,6 @@ services:
     networks:
       - backend
 
-      
 networks:
   proxy:
     name: proxy
@@ -95,4 +95,3 @@ networks:
   backend:
     name: backend
     driver: bridge
-
