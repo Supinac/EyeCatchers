@@ -9,6 +9,115 @@ import json
 from datetime import datetime
 
 
+# ── PDF (one score per page) ────────────────────────────────────
+
+def records_to_pdf(records: list[dict]) -> bytes:
+    """Generates a PDF with one score per page using reportlab."""
+    from io import BytesIO
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.HexColor("#16213e"),
+        spaceAfter=6,
+    )
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=12,
+        textColor=colors.HexColor("#16213e"),
+        spaceAfter=6,
+        spaceBefore=12,
+    )
+    meta_style = ParagraphStyle(
+        'Meta',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.HexColor("#555555"),
+        spaceAfter=12,
+    )
+    
+    elements = []
+    
+    for idx, r in enumerate(records):
+        if idx > 0:
+            elements.append(PageBreak())
+        
+        game = r["game_type"].replace("_", " ").title()
+        date = _fmt_date(r.get("created_at"))
+        user_label = f'{r.get("user_name", "?")} (#{r["user_id"]})'
+        
+        # Title
+        elements.append(Paragraph(f"Výsledek hry: {game}", title_style))
+        
+        # Meta information
+        meta_text = f"ID: {r['id']} | Uživatel: {user_label} | Datum: {date}"
+        elements.append(Paragraph(meta_text, meta_style))
+        
+        # Settings section
+        settings = _ensure_dict(r.get("settings") or {})
+        if settings:
+            elements.append(Paragraph("Nastavení hry", heading_style))
+            table_data = [["Parametr", "Hodnota"]]
+            for entry in settings.values():
+                entry = _ensure_entry(entry)
+                if not entry:
+                    continue
+                label = entry.get("tranlations", entry.get("key", ""))
+                val = _fmt_value(str(entry.get("value", "")))
+                table_data.append([label, val])
+            
+            if len(table_data) > 1:
+                table = Table(table_data, colWidths=[3*inch, 2.5*inch])
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0f3460")),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor("#f0f0f8"), colors.white]),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ]))
+                elements.append(table)
+                elements.append(Spacer(1, 0.2*inch))
+        
+        # Results section
+        results = _ensure_dict(r.get("results") or {})
+        if results:
+            elements.append(Paragraph("Výsledky", heading_style))
+            table_data = [["Parametr", "Hodnota"]]
+            for entry in results.values():
+                entry = _ensure_entry(entry)
+                if not entry:
+                    continue
+                label = entry.get("tranlations", entry.get("key", ""))
+                val = _fmt_value(str(entry.get("value", "")))
+                table_data.append([label, val])
+            
+            if len(table_data) > 1:
+                table = Table(table_data, colWidths=[3*inch, 2.5*inch])
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0f3460")),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor("#f0f0f8"), colors.white]),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ]))
+                elements.append(table)
+    
+    doc.build(elements)
+    return buffer.getvalue()
 def _ensure_dict(value) -> dict:
     """Handle string-encoded JSON at any nesting level."""
     if isinstance(value, str):
@@ -86,15 +195,16 @@ def record_to_html(
   h2 {{ font-size: 16px; color: #16213e; margin-top: 28px; margin-bottom: 8px; }}
   table {{ width: 100%; border-collapse: collapse; }}
   th {{ background: #0f3460; color: #fff; text-align: left; padding: 8px 12px; }}
-  td {{ padding: 6px 12px; border: 1px solid #ccc; }}
-  @media print {{ body {{ margin: 0; }} }}
-</style>
-</head>
 <body>
-<h1>Výsledek hry: {game}</h1>
-<p class="meta">ID: {record_id} | Uživatel: {user_name} (#{user_id}) | Datum: {date}</p>
-"""
-    if settings:
+import csv
+import io
+import json
+from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib import colors
         settings = _ensure_dict(settings)
     if results:
         results = _ensure_dict(results)
