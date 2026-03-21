@@ -4,7 +4,6 @@ import socket
 from fastapi import FastAPI, Request, Response
 from .config import settings
 from . import db
-from . import endpoints
 from . import users
 
 
@@ -29,8 +28,15 @@ app = FastAPI(
     description="API for the EyeCatchers app.",
     version="1.0.0",
 )
+from fastapi.middleware.cors import CORSMiddleware
 
-app.include_router(endpoints.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users.router)
 
 @app.middleware("http")

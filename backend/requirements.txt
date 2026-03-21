@@ -2,5 +2,6 @@ fastapi[standard]
 sqlalchemy[standard]
 mysql-connector-python
 pydantic-settings
-bcrypt
+passlib[bcrypt]
+bcrypt<4.1
 python-jose[cryptography]
