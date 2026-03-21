@@ -61,6 +61,11 @@ def remove_admin(id: int, session: Session = Depends(db.session), current_admin:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Admin not found",
         )
+    if db_admin.id == current_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete currently logged in admin",
+        )
     session.delete(db_admin)
     session.commit()
     return None
