@@ -1,16 +1,25 @@
-import { PageLayout } from "../../components/layout/PageLayout";
-import { ScreenContainer } from "../../components/layout/ScreenContainer";
-import { ButtonLink } from "../../components/ui/ButtonLink";
-import { Loader } from "../../components/ui/Loader";
 import { GameGrid } from "../../features/game-catalog/components/GameGrid";
 import { useGames } from "../../features/game-catalog/hooks/useGames";
+import styles from "./HomePage.module.css";
 
 export function HomePage() {
-  const { games, loading } = useGames();
+  const { games } = useGames();
 
   return (
-    <PageLayout title="Kids Games" actions={<ButtonLink to="/settings" variant="secondary">Settings</ButtonLink>}>
-      <ScreenContainer>{loading ? <Loader /> : <GameGrid games={games} />}</ScreenContainer>
-    </PageLayout>
+    <main className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Choose a game</h1>
+        <p className={styles.subtitle}>Large calm tiles with a black and white design.</p>
+      </div>
+
+      <div className={styles.gridWrap}>
+        <GameGrid games={games} />
+      </div>
+
+      <div className={styles.footerHint}>
+        <span className={styles.footerIcon} aria-hidden="true">○</span>
+        <span>Tap a tile to continue</span>
+      </div>
+    </main>
   );
 }

@@ -1,16 +1,29 @@
-import { useEffect, useState } from "react";
-import { getGames } from "../../../api/gamesApi";
-import type { GameCatalogItem } from "../../../games/core/types/GameDefinition";
+import type { GameCardViewModel } from "../types";
+
+const games: GameCardViewModel[] = [
+  {
+    key: "find-circle",
+    name: "Find Circle",
+    description: "Tap the circle. A calm first game to test the flow and start playing.",
+    implemented: true,
+    icon: "puzzle",
+  },
+  {
+    key: "memory-pairs",
+    name: "Memory Pairs",
+    description: "Match simple pairs with a slow, predictable rhythm and minimal distractions.",
+    implemented: false,
+    icon: "strategy",
+  },
+  {
+    key: "shape-match",
+    name: "Shape Match",
+    description: "Choose the correct shape with large clear targets and a very simple layout.",
+    implemented: false,
+    icon: "arcade",
+  },
+];
 
 export function useGames() {
-  const [games, setGames] = useState<GameCatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getGames()
-      .then(setGames)
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { games, loading };
+  return { games, loading: false };
 }
