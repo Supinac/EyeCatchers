@@ -18,7 +18,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
       type="button"
       className={`${styles.card} ${isLocked ? styles.cardLocked : ""}`}
       onClick={isLocked ? undefined : () => navigate(`/game/${game.key}`)}
-      aria-label={`${game.name}. ${game.implemented ? "Ready to open" : "Coming soon"}`}
+      aria-label={`${game.name}. ${game.implemented ? "Ready to open" : ""}`}
       disabled={isLocked}
     >
       <div className={styles.iconBox}>{getIcon(game.icon)}</div>
@@ -41,7 +41,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
         </svg>
       </div>
 
-      {isLocked ? <div className={styles.lockOverlay}>Coming soon</div> : null}
+      {isLocked ? <div className={styles.lockOverlay}></div> : null}
     </button>
   );
 }

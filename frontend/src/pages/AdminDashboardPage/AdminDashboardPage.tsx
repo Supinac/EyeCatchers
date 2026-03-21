@@ -10,8 +10,80 @@ import {
   getUserById,
   getUserStatsRows,
 } from "../../features/users/model/userStore";
+import type { StoredGameSession } from "../../features/users/model/userTypes";
 import type { AuthRole } from "../../features/auth/model/authTypes";
 import styles from "./AdminDashboardPage.module.css";
+
+function formatLabel(value: string | undefined) {
+  if (!value) return "—";
+  return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function AdminStatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.sessionStatCard}>
+      <span className={styles.sessionStatLabel}>{label}</span>
+      <strong className={styles.sessionStatValue}>{value}</strong>
+    </div>
+  );
+}
+
+function SessionResultCard({ session }: { session: StoredGameSession }) {
+  const accuracyLabel = session.stats ? `${session.stats.accuracyPercent}%` : "—";
+  const correctFoundLabel = session.stats ? `${session.stats.correctHits}/${session.maxScore}` : `${session.score}/${session.maxScore}`;
+  const correctTapsLabel = session.stats ? String(session.stats.correctHits) : String(session.score);
+  const wrongLabel = session.stats ? String(session.stats.wrongHits) : "0";
+  const elapsedLabel = session.stats ? `${session.stats.elapsedSeconds}s` : "—";
+
+  const configPills = [
+    `Game: ${formatLabel(session.gameKey)}`,
+    `Difficulty: ${formatLabel(session.difficulty)}`,
+    session.stats?.previewSeconds ? `Preview: ${session.stats.previewSeconds}s` : null,
+    session.stats?.maxGameSeconds ? `Max time: ${session.stats.maxGameSeconds}s` : null,
+    session.stats?.contentMode ? `Mode: ${formatLabel(session.stats.contentMode)}` : null,
+    session.stats?.gridSize ? `Grid size: ${session.stats.gridSize} × ${session.stats.gridSize}` : null,
+    session.stats?.correctObjectCount ? `Right objects: ${session.stats.correctObjectCount}` : null,
+    session.stats?.figureSizeMode ? `Figure size: ${formatLabel(session.stats.figureSizeMode)}` : null,
+    session.stats?.targetValue ? `Target: ${session.stats.targetValue}` : null,
+  ].filter(Boolean) as string[];
+
+  return (
+    <article className={styles.sessionCard}>
+      <div className={styles.sessionHeader}>
+        <div className={styles.sessionHero}>
+          <div
+            className={`${styles.sessionBadge} ${session.success ? styles.sessionBadgeSuccess : styles.sessionBadgeFail}`.trim()}
+          >
+            {session.success ? "Finished" : "Not finished"}
+          </div>
+          <div>
+            <h4 className={styles.sessionTitle}>{session.gameTitle}</h4>
+            <p className={styles.sessionMetaLine}>Played {formatDateTime(session.playedAt)}</p>
+          </div>
+        </div>
+        <div className={styles.sessionScoreBlock}>
+          <span className={styles.sessionScoreLabel}>Correct found</span>
+          <strong className={styles.sessionScoreValue}>{correctFoundLabel}</strong>
+        </div>
+      </div>
+
+      <div className={styles.sessionPills}>
+        {configPills.map((pill) => (
+          <span key={`${session.id}-${pill}`} className={styles.sessionPill}>
+            {pill}
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.sessionStatsGrid}>
+        <AdminStatCard label="Accuracy" value={accuracyLabel} />
+        <AdminStatCard label="Correct taps" value={correctTapsLabel} />
+        <AdminStatCard label="Wrong taps" value={wrongLabel} />
+        <AdminStatCard label="Time used" value={elapsedLabel} />
+      </div>
+    </article>
+  );
+}
 
 export function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -373,26 +445,17 @@ export function AdminDashboardPage() {
             <div className={styles.userModalBody}>
               <div className={styles.historyCard}>
                 <div className={styles.historyTitleRow}>
-                  <h3>Played games</h3>
+                  <div>
+                    <h3>Played games</h3>
+                    <p className={styles.historySubtitle}>Each round now follows the same stat language as the active game result view.</p>
+                  </div>
                   <span>{viewedSessions.length} total</span>
                 </div>
 
                 {viewedSessions.length ? (
                   <div className={styles.historyList}>
                     {viewedSessions.map((session) => (
-                      <article key={session.id} className={styles.historyRow}>
-                        <div className={styles.historyPrimary}>
-                          <strong>{session.gameTitle}</strong>
-                          <span>{formatDateTime(session.playedAt)}</span>
-                        </div>
-                        <div className={styles.historySecondary}>
-                          <span>{session.difficulty}</span>
-                          <span>
-                            {session.score}/{session.maxScore}
-                          </span>
-                          <span>{session.success ? "Finished" : "Not finished"}</span>
-                        </div>
-                      </article>
+                      <SessionResultCard key={session.id} session={session} />
                     ))}
                   </div>
                 ) : (

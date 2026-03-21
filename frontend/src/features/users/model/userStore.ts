@@ -293,6 +293,7 @@ export function recordGameForCurrentUser(result: GameResult) {
     maxScore: result.maxScore,
     success: result.success,
     playedAt: new Date().toISOString(),
+    stats: result.stats,
   };
 
   persistStore({
