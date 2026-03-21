@@ -14,16 +14,11 @@ class GameType(str, Enum):
     say_what_you_see = "řekni_co_vidíš"
     mooving_shapes = "pohyblivé_tvary"
 
-class Difficulty(BaseModel):
-    game_type: GameType
-    difficulty: int = Field(ge=1, le=3)
-    settings: dict = Field(default_factory=dict)
-
-
 class ScoreSubmit(BaseModel):
     success_rate: float = Field(ge=0)
     game_type: GameType
-    difficulty: Difficulty
+    difficulty: int = Field(ge=1, le=3)
+    settings: dict = Field(default_factory=dict)
 
 # Response schema (never expose the password hash)
 class UserResponse(BaseModel):

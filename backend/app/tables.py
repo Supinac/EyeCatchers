@@ -1,10 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
-from sqlalchemy import String, func
+from sqlalchemy import CheckConstraint, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Enum as SqlEnum
 from .db import Base
-from .models import GameType, Difficulty
+from .models import GameType
 
 
 class User(Base):
@@ -23,10 +22,15 @@ class Admin(Base):
 
 class UserScore(Base):
     __tablename__ = "score"
+    __table_args__ = (
+        CheckConstraint("difficulty >= 1 AND difficulty <= 3", name="ck_score_difficulty_range"),
+    )
+
     id:             Mapped[int]         = mapped_column(primary_key=True, init=False)
     user_id:        Mapped[int]         = mapped_column()
-    game_type:      Mapped[GameType]    = mapped_column(SqlEnum(GameType, name="game_type_enum", nullable=False))
+    game_type:      Mapped[GameType]    = mapped_column(SqlEnum(GameType, name="game_type_enum"), nullable=False)
     success_rate:   Mapped[float]       = mapped_column()
+    difficulty:     Mapped[int]         = mapped_column(nullable=False)
+    settings:       Mapped[dict]        = mapped_column(nullable=False)
     created_at:     Mapped[datetime]    = mapped_column(server_default=func.now(), init=False)
-    difficulty:     Mapped[Difficulty]    = mapped_column()
     
