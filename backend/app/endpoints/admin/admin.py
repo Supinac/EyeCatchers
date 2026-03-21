@@ -55,7 +55,15 @@ def update_admin(id: int, user: AdminUpdate, session: Session = Depends(db.sessi
 
 @router.delete("/{id}", status_code=204, response_model=None)
 def remove_admin(id: int, session: Session = Depends(db.session)):
-    pass
+    admin = session.execute(select(tables.Admin)).scalar_one_or_none()
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found",
+        )
+    session.delete(admin)
+    session.commit()
+    return None
 # @router.post("/register", status_code=201, response_model=UserResponse)
 # def register(request: UserRegister, session: Session = Depends(db.session)):
 #     """Create a new user account."""
