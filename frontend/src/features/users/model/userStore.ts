@@ -252,6 +252,24 @@ export function createUser(input: {
   return { ok: true, user };
 }
 
+
+export function deleteUser(userId: string): { ok: true } | { ok: false; message: string } {
+  const store = ensureUserStore();
+  const target = store.users.find((user) => user.id === userId);
+
+  if (!target) {
+    return { ok: false, message: "User was not found." };
+  }
+
+  const nextStore: UserStoreData = {
+    users: store.users.filter((user) => user.id !== userId),
+    sessions: store.sessions.filter((session) => session.userId !== userId),
+  };
+
+  persistStore(nextStore);
+  return { ok: true };
+}
+
 export function getSessionsForUser(userId: string): StoredGameSession[] {
   return [...ensureUserStore().sessions]
     .filter((session) => session.userId === userId)

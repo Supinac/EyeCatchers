@@ -98,9 +98,11 @@
 .segmentButton,
 .createButton,
 .viewButton,
+.deleteButton,
 .closeButton,
 .secondaryButton,
-.primaryButton {
+.primaryButton,
+.dangerButton {
   cursor: pointer;
   transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
@@ -109,8 +111,10 @@
 .segmentButton:hover,
 .createButton:hover,
 .viewButton:hover,
+.deleteButton:hover,
 .secondaryButton:hover,
 .primaryButton:hover,
+.dangerButton:hover,
 .closeButton:hover {
   transform: translateY(-1px);
 }
@@ -193,7 +197,16 @@
   text-align: right;
 }
 
-.viewButton {
+.actionButtons {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.viewButton,
+.deleteButton,
+.dangerButton {
   min-height: 40px;
   padding: 0 16px;
   border-radius: 14px;
@@ -204,8 +217,24 @@
 }
 
 .viewButton:hover,
-.viewButton:focus-visible {
+.viewButton:focus-visible,
+.deleteButton:hover,
+.deleteButton:focus-visible {
   background: #141414;
+}
+
+.deleteButton,
+.dangerButton {
+  border-color: rgba(255, 122, 122, 0.32);
+  color: #ffb1b1;
+}
+
+.deleteButton:hover,
+.deleteButton:focus-visible,
+.dangerButton:hover,
+.dangerButton:focus-visible {
+  border-color: rgba(255, 122, 122, 0.54);
+  color: #ffd1d1;
 }
 
 .tableFooter {
@@ -398,13 +427,33 @@
   gap: 12px;
 }
 
-.secondaryButton {
+.secondaryButton,
+.dangerButton {
   min-height: 52px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
   background: #0a0a0a;
-  color: #fff;
   font-weight: 600;
+}
+
+.secondaryButton {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.dangerButton {
+  border: 1px solid rgba(255, 122, 122, 0.32);
+  color: #ffb1b1;
+}
+
+.deleteModalBody {
+  display: grid;
+  gap: 20px;
+}
+
+.deleteText {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {

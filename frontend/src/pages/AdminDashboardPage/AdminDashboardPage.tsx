@@ -4,6 +4,7 @@ import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import {
   createUser,
+  deleteUser,
   formatDateTime,
   getSessionsForUser,
   getUserById,
@@ -21,6 +22,7 @@ export function AdminDashboardPage() {
   const [viewedUserId, setViewedUserId] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string>("");
   const [login, setLogin] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +42,10 @@ export function AdminDashboardPage() {
   const viewedSessions = useMemo(
     () => (viewedUser ? getSessionsForUser(viewedUser.id) : []),
     [viewedUser, version],
+  );
+  const deleteTarget = useMemo(
+    () => (deleteTargetId ? getUserById(deleteTargetId) : undefined),
+    [deleteTargetId, version],
   );
 
   function handleLogout() {
@@ -66,19 +72,54 @@ export function AdminDashboardPage() {
     setIsUserModalOpen(true);
   }
 
+  function handleOpenDeleteModal(userId: string) {
+    setDeleteTargetId(userId);
+  }
+
+  function handleCloseDeleteModal() {
+    setDeleteTargetId("");
+  }
+
+  function handleDeleteUser() {
+    if (!deleteTargetId) {
+      return;
+    }
+
+    const result = deleteUser(deleteTargetId);
+    if (!result.ok) {
+      setMessage(result.message);
+      setMessageType("error");
+      handleCloseDeleteModal();
+      return;
+    }
+
+    const deletedOwnAccount = auth?.userId === deleteTargetId;
+
+    if (viewedUserId === deleteTargetId) {
+      setViewedUserId("");
+      setIsUserModalOpen(false);
+    }
+
+    setVersion((current) => current + 1);
+    setMessage(`${deleteTarget?.role === "admin" ? "Admin" : "Student"} ${deleteTarget?.login ?? "user"} was removed.`);
+    setMessageType("success");
+    handleCloseDeleteModal();
+
+    if (deletedOwnAccount) {
+      logout();
+      navigate(routes.entry);
+    }
+  }
+
   function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedFullName = fullName.trim();
-    const fullNameParts = trimmedFullName.split(/\s+/).filter(Boolean);
-    const parsedName = fullNameParts[0] ?? "";
-    const parsedSurname = fullNameParts.slice(1).join(" ");
 
     const result = createUser({
       role: selectedRole,
       login,
-      name: parsedName || trimmedFullName,
-      surname: parsedSurname,
+      fullName: trimmedFullName,
       password: selectedRole === "admin" ? password : undefined,
     });
 
@@ -106,7 +147,7 @@ export function AdminDashboardPage() {
           <div className={styles.headingBlock}>
             <p className={styles.eyebrow}>Administration</p>
             <h1 className={styles.title}>Users</h1>
-            <p className={styles.subtitle}>Switch between students and admins, create new accounts, and open a user in a separate window to see played games.</p>
+            <p className={styles.subtitle}>Switch between students and admins, create new accounts, review student results, and remove users when needed.</p>
           </div>
 
           <div className={styles.topbarActions}>
@@ -163,13 +204,24 @@ export function AdminDashboardPage() {
                       <td>{row.bestScoreLabel}</td>
                       <td>{row.lastPlayed}</td>
                       <td className={styles.actionCell}>
-                        <button
-                          type="button"
-                          className={styles.viewButton}
-                          onClick={() => handleOpenUserModal(row.id)}
-                        >
-                          View
-                        </button>
+                        <div className={styles.actionButtons}>
+                          {row.role === "child" ? (
+                            <button
+                              type="button"
+                              className={styles.viewButton}
+                              onClick={() => handleOpenUserModal(row.id)}
+                            >
+                              View
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleOpenDeleteModal(row.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -263,6 +315,41 @@ export function AdminDashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+
+      {deleteTarget ? (
+        <div className={styles.modalOverlay} onClick={handleCloseDeleteModal}>
+          <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <p className={styles.modalEyebrow}>Delete user</p>
+                <h2>Remove {deleteTarget.role === "admin" ? "admin" : "student"}?</h2>
+                <p className={styles.detailMeta}>
+                  {`${deleteTarget.name} ${deleteTarget.surname}`.trim() || deleteTarget.login} · @{deleteTarget.login}
+                </p>
+              </div>
+              <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal}>
+                ×
+              </button>
+            </div>
+
+            <div className={styles.deleteModalBody}>
+              <p className={styles.deleteText}>
+                This action will permanently remove the user account{deleteTarget.role === "child" ? " and all saved game results" : ""}.
+              </p>
+
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal}>
+                  Cancel
+                </button>
+                <button type="button" className={styles.dangerButton} onClick={handleDeleteUser}>
+                  Remove user
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
