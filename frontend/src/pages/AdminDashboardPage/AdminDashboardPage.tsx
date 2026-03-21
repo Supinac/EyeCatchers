@@ -24,7 +24,40 @@ import {
 } from "../../features/auth/utils/authValidation";
 import styles from "./AdminDashboardPage.module.css";
 
+const ENTRY_VALUE_LABELS: Record<string, string> = {
+  easy: "Lehká",
+  medium: "Střední",
+  hard: "Těžká",
+  fixed: "Pevná",
+  random: "Náhodná",
+  figures: "Tvary",
+  letters: "Písmena",
+  numbers: "Čísla",
+  grid: "Mřížka",
+  unlimited: "Bez omezení",
+  true: "Ano",
+  false: "Ne",
+  circle: "Kruh",
+  square: "Čtverec",
+  triangle: "Trojúhelník",
+  star: "Hvězda",
+  diamond: "Kosočtverec",
+  rectangle: "Obdélník",
+  hexagon: "Šestiúhelník",
+};
+
+function localizeValue(value: string) {
+  const normalized = value.trim();
+  if (!normalized) {
+    return "—";
+  }
+
+  const lower = normalized.toLowerCase();
+  return ENTRY_VALUE_LABELS[lower] ?? normalized;
+}
+
 function formatLabel(value: string | undefined) {
+
   if (!value) return "—";
   return value
     .replace(/[_-]+/g, " ")
@@ -42,6 +75,9 @@ const SETTING_PREFERRED_ORDER = [
   "contentMode",
   "placementMode",
   "targetValue",
+  "swapCount",
+  "swapDurationMs",
+  "symbolSize",
 ];
 
 const RESULT_PREFERRED_ORDER = [
@@ -80,11 +116,24 @@ function formatEntryValue(entry: SubmitScoreEntry) {
   }
 
   if (entry.key === "success") {
-    return normalizedValue.toLowerCase() === "true" ? "Yes" : "No";
+    return normalizedValue.toLowerCase() === "true" ? "Ano" : "Ne";
   }
 
-  if (["previewTime", "maxGameTime", "elapsedSeconds", "remainingSeconds"].includes(entry.key)) {
-    return `${normalizedValue}s`;
+  if (["previewTime", "elapsedSeconds", "remainingSeconds"].includes(entry.key)) {
+    return `${normalizedValue} s`;
+  }
+
+  if (entry.key === "maxGameTime") {
+    return normalizedValue === "unlimited" ? "Bez omezení" : `${normalizedValue} s`;
+  }
+
+  if (entry.key === "swapDurationMs") {
+    const milliseconds = Number(normalizedValue);
+    return Number.isFinite(milliseconds) ? `${(milliseconds / 1000).toFixed(1)} s` : `${normalizedValue} ms`;
+  }
+
+  if (entry.key === "symbolSize") {
+    return `${normalizedValue} px`;
   }
 
   if (["accuracyPercent", "figureSizePercent"].includes(entry.key)) {
@@ -96,7 +145,8 @@ function formatEntryValue(entry: SubmitScoreEntry) {
   }
 
   if (/^[a-z][a-z0-9_-]*$/i.test(normalizedValue)) {
-    return formatLabel(normalizedValue);
+    const localized = localizeValue(normalizedValue);
+    return localized === normalizedValue ? formatLabel(normalizedValue) : localized;
   }
 
   return normalizedValue;
@@ -185,25 +235,28 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
   const scoreValue = session.score ?? getResultNumber(session, "score");
   const maxScoreValue = session.maxScore ?? getResultNumber(session, "maxScore");
   const correctFoundLabel = scoreValue != null && maxScoreValue != null ? `${scoreValue}/${maxScoreValue}` : "—";
+  const isMovingShapes = session.gameKey === "track-the-circle";
 
-  const statsToRender = [
-    accuracyEntry,
-    correctHitsEntry,
-    wrongHitsEntry,
-    elapsedEntry,
-  ].filter(Boolean) as SubmitScoreEntry[];
+  const statsToRender = isMovingShapes
+    ? []
+    : ([
+        accuracyEntry,
+        correctHitsEntry,
+        wrongHitsEntry,
+        elapsedEntry,
+      ].filter(Boolean) as SubmitScoreEntry[]);
 
-  const extraStats = resultEntries.filter(
-    (entry) => !["score", "maxScore", "success", ...statsToRender.map((item) => item.key)].includes(entry.key),
-  );
+  const hiddenResultKeys = isMovingShapes
+    ? ["score", "maxScore", "success", "correctHits", "wrongHits", "totalTaps", "accuracyPercent", "elapsedSeconds", "remainingSeconds"]
+    : ["score", "maxScore", "success", ...statsToRender.map((item) => item.key)];
+
+  const extraStats = resultEntries.filter((entry) => !hiddenResultKeys.includes(entry.key));
   const visibleStats = [...statsToRender, ...extraStats];
 
   const configPills = [
     t("admin.session.pillGame", { value: session.gameTitle }),
     ...settingEntries.map((entry) => `${entry.tranlations}: ${formatEntryValue(entry)}`),
   ];
-
-  const playedAtLabel = session.playedAt ? formatDateTime(session.playedAt) : "—";
 
   return (
     <article className={styles.sessionCard}>
@@ -216,8 +269,7 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
           </div>
           <div>
             <h4 className={styles.sessionTitle}>{session.gameTitle}</h4>
-            <p className={styles.sessionMetaLine}>{t("admin.session.playedAt", { value: playedAtLabel })}</p>
-          </div>
+                      </div>
         </div>
         <div className={styles.sessionScoreBlock}>
           <span className={styles.sessionScoreLabel}>{t("admin.session.correctFound")}</span>
@@ -233,20 +285,13 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
         ))}
       </div>
 
-      <div className={styles.sessionStatsGrid}>
-        {visibleStats.length ? (
-          visibleStats.map((entry) => (
+      {visibleStats.length ? (
+        <div className={styles.sessionStatsGrid}>
+          {visibleStats.map((entry) => (
             <AdminStatCard key={`${session.id}-${entry.key}`} label={entry.tranlations} value={formatEntryValue(entry)} />
-          ))
-        ) : (
-          <>
-            <AdminStatCard label={t("admin.session.accuracy")} value="—" />
-            <AdminStatCard label={t("admin.session.correctTaps")} value="—" />
-            <AdminStatCard label={t("admin.session.wrongTaps")} value="—" />
-            <AdminStatCard label={t("admin.session.timeUsed")} value="—" />
-          </>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -610,14 +655,13 @@ export function AdminDashboardPage() {
                   <th>{t("admin.table.login")}</th>
                   <th>{t("admin.table.gamesPlayed")}</th>
                   <th>{t("admin.table.bestScore")}</th>
-                  <th>{t("admin.table.lastPlayed")}</th>
                   <th className={styles.actionColumn}>{t("admin.table.action")}</th>
                 </tr>
               </thead>
               <tbody>
                 {isTableLoading ? (
                   <tr>
-                    <td colSpan={6} className={styles.emptyTable}>
+                    <td colSpan={5} className={styles.emptyTable}>
                       {t("admin.table.loading", { role: selectedRolePlural })}
                     </td>
                   </tr>
@@ -628,7 +672,6 @@ export function AdminDashboardPage() {
                       <td>@{row.login}</td>
                       <td>{row.gamesPlayed}</td>
                       <td>{row.bestScoreLabel}</td>
-                      <td>{row.lastPlayed}</td>
                       <td className={styles.actionCell}>
                         <div className={styles.actionButtons}>
                           {row.role === "child" ? (
@@ -653,7 +696,7 @@ export function AdminDashboardPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className={styles.emptyTable}>
+                    <td colSpan={5} className={styles.emptyTable}>
                       {t("admin.table.empty", { role: selectedRolePlural })}
                     </td>
                   </tr>

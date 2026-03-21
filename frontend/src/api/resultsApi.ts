@@ -45,6 +45,7 @@ export type AdminGameResult = {
 
 const GAME_TYPE_MAP: Record<string, string> = {
   "find-circle": "find_all_same",
+  "track-the-circle": "moving_shapes",
   "memory-pairs": "memory_pairs",
   "shape-match": "shape_match",
   "count-items": "count_items",
@@ -57,6 +58,16 @@ const API_GAME_TO_FRONTEND_KEY: Record<string, string> = Object.entries(GAME_TYP
   return accumulator;
 }, {});
 
+const GAME_TITLE_MAP: Record<string, string> = {
+  "find-circle": "Najdi stejné",
+  "track-the-circle": "Sleduj kruh",
+  "memory-pairs": "Pexeso",
+  "shape-match": "Přiřaď tvary",
+  "count-items": "Počítání objektů",
+  "find-different": "Najdi rozdíl",
+  "repeat-sequence": "Opakuj sekvenci",
+};
+
 function formatTitle(value: string) {
   return value
     .replace(/[_-]+/g, " ")
@@ -64,6 +75,10 @@ function formatTitle(value: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function mapGameTitle(gameKey: string) {
+  return GAME_TITLE_MAP[gameKey] ?? formatTitle(gameKey);
 }
 
 function mapGameType(gameKey: string) {
@@ -246,7 +261,7 @@ export function normalizeAdminResult(item: AdminResultResponse): AdminGameResult
     id: String(item.id),
     userId: String(item.user_id),
     gameKey,
-    gameTitle: formatTitle(gameKey),
+    gameTitle: mapGameTitle(gameKey),
     playedAt: extractPlayedAt(item),
     success: parseBoolean(results.success?.value),
     score: parseNumber(results.score?.value),
@@ -279,6 +294,9 @@ export function buildSubmitScoreRequest(result: GameResult): SubmitScoreRequest 
       stats?.contentMode ? toEntry("contentMode", "Režim obsahu", stats.contentMode) : null,
       stats?.placementMode ? toEntry("placementMode", "Rozložení objektů", stats.placementMode) : null,
       stats?.targetValue ? toEntry("targetValue", "Hledaný objekt", stats.targetValue) : null,
+      stats?.swapCount != null ? toEntry("swapCount", "Počet přesunů", stats.swapCount) : null,
+      stats?.swapDurationMs != null ? toEntry("swapDurationMs", "Rychlost přesunu", stats.swapDurationMs) : null,
+      stats?.symbolSize != null ? toEntry("symbolSize", "Velikost symbolů", stats.symbolSize) : null,
     ]),
     results: toMap([
       toEntry("score", "Skóre", result.score),
