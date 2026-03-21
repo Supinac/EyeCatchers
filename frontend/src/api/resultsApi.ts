@@ -15,6 +15,29 @@ export type SubmitScoreRequest = {
   results: SubmitScoreMap;
 };
 
+export type AdminResultResponse = {
+  id: number;
+  user_id: number;
+  game_type: string;
+  settings: SubmitScoreMap | SubmitScoreEntry[] | string | null;
+  results: SubmitScoreMap | SubmitScoreEntry[] | string | null;
+  created_at?: string | null;
+};
+
+export type AdminGameResult = {
+  id: string;
+  userId: string;
+  gameKey: string;
+  gameTitle: string;
+  playedAt: string;
+  success: boolean;
+  score: number | null;
+  maxScore: number | null;
+  difficulty: string;
+  settings: SubmitScoreMap;
+  results: SubmitScoreMap;
+};
+
 const GAME_TYPE_MAP: Record<string, string> = {
   "find-circle": "find_all_same",
   "memory-pairs": "memory_pairs",
@@ -24,8 +47,26 @@ const GAME_TYPE_MAP: Record<string, string> = {
   "repeat-sequence": "repeat_sequence",
 };
 
+const API_GAME_TO_FRONTEND_KEY: Record<string, string> = Object.entries(GAME_TYPE_MAP).reduce<Record<string, string>>((accumulator, [frontendKey, apiKey]) => {
+  accumulator[apiKey] = frontendKey;
+  return accumulator;
+}, {});
+
+function formatTitle(value: string) {
+  return value
+    .replace(/[_-]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function mapGameType(gameKey: string) {
   return GAME_TYPE_MAP[gameKey] ?? gameKey.replace(/-/g, "_");
+}
+
+function mapApiGameType(gameType: string) {
+  return API_GAME_TO_FRONTEND_KEY[gameType] ?? gameType.replace(/_/g, "-");
 }
 
 function toEntry(key: string, tranlations: string, value: unknown): SubmitScoreEntry | null {
@@ -60,6 +101,111 @@ function toMap(entries: Array<SubmitScoreEntry | null>): SubmitScoreMap {
 
     return accumulator;
   }, {});
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeEntry(candidate: unknown, fallbackKey?: string): SubmitScoreEntry | null {
+  if (!isPlainObject(candidate)) {
+    return null;
+  }
+
+  const key = typeof candidate.key === "string" && candidate.key.trim() ? candidate.key.trim() : fallbackKey;
+  const tranlations = typeof candidate.tranlations === "string" ? candidate.tranlations : typeof candidate.translations === "string" ? candidate.translations : key ?? "";
+  const value = candidate.value;
+
+  if (!key || value == null) {
+    return null;
+  }
+
+  return {
+    key,
+    tranlations,
+    value: typeof value === "string" ? value : String(value),
+  };
+}
+
+export function normalizeEntryMap(input: unknown): SubmitScoreMap {
+  if (!input) {
+    return {};
+  }
+
+  let parsedInput: unknown = input;
+
+  if (typeof parsedInput === "string") {
+    try {
+      parsedInput = JSON.parse(parsedInput) as unknown;
+    } catch {
+      return {};
+    }
+  }
+
+  if (Array.isArray(parsedInput)) {
+    return parsedInput.reduce<SubmitScoreMap>((accumulator, item) => {
+      const normalized = normalizeEntry(item);
+      if (normalized) {
+        accumulator[normalized.key] = normalized;
+      }
+      return accumulator;
+    }, {});
+  }
+
+  if (isPlainObject(parsedInput)) {
+    return Object.entries(parsedInput).reduce<SubmitScoreMap>((accumulator, [key, value]) => {
+      const normalized = normalizeEntry(value, key);
+      if (normalized) {
+        accumulator[normalized.key] = normalized;
+      }
+      return accumulator;
+    }, {});
+  }
+
+  return {};
+}
+
+function parseBoolean(value: string | undefined) {
+  if (!value) {
+    return false;
+  }
+
+  return value.trim().toLowerCase() === "true";
+}
+
+function parseNumber(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function normalizeAdminResult(item: AdminResultResponse): AdminGameResult {
+  const settings = normalizeEntryMap(item.settings);
+  const results = normalizeEntryMap(item.results);
+  const gameKey = mapApiGameType(item.game_type);
+
+  return {
+    id: String(item.id),
+    userId: String(item.user_id),
+    gameKey,
+    gameTitle: formatTitle(gameKey),
+    playedAt: item.created_at ?? new Date(0).toISOString(),
+    success: parseBoolean(results.success?.value),
+    score: parseNumber(results.score?.value),
+    maxScore: parseNumber(results.maxScore?.value),
+    difficulty: settings.difficulty?.value ?? "",
+    settings,
+    results,
+  };
+}
+
+export function normalizeAdminResults(items: AdminResultResponse[]) {
+  return items
+    .map(normalizeAdminResult)
+    .sort((left, right) => new Date(right.playedAt).getTime() - new Date(left.playedAt).getTime());
 }
 
 export function buildSubmitScoreRequest(result: GameResult): SubmitScoreRequest {
@@ -97,5 +243,11 @@ export function submitScore(payload: SubmitScoreRequest) {
   return request<string>("/user/results", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function getAdminResults() {
+  return request<AdminResultResponse[]>("/admin/results", {
+    method: "GET",
   });
 }
