@@ -130,7 +130,7 @@ export function GameConfigPage() {
       </div>
 
       <div className={styles.panel}>
-        {gameKey !== "track-the-circle" && (
+        {gameKey === "find-circle" && (
           <>
             <ConfigTileGroup title="Preview time" options={previewOptions} selected={previewSeconds} onChange={setPreviewSeconds} />
             <ConfigTileGroup title="Max game time" options={maxGameTimeOptions} selected={maxGameSeconds} onChange={setMaxGameSeconds} />

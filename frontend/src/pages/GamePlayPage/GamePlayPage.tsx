@@ -77,13 +77,24 @@ export function GamePlayPage() {
           Back
         </ButtonLink>
         <div className={styles.meta}>
-          <span>{config.findCircle?.previewSeconds}s preview</span>
-          <span>{isUnlimitedTime(config.findCircle?.maxGameSeconds ?? 60) ? "Unlimited time" : `${config.findCircle?.maxGameSeconds}s max time`}</span>
-          <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} items</span>
-          <span>{config.findCircle?.correctObjectCount} correct</span>
-          <span>{formatLabel(config.findCircle?.contentMode)}</span>
-          <span>{formatLabel(config.findCircle?.placementMode)}</span>
-          <span>{config.findCircle?.figureSizePercent}% {formatLabel(config.findCircle?.figureSizeMode).toLowerCase()} size</span>
+          {gameKey === "find-circle" && (
+            <>
+              <span>{config.findCircle?.previewSeconds}s preview</span>
+              <span>{isUnlimitedTime(config.findCircle?.maxGameSeconds ?? 60) ? "Unlimited time" : `${config.findCircle?.maxGameSeconds}s max time`}</span>
+              <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} items</span>
+              <span>{config.findCircle?.correctObjectCount} correct</span>
+              <span>{formatLabel(config.findCircle?.contentMode)}</span>
+              <span>{formatLabel(config.findCircle?.placementMode)}</span>
+              <span>{config.findCircle?.figureSizePercent}% {formatLabel(config.findCircle?.figureSizeMode).toLowerCase()} size</span>
+            </>
+          )}
+          {gameKey === "track-the-circle" && (
+            <>
+              <span>{difficulty}</span>
+              <span>{searchParams.get("swapCount")} přehození</span>
+              <span>{searchParams.get("symbolSize")}px symboly</span>
+            </>
+          )}
         </div>
       </div>
 
