@@ -29,6 +29,7 @@ def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
         )
     admin = tables.Admin(
         name=user.name,
+        login=user.login,
         password=hash_password(user.password),
     )
     session.add(admin)

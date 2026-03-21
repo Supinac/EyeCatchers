@@ -16,7 +16,8 @@ class User(Base):
 class Admin(Base):
     __tablename__ = "admin"
     id:         Mapped[int]       = mapped_column(primary_key=True, init=False)
-    login:  Mapped[str]       = mapped_column(String(50), unique=True)
+    name:       Mapped[str]       = mapped_column(String(50))
+    login:      Mapped[str]       = mapped_column(String(50), unique=True)
     password:   Mapped[str]       = mapped_column(String(255))  # stored as bcrypt hash
     created_at: Mapped[datetime]  = mapped_column(server_default=func.now(), init=False)
 
