@@ -21,7 +21,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.arm64
+      dockerfile: Dockerfile
     container_name: eyecatchers-backend
     environment:
       DB_HOST: mysql

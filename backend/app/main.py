@@ -1,11 +1,12 @@
 
 import sys
-import socket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Request, Response
 from .config import settings
 from . import db
 from .endpoints.admin import router as admin_router
 from .endpoints.user import router as user_router
+
 
 
 
@@ -38,7 +39,7 @@ app = FastAPI(
     description="API for the EyeCatchers app.",
     version="1.0.0",
 )
-from fastapi.middleware.cors import CORSMiddleware
+
 
 app.add_middleware(
     CORSMiddleware,
