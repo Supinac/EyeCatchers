@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds, SwapCount, SymbolSize } from "../../games/core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds, SwapCount, SymbolSize, SwapDurationMs } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { defaultFindCircleConfig, getFigureSizePercent, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
 import type { GameDifficulty } from "../../games/core/types/GameDefinition";
@@ -57,6 +57,15 @@ const swapCountOptions: TileOption<SwapCount>[] = [
   { id: 30, label: "30", description: "Maximální obtížnost." },
 ];
 
+const swapDurationOptions: TileOption<SwapDurationMs>[] = [
+  { id: 200,  label: "0.2s", description: "Velmi rychlé." },
+  { id: 400,  label: "0.4s", description: "Rychlé." },
+  { id: 600,  label: "0.6s", description: "Střední." },
+  { id: 800,  label: "0.8s", description: "Pomalé." },
+  { id: 1000, label: "1.0s", description: "Velmi pomalé." },
+  { id: 1200, label: "1.2s", description: "Nejpomalejší." },
+];
+
 const difficultyOptions: TileOption<GameDifficulty>[] = [
   { id: "easy",   label: "Lehká",   description: "3 kruhy na obrazovce." },
   { id: "medium", label: "Střední", description: "5 kruhů na obrazovce." },
@@ -78,6 +87,7 @@ export function GameConfigPage() {
   const [contentMode, setContentMode] = useState<ContentMode>(defaultFindCircleConfig.contentMode);
   const [placementMode, setPlacementMode] = useState<PlacementMode>(defaultFindCircleConfig.placementMode);
   const [swapCount, setSwapCount] = useState<SwapCount>(15);
+  const [swapDurationMs, setSwapDurationMs] = useState<SwapDurationMs>(600);
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
   const [symbolSize, setSymbolSize] = useState<SymbolSize>(52);
 
@@ -96,7 +106,7 @@ export function GameConfigPage() {
       gameKey,
       difficulty,
       findCircle: { previewSeconds, maxGameSeconds, gridSize, correctObjectCount, figureSizeMode, figureSizePercent, contentMode, placementMode },
-      trackTheCircle: { swapCount, symbolSize },
+      trackTheCircle: { swapCount, symbolSize, swapDurationMs },
     });
 
     const params = new URLSearchParams({
@@ -110,6 +120,7 @@ export function GameConfigPage() {
       placementMode,
       swapCount: String(swapCount),
       symbolSize: String(symbolSize),
+      swapDurationMs: String(swapDurationMs),
       difficulty,
     });
 
@@ -163,7 +174,8 @@ export function GameConfigPage() {
         {gameKey === "track-the-circle" && (
           <>
             <ConfigTileGroup title="Obtížnost" options={difficultyOptions} selected={difficulty} onChange={setDifficulty} />
-            <ConfigTileGroup title="Počet přehození" options={swapCountOptions} selected={swapCount} onChange={setSwapCount} />
+            <ConfigTileGroup title="Počet přehození" options={swapCountOptions} selected={swapCount} onChange={setSwapCount} columns={3} />
+            <ConfigTileGroup title="Rychlost přehození" options={swapDurationOptions} selected={swapDurationMs} onChange={setSwapDurationMs} columns={3} />
             <ConfigSlider
               title="Velikost symbolů"
               min={32}

@@ -92,7 +92,8 @@ export function GamePlayPage() {
             <>
               <span>{difficulty}</span>
               <span>{searchParams.get("swapCount")} přehození</span>
-              <span>{searchParams.get("symbolSize")}px symboly</span>
+              <span>{searchParams.get("swapDurationMs")} ms rychlost</span>
+              <span>{searchParams.get("symbolSize")} px symboly</span>
             </>
           )}
         </div>

@@ -61,11 +61,12 @@ async function animateSwap(
   spriteB: Container,
   toAx: number, toAy: number,
   toBx: number, toBy: number,
+  duration: number,
 ) {
   const fromAx = spriteA.x, fromAy = spriteA.y;
   const fromBx = spriteB.x, fromBy = spriteB.y;
   const steps = 30;
-  const stepMs = SWAP_DURATION_MS / steps;
+  const stepMs = duration / steps;
 
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
@@ -84,12 +85,14 @@ export function mountTrackTheCircleScene({
   difficulty,
   swapCount,
   symbolSize,
+  swapDurationMs,
   onComplete,
 }: {
   mountElement: HTMLDivElement;
   difficulty: GameDifficulty;
   swapCount: number;
   symbolSize: number;
+  swapDurationMs: number;
   onComplete: (result: GameResult) => void;
 }) {
   const app = createPixiApp(mountElement);
@@ -160,6 +163,7 @@ export function mountTrackTheCircleScene({
         spriteA, spriteB,
         newA.x * width, newA.y * height,
         newB.x * width, newB.y * height,
+        swapDurationMs,
       );
 
       // Aktualizace state po animaci

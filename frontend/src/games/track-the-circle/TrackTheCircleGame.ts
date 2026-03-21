@@ -18,11 +18,16 @@ export const TrackTheCircleGame: RegisteredGame = {
       ? Number(params.get("symbolSize"))
       : 52;
 
+    const swapDurationMs = params.get("swapDurationMs")
+      ? Number(params.get("swapDurationMs"))
+      : 600;
+
     return mountTrackTheCircleScene({
       mountElement,
       difficulty: resolvedDifficulty,
       swapCount,
       symbolSize,
+      swapDurationMs,
       onComplete,
     });
   },
