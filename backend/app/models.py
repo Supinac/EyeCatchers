@@ -47,9 +47,9 @@ class UserLogin(BaseModel):
     login:      str                     = Field(min_length=4, max_length=MAX_STRING_LENGTH)
 
 class GameType(str, Enum):
-    find_all_same = "najdi_vsechny_stejne_obrazky"
-    say_what_you_see = "řekni_co_vidíš"
-    mooving_shapes = "pohyblivé_tvary"
+    find_all_same = "find_all_same"
+    say_what_you_see = "say_what_you_see"
+    moving_shapes = "moving_shapes"
 
 class ScoreSubmit(BaseModel):
     success_rate: float = Field(ge=0)

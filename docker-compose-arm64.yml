@@ -1,9 +1,7 @@
 services:
-  mysql:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.mysql.arm64
-    container_name: eyecatchers-mysql
+  db:
+    image: mysql:8.0
+    platform: linux/arm64
     environment:
       MYSQL_DATABASE: eyecatchers
       MYSQL_USER: eyecatchers
@@ -24,15 +22,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.arm64
-    container_name: eyecatchers-backend
+    platform: linux/arm64
     environment:
-      DB_HOST: mysql
+    
+      DB_HOST: db
       DB_PORT: 3306
       DB_NAME: eyecatchers
       DB_USER: eyecatchers
       DB_PASSWORD: pja98fbe
     depends_on:
-      mysql:
+      db:
         condition: service_healthy
     ports:
       - "80:80"
