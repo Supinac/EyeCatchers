@@ -50,13 +50,7 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   if (kind === "square") {
     const rectWidth = getRounded(roundedSize * 1.14);
     const rectHeight = getRounded(roundedSize * 0.78);
-    graphic.drawRoundedRect(
-      -rectWidth / 2,
-      -rectHeight / 2,
-      rectWidth,
-      rectHeight,
-      Math.max(10, Math.round(rectHeight * 0.22)),
-    );
+    graphic.drawRect(-rectWidth / 2, -rectHeight / 2, rectWidth, rectHeight);
     graphic.endFill();
     return;
   }
@@ -158,7 +152,7 @@ function createGridItem({
   const container = new Container();
   const card = new Graphics();
   const symbolLayer = new Container();
-  const symbolSize = cellSize * 0.38 * item.scale;
+  const symbolSize = cellSize * (item.contentType === "shape" ? 0.58 : 0.54) * item.scale;
 
   function paint(state: "idle" | "correct" | "wrong") {
     const borderColor = state === "correct" ? COLORS.correct : state === "wrong" ? COLORS.wrong : COLORS.panelBorder;
@@ -247,7 +241,6 @@ function getRandomPositions({
   bottomSpace,
   padding,
   baseSize,
-  gridSize,
 }: {
   count: number;
   width: number;
@@ -256,41 +249,83 @@ function getRandomPositions({
   bottomSpace: number;
   padding: number;
   baseSize: number;
-  gridSize: number;
 }) {
   const playLeft = padding;
   const playRight = width - padding;
   const playTop = topSpace;
   const playBottom = height - bottomSpace;
-  const density = Math.max(count * 2.4, count + 10);
-  const aspectRatio = (playRight - playLeft) / Math.max(playBottom - playTop, 1);
-  const cols = Math.max(gridSize + 2, Math.ceil(Math.sqrt(density * Math.max(aspectRatio, 0.8))));
-  const rows = Math.max(gridSize + 2, Math.ceil(density / cols));
-  const slotWidth = (playRight - playLeft) / cols;
-  const slotHeight = (playBottom - playTop) / rows;
-  const itemSize = Math.max(72, Math.min(baseSize * 0.88, Math.min(slotWidth, slotHeight) * 0.82));
-  const jitterX = Math.max(0, (slotWidth - itemSize) * 0.34);
-  const jitterY = Math.max(0, (slotHeight - itemSize) * 0.34);
+  const playWidth = playRight - playLeft;
+  const playHeight = playBottom - playTop;
+  const areaSide = Math.min(playWidth, playHeight);
+  const sizeBoost =
+    count <= 4 ? 1.28 : count <= 9 ? 1.16 : count <= 16 ? 1.06 : 1;
+  const desiredSize = Math.max(
+    78,
+    Math.min(
+      baseSize * sizeBoost,
+      areaSide * (count <= 4 ? 0.35 : count <= 9 ? 0.245 : count <= 16 ? 0.185 : 0.15),
+    ),
+  );
 
-  const candidates: ItemPosition[] = [];
+  function tryPlace(itemSize: number) {
+    const positions: ItemPosition[] = [];
+    const half = itemSize / 2;
+    const gap = Math.max(14, Math.min(26, itemSize * 0.12));
+    const minCenterDistance = itemSize + gap;
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const centerX = playLeft + slotWidth * (col + 0.5);
-      const centerY = playTop + slotHeight * (row + 0.5);
-      const randomX = centerX + (Math.random() * 2 - 1) * jitterX;
-      const randomY = centerY + (Math.random() * 2 - 1) * jitterY;
+    for (let index = 0; index < count; index += 1) {
+      let placed = false;
 
-      candidates.push({
-        x: Math.min(playRight - itemSize / 2, Math.max(playLeft + itemSize / 2, randomX)),
-        y: Math.min(playBottom - itemSize / 2, Math.max(playTop + itemSize / 2, randomY)),
-      });
+      for (let attempt = 0; attempt < 1600; attempt += 1) {
+        const x = playLeft + half + Math.random() * Math.max(1, playWidth - itemSize);
+        const y = playTop + half + Math.random() * Math.max(1, playHeight - itemSize);
+
+        const overlaps = positions.some((position) => {
+          const dx = Math.abs(position.x - x);
+          const dy = Math.abs(position.y - y);
+          return dx < minCenterDistance && dy < minCenterDistance;
+        });
+
+        if (!overlaps) {
+          positions.push({ x, y });
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        return null;
+      }
+    }
+
+    return positions;
+  }
+
+  const fallbackMinSize = Math.max(78, Math.min(baseSize * 0.9, areaSide * 0.13));
+
+  for (let size = desiredSize; size >= fallbackMinSize; size -= 8) {
+    const positions = tryPlace(size);
+    if (positions) {
+      return { positions, itemSize: size };
     }
   }
 
+  const safeSize = fallbackMinSize;
+  const columns = Math.max(1, Math.ceil(Math.sqrt(count)));
+  const rows = Math.max(1, Math.ceil(count / columns));
+  const xStep = Math.max(safeSize + 12, playWidth / columns);
+  const yStep = Math.max(safeSize + 12, playHeight / rows);
+  const startX = playLeft + Math.min(playWidth, xStep * columns) / (columns * 2);
+  const startY = playTop + Math.min(playHeight, yStep * rows) / (rows * 2);
+
+  const positions: ItemPosition[] = Array.from({ length: count }, (_, index) => ({
+    x: Math.min(playRight - safeSize / 2, startX + (index % columns) * xStep),
+    y: Math.min(playBottom - safeSize / 2, startY + Math.floor(index / columns) * yStep),
+  }));
+
   return {
-    positions: shuffle(candidates).slice(0, count),
-    itemSize,
+    positions: shuffle(positions),
+    itemSize: safeSize,
   };
 }
 
@@ -373,7 +408,7 @@ export function mountFindCircleScene({
   const previewDisplay = createPreviewDisplay(
     round.targetValue,
     round.items[0]?.contentType === "shape",
-    previewCardSize * (round.items[0]?.contentType === "shape" ? 0.42 : 0.54),
+    previewCardSize * (round.items[0]?.contentType === "shape" ? 0.56 : 0.62),
     COLORS.white,
   );
   previewDisplay.x = width / 2;
@@ -460,7 +495,6 @@ export function mountFindCircleScene({
           bottomSpace,
           padding: gridPaddingX,
           baseSize: gridLayout.itemSize,
-          gridSize: config.gridSize,
         })
       : gridLayout;
 
