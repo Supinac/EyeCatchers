@@ -2,14 +2,17 @@ import { useEffect, useRef } from "react";
 import { createGame } from "../core/engine/GameFactory";
 import type { GameDifficulty } from "../core/types/GameDefinition";
 import type { GameResult } from "../core/types/GameResult";
+import type { GameConfig } from "../core/types/GameConfig";
 
 export function PixiGameHost({
   gameKey,
   difficulty,
+  config,
   onComplete,
 }: {
   gameKey: string;
   difficulty: GameDifficulty;
+  config?: GameConfig;
   onComplete: (result: GameResult) => void;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +28,7 @@ export function PixiGameHost({
     const cleanup = game.render({
       mountElement: hostRef.current,
       difficulty,
+      config,
       onComplete,
     });
 
@@ -34,16 +38,17 @@ export function PixiGameHost({
         hostRef.current.innerHTML = "";
       }
     };
-  }, [gameKey, difficulty, onComplete]);
+  }, [config, difficulty, gameKey, onComplete]);
 
   return (
     <div
       ref={hostRef}
       style={{
         width: "100%",
-        minHeight: 540,
+        height: "100%",
+        minHeight: 0,
         border: "1px solid rgba(255,255,255,0.14)",
-        borderRadius: 24,
+        borderRadius: 28,
         overflow: "hidden",
         background: "#000",
       }}

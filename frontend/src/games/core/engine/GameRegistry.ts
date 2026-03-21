@@ -1,5 +1,6 @@
 import type { GameDifficulty } from "../types/GameDefinition";
 import type { GameResult } from "../types/GameResult";
+import type { GameConfig } from "../types/GameConfig";
 import { FindCircleGame } from "../../find-circle/FindCircleGame";
 import { PlaceholderGame } from "../../placeholder/PlaceholderGame";
 import { TrackTheCircleGame } from "../../track-the-circle/TrackTheCircleGame";
@@ -9,6 +10,7 @@ export type RegisteredGame = {
   render: (params: {
     mountElement: HTMLDivElement;
     difficulty: GameDifficulty;
+    config?: GameConfig;
     onComplete: (result: GameResult) => void;
   }) => () => void;
 };
