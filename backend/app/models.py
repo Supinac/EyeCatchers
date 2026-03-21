@@ -48,7 +48,7 @@ class UserLogin(BaseModel):
 
 class GameType(str, Enum):
     find_all_same = "find_all_same"
-    say_what_you_see = "say_what_you_see"
+    keys = "keys"
     moving_shapes = "moving_shapes"
 
 class ScoreSubmit(BaseModel):
