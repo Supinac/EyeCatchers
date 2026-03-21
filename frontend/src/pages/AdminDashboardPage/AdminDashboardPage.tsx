@@ -2,15 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import {
-  deleteAdmin,
-  deleteStudent,
-  getAdmins,
-  getStudents,
-  registerAdmin,
-  registerStudent,
-  type UserListItemResponse,
-} from "../../api/authApi";
+import { deleteAdmin, deleteStudent, getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
 import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
@@ -60,6 +52,18 @@ function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
       lastPlayed: sessions[0]?.playedAt ? formatDateTime(sessions[0].playedAt) : "—",
     };
   });
+}
+
+function isSameAdminAccount(
+  auth: ReturnType<ReturnType<typeof useAuth>["getAuthState"]>,
+  candidate: { id?: number | string; login?: string; role?: AuthRole },
+) {
+  if (!auth || auth.role !== "admin") {
+    return false;
+  }
+
+  const candidateId = candidate.id == null ? "" : String(candidate.id);
+  return candidateId === auth.userId || candidate.login === auth.login;
 }
 
 function AdminStatCard({ label, value }: { label: string; value: string }) {
@@ -151,10 +155,8 @@ export function AdminDashboardPage() {
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [tableError, setTableError] = useState("");
 
-  const filteredRows = useMemo(
-    () => (selectedRole === "admin" ? adminRows : studentRows),
-    [adminRows, selectedRole, studentRows],
-  );
+  const allTableRows = useMemo(() => [...studentRows, ...adminRows], [adminRows, studentRows]);
+  const filteredRows = useMemo(() => (selectedRole === "admin" ? adminRows : studentRows), [adminRows, selectedRole, studentRows]);
   const viewedUser = useMemo(
     () => (viewedUserId ? getUserById(viewedUserId) : undefined),
     [viewedUserId, version],
@@ -164,8 +166,8 @@ export function AdminDashboardPage() {
     [viewedUser, version],
   );
   const deleteTarget = useMemo(
-    () => (deleteTargetId ? getUserById(deleteTargetId) : undefined),
-    [deleteTargetId, version],
+    () => (deleteTargetId ? allTableRows.find((row) => row.id === deleteTargetId) : undefined),
+    [allTableRows, deleteTargetId],
   );
 
   async function loadUsers() {
@@ -193,8 +195,10 @@ export function AdminDashboardPage() {
         });
       });
 
+      const visibleAdmins = adminsResponse.filter((user) => !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
+
       setStudentRows(mapApiUsersToRows("child", studentsResponse));
-      setAdminRows(mapApiUsersToRows("admin", adminsResponse));
+      setAdminRows(mapApiUsersToRows("admin", visibleAdmins));
     } catch (apiError) {
       setTableError(getApiErrorMessage(apiError, "Failed to load users."));
     } finally {
@@ -231,6 +235,14 @@ export function AdminDashboardPage() {
   }
 
   function handleOpenDeleteModal(userId: string) {
+    const targetRow = allTableRows.find((row) => row.id === userId);
+
+    if (isSameAdminAccount(auth, { id: userId, login: targetRow?.login, role: targetRow?.role })) {
+      setMessage("You cannot remove your own admin account.");
+      setMessageType("error");
+      return;
+    }
+
     setDeleteTargetId(userId);
   }
 
@@ -243,57 +255,56 @@ export function AdminDashboardPage() {
       return;
     }
 
-    const targetId = Number(deleteTargetId);
-    if (Number.isNaN(targetId)) {
-      setMessage("Invalid user id.");
+    if (isSameAdminAccount(auth, { id: deleteTargetId, login: deleteTarget.login, role: deleteTarget.role })) {
+      setMessage("You cannot remove your own admin account.");
       setMessageType("error");
       handleCloseDeleteModal();
       return;
     }
 
+    const targetId = deleteTargetId;
+    const targetRole = deleteTarget.role;
+    const targetLogin = deleteTarget.login;
+    const deletedOwnAccount = isSameAdminAccount(auth, { id: targetId, login: targetLogin, role: targetRole });
+
     setIsDeleting(true);
+    setMessage("");
+    setMessageType("");
 
     try {
-      if (deleteTarget.role === "admin") {
-        await deleteAdmin(targetId);
+      if (targetRole === "admin") {
+        await deleteAdmin(Number(targetId));
       } else {
-        await deleteStudent(targetId);
+        await deleteStudent(Number(targetId));
       }
 
-      const result = deleteUser(deleteTargetId);
-      if (!result.ok) {
-        setMessage(result.message);
-        setMessageType("error");
-        handleCloseDeleteModal();
-        return;
-      }
+      deleteUser(targetId);
 
-      const deletedOwnAccount = auth?.userId === deleteTargetId;
-
-      if (viewedUserId === deleteTargetId) {
+      if (viewedUserId === targetId) {
         setViewedUserId("");
         setIsUserModalOpen(false);
       }
 
-      if (deleteTarget.role === "admin") {
-        setAdminRows((current) => current.filter((row) => row.id !== deleteTargetId));
+      if (targetRole === "admin") {
+        setAdminRows((current) => current.filter((row) => row.id !== targetId));
       } else {
-        setStudentRows((current) => current.filter((row) => row.id !== deleteTargetId));
+        setStudentRows((current) => current.filter((row) => row.id !== targetId));
       }
 
-      setVersion((current) => current + 1);
-      setMessage(`${deleteTarget.role === "admin" ? "Admin" : "Student"} ${deleteTarget.login} was removed.`);
-      setMessageType("success");
       handleCloseDeleteModal();
+      setVersion((current) => current + 1);
+      setMessage(`${targetRole === "admin" ? "Admin" : "Student"} ${targetLogin} was removed.`);
+      setMessageType("success");
+
+      await loadUsers();
 
       if (deletedOwnAccount) {
         logout();
         navigate(routes.entry);
       }
     } catch (apiError) {
-      setMessage(getApiErrorMessage(apiError, `Failed to delete ${deleteTarget.role === "admin" ? "admin" : "student"}.`));
+      setMessage(getApiErrorMessage(apiError, `Failed to remove ${deleteTarget.role === "admin" ? "admin" : "student"}.`));
       setMessageType("error");
-      handleCloseDeleteModal();
     } finally {
       setIsDeleting(false);
     }
@@ -356,7 +367,9 @@ export function AdminDashboardPage() {
 
       const nextRow = mapApiUsersToRows(selectedRole, [response])[0];
       if (selectedRole === "admin") {
-        setAdminRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+        if (!isSameAdminAccount(auth, { id: response.id, login: response.login, role: "admin" })) {
+          setAdminRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+        }
       } else {
         setStudentRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
       }
@@ -586,7 +599,7 @@ export function AdminDashboardPage() {
                 <p className={styles.modalEyebrow}>Delete user</p>
                 <h2>Remove {deleteTarget.role === "admin" ? "admin" : "student"}?</h2>
                 <p className={styles.detailMeta}>
-                  {`${deleteTarget.name} ${deleteTarget.surname}`.trim() || deleteTarget.login} · @{deleteTarget.login}
+                  {deleteTarget.fullName || deleteTarget.login} · @{deleteTarget.login}
                 </p>
               </div>
               <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>

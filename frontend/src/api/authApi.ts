@@ -71,14 +71,16 @@ export function getAdmins() {
   });
 }
 
+
+
 export function deleteStudent(userId: number) {
-  return request<void>(`/admin/user/${userId}`, {
+  return request<null>(`/admin/user/${userId}`, {
     method: "DELETE",
   });
 }
 
 export function deleteAdmin(adminId: number) {
-  return request<void>(`/admin/admin/${adminId}`, {
+  return request<null>(`/admin/admin/${adminId}`, {
     method: "DELETE",
   });
 }
