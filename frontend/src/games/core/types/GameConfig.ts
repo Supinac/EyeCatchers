@@ -16,4 +16,5 @@ export type GameConfig = {
   gameKey: string;
   difficulty: GameDifficulty;
   findCircle?: FindCircleGameConfig;
+  keys?: KeysGameConfig;
 };
