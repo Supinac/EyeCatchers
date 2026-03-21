@@ -30,6 +30,6 @@ COPY . .
 # # Runtime stage: install prod deps
 # RUN npm install --omit=dev
 # Runtime stage: expose port
-# EXPOSE 3000
+EXPOSE 5173
 # Runtime stage: start server
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

@@ -29,8 +29,8 @@ services:
   client:
     build:
       context: ./frontend
-      args:
-        NEXT_PUBLIC_BASE_URL: https://obrady.fav.zcu.cz/api
+    environment:
+      VITE_API_BASE_URL: http://localhost/api
     restart: unless-stopped
     depends_on:
       - api
