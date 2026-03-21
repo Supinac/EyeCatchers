@@ -14,7 +14,7 @@ router = APIRouter(prefix="/admin", tags=["Admin - admin"])
 
 @router.get("/", status_code=200, response_model=List[AdminResponse])
 def get_admins(session: Session = Depends(db.session)):
-    pass
+    return 
 
 @router.post("/", status_code=201, response_model=AdminResponse)
 def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
