@@ -1,8 +1,10 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from ... import db
-from ...models import AdminLogin, AdminRegister, AdminUpdate, AdminResponse
+from ...models import AdminLogin, AdminCreate, AdminUpdate, AdminResponse
 from ...auth import hash_password, verify_password, create_token, get_current_user
 
 
@@ -10,16 +12,16 @@ router = APIRouter(prefix="/admin", tags=["Admin - admin"])
 
 
 
-@router.get("/", status_code=200, response_model=AdminResponse)
-def admin_login(user: AdminLogin, session: Session = Depends(db.session)):
+@router.get("/", status_code=200, response_model=List[AdminResponse])
+def get_admins(session: Session = Depends(db.session)):
     pass
 
 @router.post("/", status_code=201, response_model=AdminResponse)
-def admin_register(user: AdminRegister, session: Session = Depends(db.session)):
+def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
     pass
 
 @router.patch("/", status_code=200, response_model=AdminResponse)
-def admin_update(user: AdminUpdate, session: Session = Depends(db.session)):
+def update_admin(user: AdminUpdate, session: Session = Depends(db.session)):
     pass
 
 # @router.post("/register", status_code=201, response_model=UserResponse)
