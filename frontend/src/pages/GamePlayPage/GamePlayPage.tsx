@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { saveSessionResult } from "../../api/sessionsApi";
 import { ButtonLink } from "../../components/ui/ButtonLink";
 import { PixiGameHost } from "../../games/pixi/PixiGameHost";
@@ -17,23 +18,14 @@ import {
   getPreviewSeconds,
   isUnlimitedTime,
 } from "../../games/find-circle/FindCircleConfig";
+import { formatTokenLabel, translateValue } from "../../app/i18n/text";
 import styles from "./GamePlayPage.module.css";
-
-function formatLabel(value: string | undefined) {
-  if (!value) return "—";
-  if (value === "letters") return "Czech letters";
-  if (value === "figures") return "Figures";
-  if (value === "numbers") return "Numbers";
-  if (value === "grid") return "Grid";
-  if (value === "random") return "Random positions";
-  if (value === "fixed") return "Fixed";
-  return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 export function GamePlayPage() {
   const { gameKey = "find-circle" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const difficulty = ((searchParams.get("difficulty") as GameDifficulty) || "easy") as GameDifficulty;
 
   const config = useMemo<GameConfig>(() => {
@@ -74,26 +66,30 @@ export function GamePlayPage() {
     <main className={styles.page}>
       <div className={styles.topBar}>
         <ButtonLink to={`/game/${gameKey}`} variant="ghost">
-          Back
+          {t("config.back")}
         </ButtonLink>
         <div className={styles.meta}>
           {gameKey === "find-circle" && (
             <>
-              <span>{config.findCircle?.previewSeconds}s preview</span>
-              <span>{isUnlimitedTime(config.findCircle?.maxGameSeconds ?? 60) ? "Unlimited time" : `${config.findCircle?.maxGameSeconds}s max time`}</span>
-              <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} items</span>
-              <span>{config.findCircle?.correctObjectCount} correct</span>
-              <span>{formatLabel(config.findCircle?.contentMode)}</span>
-              <span>{formatLabel(config.findCircle?.placementMode)}</span>
-              <span>{config.findCircle?.figureSizePercent}% {formatLabel(config.findCircle?.figureSizeMode).toLowerCase()} size</span>
+              <span>{t("config.meta.previewTime", { value: `${config.findCircle?.previewSeconds} s` })}</span>
+              <span>
+                {isUnlimitedTime(config.findCircle?.maxGameSeconds ?? 60)
+                  ? t("config.meta.maxGameTimeUnlimited")
+                  : t("config.meta.maxGameTimeLimited", { value: `${config.findCircle?.maxGameSeconds} s` })}
+              </span>
+              <span>{t("config.meta.gridSize", { value: `${config.findCircle?.gridSize}×${config.findCircle?.gridSize}` })}</span>
+              <span>{t("config.meta.correctObjectCount", { value: config.findCircle?.correctObjectCount })}</span>
+              <span>{formatTokenLabel(config.findCircle?.contentMode)}</span>
+              <span>{formatTokenLabel(config.findCircle?.placementMode)}</span>
+              <span>{t("config.meta.figureSizePercent", { value: `${config.findCircle?.figureSizePercent}%`, mode: formatTokenLabel(config.findCircle?.figureSizeMode).toLowerCase() })}</span>
             </>
           )}
           {gameKey === "track-the-circle" && (
             <>
-              <span>{difficulty}</span>
-              <span>{searchParams.get("swapCount")} přehození</span>
-              <span>{searchParams.get("swapDurationMs")} ms rychlost</span>
-              <span>{searchParams.get("symbolSize")} px symboly</span>
+              <span>{translateValue(difficulty)}</span>
+              <span>{t("config.meta.swapCount", { value: searchParams.get("swapCount") })}</span>
+              <span>{t("config.meta.swapDurationMs", { value: `${searchParams.get("swapDurationMs")} ms` })}</span>
+              <span>{t("config.meta.symbolSize", { value: `${searchParams.get("symbolSize")} px` })}</span>
             </>
           )}
         </div>

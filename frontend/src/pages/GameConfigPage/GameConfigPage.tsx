@@ -1,80 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds, SwapCount, SymbolSize, SwapDurationMs } from "../../games/core/types/GameConfig";
+import type {
+  ContentMode,
+  FigureSizeMode,
+  GridSize,
+  MaxGameSeconds,
+  PlacementMode,
+  PreviewSeconds,
+  SwapCount,
+  SwapDurationMs,
+  SymbolSize,
+} from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
-import { defaultFindCircleConfig, getFigureSizePercent, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
+import {
+  defaultFindCircleConfig,
+  getFigureSizePercent,
+  getFindCircleCorrectCount,
+  getMaxCorrectObjectCount,
+} from "../../games/find-circle/FindCircleConfig";
 import type { GameDifficulty } from "../../games/core/types/GameDefinition";
 import { ConfigTileGroup, type TileOption } from "../../components/ui/ConfigTileGroup";
 import { ConfigSlider } from "../../components/ui/ConfigSlider";
 import styles from "./GameConfigPage.module.css";
 
-const previewOptions: TileOption<PreviewSeconds>[] = [
-  { id: 1, label: "1 sec", description: "Very quick flash before the game starts." },
-  { id: 2, label: "2 sec", description: "Short preview for a harder round." },
-  { id: 5, label: "5 sec", description: "Balanced memory time." },
-  { id: 10, label: "10 sec", description: "Longest and calmest preview." },
-];
-
-const maxGameTimeOptions: TileOption<MaxGameSeconds>[] = [
-  { id: 30, label: "30 sec", description: "Fast round with quick decisions." },
-  { id: 60, label: "60 sec", description: "Balanced time for most players." },
-  { id: 90, label: "90 sec", description: "More time for larger grids." },
-  { id: "unlimited", label: "Unlimited", description: "No timer. The round ends only when all correct items are found." },
-];
-
-const gridOptions: TileOption<GridSize>[] = [
-  { id: 2, label: "2 × 2", description: "4 objects on screen." },
-  { id: 3, label: "3 × 3", description: "9 objects on screen." },
-  { id: 4, label: "4 × 4", description: "16 objects on screen." },
-  { id: 5, label: "5 × 5", description: "25 objects on screen." },
-];
-
-const contentOptions: TileOption<ContentMode>[] = [
-  { id: "figures", label: "Figures", description: "Circle, rectangle, triangle and other simple icons." },
-  { id: "letters", label: "Czech letters", description: "Big bold Czech uppercase letters for kids." },
-  { id: "numbers", label: "Numbers", description: "Big bold digits from 0 to 9." },
-];
-
-const placementOptions: TileOption<PlacementMode>[] = [
-  { id: "grid", label: "Grid", description: "Objects are placed into a clean grid." },
-  { id: "random", label: "Random positions", description: "Objects are scattered across the whole view." },
-];
-
-const figureSizeOptions: TileOption<FigureSizeMode>[] = [
-  { id: "fixed", label: "Fixed", description: "All objects keep the same size percent." },
-  { id: "random", label: "Random", description: "Objects still use your chosen size, but some become smaller or bigger." },
-];
-
-const swapCountOptions: TileOption<SwapCount>[] = [
-  { id: 5,  label: "5",  description: "Velmi jednoduché." },
-  { id: 10, label: "10", description: "Lehká úroveň." },
-  { id: 15, label: "15", description: "Střední obtížnost." },
-  { id: 20, label: "20", description: "Náročnější sledování." },
-  { id: 25, label: "25", description: "Těžké." },
-  { id: 30, label: "30", description: "Maximální obtížnost." },
-];
-
-const swapDurationOptions: TileOption<SwapDurationMs>[] = [
-  { id: 200,  label: "0.2s", description: "Velmi rychlé." },
-  { id: 400,  label: "0.4s", description: "Rychlé." },
-  { id: 600,  label: "0.6s", description: "Střední." },
-  { id: 800,  label: "0.8s", description: "Pomalé." },
-  { id: 1000, label: "1.0s", description: "Velmi pomalé." },
-  { id: 1200, label: "1.2s", description: "Nejpomalejší." },
-];
-
-const difficultyOptions: TileOption<GameDifficulty>[] = [
-  { id: "easy",   label: "Lehká",   description: "3 kruhy na obrazovce." },
-  { id: "medium", label: "Střední", description: "5 kruhů na obrazovce." },
-  { id: "hard",   label: "Těžká",   description: "8 kruhů na obrazovce." },
-];
+function createOption<T extends string | number>(
+  id: T,
+  label: string,
+  description: string,
+): TileOption<T> {
+  return { id, label, description };
+}
 
 export function GameConfigPage() {
   const { gameKey = "" } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { saveSessionState } = useGameSession();
   const [, setGame] = useState<GameCatalogItem | null>(null);
 
@@ -94,6 +58,67 @@ export function GameConfigPage() {
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
   }, [gameKey]);
+
+  const previewOptions = useMemo<TileOption<PreviewSeconds>[]>(() => [
+    createOption(1, t("config.options.previewTime.1.label"), t("config.options.previewTime.1.description")),
+    createOption(2, t("config.options.previewTime.2.label"), t("config.options.previewTime.2.description")),
+    createOption(5, t("config.options.previewTime.5.label"), t("config.options.previewTime.5.description")),
+    createOption(10, t("config.options.previewTime.10.label"), t("config.options.previewTime.10.description")),
+  ], [t]);
+
+  const maxGameTimeOptions = useMemo<TileOption<MaxGameSeconds>[]>(() => [
+    createOption(30, t("config.options.maxGameTime.30.label"), t("config.options.maxGameTime.30.description")),
+    createOption(60, t("config.options.maxGameTime.60.label"), t("config.options.maxGameTime.60.description")),
+    createOption(90, t("config.options.maxGameTime.90.label"), t("config.options.maxGameTime.90.description")),
+    createOption("unlimited", t("config.options.maxGameTime.unlimited.label"), t("config.options.maxGameTime.unlimited.description")),
+  ], [t]);
+
+  const gridOptions = useMemo<TileOption<GridSize>[]>(() => [
+    createOption(2, t("config.options.gridSize.2.label"), t("config.options.gridSize.2.description")),
+    createOption(3, t("config.options.gridSize.3.label"), t("config.options.gridSize.3.description")),
+    createOption(4, t("config.options.gridSize.4.label"), t("config.options.gridSize.4.description")),
+    createOption(5, t("config.options.gridSize.5.label"), t("config.options.gridSize.5.description")),
+  ], [t]);
+
+  const contentOptions = useMemo<TileOption<ContentMode>[]>(() => [
+    createOption("figures", t("config.options.contentMode.figures.label"), t("config.options.contentMode.figures.description")),
+    createOption("letters", t("config.options.contentMode.letters.label"), t("config.options.contentMode.letters.description")),
+    createOption("numbers", t("config.options.contentMode.numbers.label"), t("config.options.contentMode.numbers.description")),
+  ], [t]);
+
+  const placementOptions = useMemo<TileOption<PlacementMode>[]>(() => [
+    createOption("grid", t("config.options.placementMode.grid.label"), t("config.options.placementMode.grid.description")),
+    createOption("random", t("config.options.placementMode.random.label"), t("config.options.placementMode.random.description")),
+  ], [t]);
+
+  const figureSizeOptions = useMemo<TileOption<FigureSizeMode>[]>(() => [
+    createOption("fixed", t("config.options.figureSizeMode.fixed.label"), t("config.options.figureSizeMode.fixed.description")),
+    createOption("random", t("config.options.figureSizeMode.random.label"), t("config.options.figureSizeMode.random.description")),
+  ], [t]);
+
+  const swapCountOptions = useMemo<TileOption<SwapCount>[]>(() => [
+    createOption(5, t("config.options.swapCount.5.label"), t("config.options.swapCount.5.description")),
+    createOption(10, t("config.options.swapCount.10.label"), t("config.options.swapCount.10.description")),
+    createOption(15, t("config.options.swapCount.15.label"), t("config.options.swapCount.15.description")),
+    createOption(20, t("config.options.swapCount.20.label"), t("config.options.swapCount.20.description")),
+    createOption(25, t("config.options.swapCount.25.label"), t("config.options.swapCount.25.description")),
+    createOption(30, t("config.options.swapCount.30.label"), t("config.options.swapCount.30.description")),
+  ], [t]);
+
+  const swapDurationOptions = useMemo<TileOption<SwapDurationMs>[]>(() => [
+    createOption(200, t("config.options.swapDurationMs.200.label"), t("config.options.swapDurationMs.200.description")),
+    createOption(400, t("config.options.swapDurationMs.400.label"), t("config.options.swapDurationMs.400.description")),
+    createOption(600, t("config.options.swapDurationMs.600.label"), t("config.options.swapDurationMs.600.description")),
+    createOption(800, t("config.options.swapDurationMs.800.label"), t("config.options.swapDurationMs.800.description")),
+    createOption(1000, t("config.options.swapDurationMs.1000.label"), t("config.options.swapDurationMs.1000.description")),
+    createOption(1200, t("config.options.swapDurationMs.1200.label"), t("config.options.swapDurationMs.1200.description")),
+  ], [t]);
+
+  const difficultyOptions = useMemo<TileOption<GameDifficulty>[]>(() => [
+    createOption("easy", t("config.options.difficulty.easy.label"), t("config.options.difficulty.easy.description")),
+    createOption("medium", t("config.options.difficulty.medium.label"), t("config.options.difficulty.medium.description")),
+    createOption("hard", t("config.options.difficulty.hard.label"), t("config.options.difficulty.hard.description")),
+  ], [t]);
 
   const maxCorrectObjectCount = useMemo(() => getMaxCorrectObjectCount(gridSize), [gridSize]);
 
@@ -133,34 +158,34 @@ export function GameConfigPage() {
         <svg className={styles.backArrow} width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M12 4L6 10L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span>Back</span>
+        <span>{t("config.back")}</span>
       </button>
 
       <div className={styles.header}>
-        <h1 className={styles.title}>Configuration</h1>
+        <h1 className={styles.title}>{t("config.title")}</h1>
       </div>
 
       <div className={styles.panel}>
         {gameKey === "find-circle" && (
           <>
-            <ConfigTileGroup title="Preview time" options={previewOptions} selected={previewSeconds} onChange={setPreviewSeconds} />
-            <ConfigTileGroup title="Max game time" options={maxGameTimeOptions} selected={maxGameSeconds} onChange={setMaxGameSeconds} />
-            <ConfigTileGroup title="Grid size" options={gridOptions} selected={gridSize} onChange={setGridSize} />
+            <ConfigTileGroup title={t("config.labels.previewTime")} options={previewOptions} selected={previewSeconds} onChange={setPreviewSeconds} />
+            <ConfigTileGroup title={t("config.labels.maxGameTime")} options={maxGameTimeOptions} selected={maxGameSeconds} onChange={setMaxGameSeconds} />
+            <ConfigTileGroup title={t("config.labels.gridSize")} options={gridOptions} selected={gridSize} onChange={setGridSize} />
             <ConfigSlider
-              title="Right objects count"
-              hint="Choose how many correct items will appear on the screen."
+              title={t("config.labels.correctObjectCount")}
+              hint={t("config.hints.correctObjectCount")}
               min={1}
               max={maxCorrectObjectCount}
               step={1}
               value={correctObjectCount}
               onChange={(v) => setCorrectObjectCount(getFindCircleCorrectCount(gridSize, v))}
             />
-            <ConfigTileGroup title="Content mode" options={contentOptions} selected={contentMode} onChange={setContentMode} />
-            <ConfigTileGroup title="Placement mode" options={placementOptions} selected={placementMode} onChange={setPlacementMode} />
-            <ConfigTileGroup title="Figure size mode" options={figureSizeOptions} selected={figureSizeMode} onChange={setFigureSizeMode} />
+            <ConfigTileGroup title={t("config.labels.contentMode")} options={contentOptions} selected={contentMode} onChange={setContentMode} />
+            <ConfigTileGroup title={t("config.labels.placementMode")} options={placementOptions} selected={placementMode} onChange={setPlacementMode} />
+            <ConfigTileGroup title={t("config.labels.figureSizeMode")} options={figureSizeOptions} selected={figureSizeMode} onChange={setFigureSizeMode} />
             <ConfigSlider
-              title="Figure size"
-              hint="100% fills almost the whole available object area. 50% makes it about half that size."
+              title={t("config.labels.figureSizePercent")}
+              hint={t("config.hints.figureSizePercent")}
               min={40}
               max={100}
               step={5}
@@ -173,11 +198,12 @@ export function GameConfigPage() {
 
         {gameKey === "track-the-circle" && (
           <>
-            <ConfigTileGroup title="Obtížnost" options={difficultyOptions} selected={difficulty} onChange={setDifficulty} />
-            <ConfigTileGroup title="Počet přehození" options={swapCountOptions} selected={swapCount} onChange={setSwapCount} columns={3} />
-            <ConfigTileGroup title="Rychlost přehození" options={swapDurationOptions} selected={swapDurationMs} onChange={setSwapDurationMs} columns={3} />
+            <ConfigTileGroup title={t("config.labels.difficulty")} options={difficultyOptions} selected={difficulty} onChange={setDifficulty} />
+            <ConfigTileGroup title={t("config.labels.swapCount")} options={swapCountOptions} selected={swapCount} onChange={setSwapCount} columns={3} />
+            <ConfigTileGroup title={t("config.labels.swapDurationMs")} options={swapDurationOptions} selected={swapDurationMs} onChange={setSwapDurationMs} columns={3} />
             <ConfigSlider
-              title="Velikost symbolů"
+              title={t("config.labels.symbolSize")}
+              hint={t("config.hints.symbolSize")}
               min={32}
               max={144}
               step={4}
@@ -197,7 +223,7 @@ export function GameConfigPage() {
       </div>
 
       <button type="button" onClick={handleStart} className={styles.startButton}>
-        Start Game
+        {t("config.start")}
       </button>
     </main>
   );

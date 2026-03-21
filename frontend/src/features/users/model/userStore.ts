@@ -7,12 +7,12 @@ import type { StoredGameSession, UserRecord, UserStatsRow, UserStoreData } from 
 const STORAGE_KEY = "users_store_v1";
 
 const GAME_TITLES: Record<string, string> = {
-  "find-circle": "Find Circle",
-  "memory-pairs": "Memory Pairs",
-  "shape-match": "Shape Match",
-  "count-items": "Count Items",
-  "find-different": "Find Different",
-  "repeat-sequence": "Repeat Sequence",
+  "find-circle": "Paměťová hra",
+  "memory-pairs": "Pexeso",
+  "shape-match": "Přiřazení tvarů",
+  "count-items": "Počítání objektů",
+  "find-different": "Najdi rozdíl",
+  "repeat-sequence": "Opakuj sekvenci",
 };
 
 const seedData: UserStoreData = {
@@ -64,7 +64,7 @@ const seedData: UserStoreData = {
       id: "session-1",
       userId: "student-1",
       gameKey: "find-circle",
-      gameTitle: "Find Circle",
+      gameTitle: "Paměťová hra",
       difficulty: "easy",
       score: 14,
       maxScore: 16,
@@ -75,7 +75,7 @@ const seedData: UserStoreData = {
       id: "session-2",
       userId: "student-1",
       gameKey: "memory-pairs",
-      gameTitle: "Memory Pairs",
+      gameTitle: "Pexeso",
       difficulty: "medium",
       score: 11,
       maxScore: 12,
@@ -86,7 +86,7 @@ const seedData: UserStoreData = {
       id: "session-3",
       userId: "student-2",
       gameKey: "shape-match",
-      gameTitle: "Shape Match",
+      gameTitle: "Přiřazení tvarů",
       difficulty: "easy",
       score: 19,
       maxScore: 20,
@@ -97,7 +97,7 @@ const seedData: UserStoreData = {
       id: "session-4",
       userId: "student-2",
       gameKey: "find-circle",
-      gameTitle: "Find Circle",
+      gameTitle: "Paměťová hra",
       difficulty: "hard",
       score: 9,
       maxScore: 16,
@@ -108,7 +108,7 @@ const seedData: UserStoreData = {
       id: "session-5",
       userId: "student-3",
       gameKey: "count-items",
-      gameTitle: "Count Items",
+      gameTitle: "Počítání objektů",
       difficulty: "easy",
       score: 7,
       maxScore: 10,
