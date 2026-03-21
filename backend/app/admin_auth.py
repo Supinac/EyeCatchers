@@ -79,3 +79,7 @@ def login_admin(login: str, password: str, response: Response, session: Session)
     )
 
     return admin
+
+def logout_admin(response: Response):
+    """Clear auth cookie. Callable from endpoint."""
+    response.delete_cookie(key=COOKIE_NAME)

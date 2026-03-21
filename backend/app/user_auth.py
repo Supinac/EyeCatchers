@@ -71,3 +71,7 @@ def login_user(login: str, response: Response, session: Session):
     )
 
     return user
+
+def logout_user(response: Response):
+    """Clear auth cookie. Callable from endpoint."""
+    response.delete_cookie(key=COOKIE_NAME)
