@@ -24,7 +24,14 @@ def connect_mysql(user, password, host, port, db_name, pool_size=100, max_overfl
         max_overflow=max_overflow,
         pool_recycle=3600,
         pool_pre_ping=True,
-        )       
+        )
+
+def connect_sqlite(db_name: str = "app.db"):
+    global engine
+    
+    DB_URL = f"sqlite:///{db_name}"
+    engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+
         
 def init():
     # Import models to ensure they are registered with Base.metadata
