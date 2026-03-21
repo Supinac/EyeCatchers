@@ -11,7 +11,13 @@ function formatLabel(value: string | undefined) {
   if (value === "numbers") return "Numbers";
   if (value === "grid") return "Grid";
   if (value === "random") return "Random positions";
+  if (value === "fixed") return "Fixed";
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatMaxTime(value: string | number | undefined) {
+  if (!value) return null;
+  return value === "unlimited" ? "Max time: Unlimited" : `Max time: ${value}s`;
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -56,12 +62,13 @@ export function ResultPage() {
   const configPills = [
     `Game: ${formatLabel(result.gameKey)}`,
     result.stats?.previewSeconds ? `Preview: ${result.stats.previewSeconds}s` : null,
-    result.stats?.maxGameSeconds ? `Max time: ${result.stats.maxGameSeconds}s` : null,
+    formatMaxTime(result.stats?.maxGameSeconds),
     result.stats?.contentMode ? `Mode: ${formatLabel(result.stats.contentMode)}` : null,
     result.stats?.placementMode ? `Layout: ${formatLabel(result.stats.placementMode)}` : null,
     result.stats?.gridSize ? `Grid size: ${result.stats.gridSize} × ${result.stats.gridSize}` : null,
     result.stats?.correctObjectCount ? `Right objects: ${result.stats.correctObjectCount}` : null,
-    result.stats?.figureSizeMode ? `Figure size: ${formatLabel(result.stats.figureSizeMode)}` : null,
+    result.stats?.figureSizePercent ? `Figure size: ${result.stats.figureSizePercent}%` : null,
+    result.stats?.figureSizeMode ? `Size mode: ${formatLabel(result.stats.figureSizeMode)}` : null,
   ].filter(Boolean) as string[];
 
   return (

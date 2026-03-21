@@ -9,11 +9,13 @@ import type { GameConfig } from "../../games/core/types/GameConfig";
 import {
   getContentMode,
   getFigureSizeMode,
+  getFigureSizePercent,
   getFindCircleCorrectCount,
   getGridSize,
   getMaxGameSeconds,
   getPlacementMode,
   getPreviewSeconds,
+  isUnlimitedTime,
 } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GamePlayPage.module.css";
 
@@ -24,6 +26,7 @@ function formatLabel(value: string | undefined) {
   if (value === "numbers") return "Numbers";
   if (value === "grid") return "Grid";
   if (value === "random") return "Random positions";
+  if (value === "fixed") return "Fixed";
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -34,10 +37,11 @@ export function GamePlayPage() {
   const difficulty = ((searchParams.get("difficulty") as GameDifficulty) || "easy") as GameDifficulty;
 
   const config = useMemo<GameConfig>(() => {
-    const preview = getPreviewSeconds(Number(searchParams.get("preview")) || undefined);
-    const maxTime = getMaxGameSeconds(Number(searchParams.get("maxTime")) || undefined);
-    const grid = getGridSize(Number(searchParams.get("grid")) || undefined);
+    const preview = getPreviewSeconds(searchParams.get("preview"));
+    const maxTime = getMaxGameSeconds(searchParams.get("maxTime"));
+    const grid = getGridSize(searchParams.get("grid"));
     const sizeMode = getFigureSizeMode(searchParams.get("sizeMode"));
+    const sizePercent = getFigureSizePercent(searchParams.get("sizePercent"));
     const contentMode = getContentMode(searchParams.get("contentMode"));
     const placementMode = getPlacementMode(searchParams.get("placementMode"));
     const correctCount = getFindCircleCorrectCount(grid, Number(searchParams.get("correctCount")) || undefined);
@@ -51,6 +55,7 @@ export function GamePlayPage() {
         gridSize: grid,
         correctObjectCount: correctCount,
         figureSizeMode: sizeMode,
+        figureSizePercent: sizePercent,
         contentMode,
         placementMode,
       },
@@ -73,12 +78,12 @@ export function GamePlayPage() {
         </ButtonLink>
         <div className={styles.meta}>
           <span>{config.findCircle?.previewSeconds}s preview</span>
-          <span>{config.findCircle?.maxGameSeconds}s max time</span>
+          <span>{isUnlimitedTime(config.findCircle?.maxGameSeconds ?? 60) ? "Unlimited time" : `${config.findCircle?.maxGameSeconds}s max time`}</span>
           <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} items</span>
           <span>{config.findCircle?.correctObjectCount} correct</span>
           <span>{formatLabel(config.findCircle?.contentMode)}</span>
           <span>{formatLabel(config.findCircle?.placementMode)}</span>
-          <span>{formatLabel(config.findCircle?.figureSizeMode)} size</span>
+          <span>{config.findCircle?.figureSizePercent}% {formatLabel(config.findCircle?.figureSizeMode).toLowerCase()} size</span>
         </div>
       </div>
 

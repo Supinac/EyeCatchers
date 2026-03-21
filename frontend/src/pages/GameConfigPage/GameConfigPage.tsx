@@ -5,7 +5,12 @@ import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
 import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
-import { defaultFindCircleConfig, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
+import {
+  defaultFindCircleConfig,
+  getFigureSizePercent,
+  getFindCircleCorrectCount,
+  getMaxCorrectObjectCount,
+} from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
 
 type ConfigOption<T extends string | number> = {
@@ -15,7 +20,7 @@ type ConfigOption<T extends string | number> = {
 };
 
 const previewOptions: ConfigOption<PreviewSeconds>[] = [
-  { id: 1, label: "1 sec", description: "Very quick flash before the grid appears." },
+  { id: 1, label: "1 sec", description: "Very quick flash before the game starts." },
   { id: 2, label: "2 sec", description: "Short preview for a harder round." },
   { id: 5, label: "5 sec", description: "Balanced memory time." },
   { id: 10, label: "10 sec", description: "Longest and calmest preview." },
@@ -25,7 +30,7 @@ const maxGameTimeOptions: ConfigOption<MaxGameSeconds>[] = [
   { id: 30, label: "30 sec", description: "Fast round with quick decisions." },
   { id: 60, label: "60 sec", description: "Balanced time for most players." },
   { id: 90, label: "90 sec", description: "More time for larger grids." },
-  { id: 120, label: "120 sec", description: "Longest and calmest game timer." },
+  { id: "unlimited", label: "Unlimited", description: "No timer. The round ends only when all correct items are found." },
 ];
 
 const gridOptions: ConfigOption<GridSize>[] = [
@@ -36,7 +41,7 @@ const gridOptions: ConfigOption<GridSize>[] = [
 ];
 
 const contentOptions: ConfigOption<ContentMode>[] = [
-  { id: "figures", label: "Figures", description: "Circle, square, triangle and other simple icons." },
+  { id: "figures", label: "Figures", description: "Circle, rectangle, triangle and other simple icons." },
   { id: "letters", label: "Czech letters", description: "Big bold Czech uppercase letters for kids." },
   { id: "numbers", label: "Numbers", description: "Big bold digits from 0 to 9." },
 ];
@@ -47,8 +52,8 @@ const placementOptions: ConfigOption<PlacementMode>[] = [
 ];
 
 const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
-  { id: "static", label: "Static", description: "All items keep the same size." },
-  { id: "random", label: "Random", description: "Items become much smaller or bigger." },
+  { id: "fixed", label: "Fixed", description: "All objects keep the same size percent." },
+  { id: "random", label: "Random", description: "Objects still use your chosen size, but some become smaller or bigger." },
 ];
 
 function ConfigTile<T extends string | number>({
@@ -83,6 +88,7 @@ export function GameConfigPage() {
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
   const [correctObjectCount, setCorrectObjectCount] = useState<number>(defaultFindCircleConfig.correctObjectCount);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
+  const [figureSizePercent, setFigureSizePercent] = useState<number>(defaultFindCircleConfig.figureSizePercent);
   const [contentMode, setContentMode] = useState<ContentMode>(defaultFindCircleConfig.contentMode);
   const [placementMode, setPlacementMode] = useState<PlacementMode>(defaultFindCircleConfig.placementMode);
 
@@ -106,6 +112,7 @@ export function GameConfigPage() {
         gridSize,
         correctObjectCount,
         figureSizeMode,
+        figureSizePercent,
         contentMode,
         placementMode,
       },
@@ -117,6 +124,7 @@ export function GameConfigPage() {
       grid: String(gridSize),
       correctCount: String(correctObjectCount),
       sizeMode: figureSizeMode,
+      sizePercent: String(figureSizePercent),
       contentMode,
       placementMode,
     });
@@ -161,7 +169,7 @@ export function GameConfigPage() {
           <div className={styles.grid}>
             {maxGameTimeOptions.map((option) => (
               <ConfigTile
-                key={option.id}
+                key={String(option.id)}
                 option={option}
                 selected={maxGameSeconds === option.id}
                 onClick={() => setMaxGameSeconds(option.id)}
@@ -235,7 +243,7 @@ export function GameConfigPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Figure size</h2>
+          <h2 className={styles.sectionTitle}>Figure size mode</h2>
           <div className={styles.grid}>
             {figureSizeOptions.map((option) => (
               <ConfigTile
@@ -245,6 +253,33 @@ export function GameConfigPage() {
                 onClick={() => setFigureSizeMode(option.id)}
               />
             ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sliderHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Figure size</h2>
+              <p className={styles.sliderHint}>100% fills almost the whole available object area. 50% makes it about half that size.</p>
+            </div>
+            <div className={styles.sliderValue}>{figureSizePercent}%</div>
+          </div>
+
+          <div className={styles.sliderPanel}>
+            <input
+              className={styles.slider}
+              type="range"
+              min={40}
+              max={100}
+              step={5}
+              value={figureSizePercent}
+              onChange={(event) => setFigureSizePercent(getFigureSizePercent(event.target.value))}
+            />
+
+            <div className={styles.sliderScale}>
+              <span>40%</span>
+              <span>100%</span>
+            </div>
           </div>
         </section>
       </div>
