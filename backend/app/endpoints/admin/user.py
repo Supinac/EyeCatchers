@@ -18,6 +18,13 @@ def get_users(session: Session = Depends(db.session), current_admin: tables.Admi
 
 @router.post("", status_code=201, response_model=UserResponse)
 def register_user(user: UserCreate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
+    check_user = session.execute(select(tables.User).where(tables.User.login == user.login)).scalar_one_or_none()
+    if check_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already exists",
+        )
+
     db_user = tables.User(
         name=user.name,
         login=user.login
@@ -29,6 +36,13 @@ def register_user(user: UserCreate, session: Session = Depends(db.session), curr
 
 @router.patch("/{id}", status_code=200, response_model=UserResponse)
 def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
+    check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
+    if check_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
     db_user = session.query(tables.User).filter(tables.User.id == id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -40,6 +54,13 @@ def update_user(id: int, user: UserUpdate, session: Session = Depends(db.session
 
 @router.delete("/{id}", status_code=204, response_model=None)
 def delete_user(id: int, session: Session = Depends(db.session), current_admin: tables.Admin = Depends(auth_admin)):
+    check_user = session.execute(select(tables.User).where(tables.User.id == id)).scalar_one_or_none()
+    if check_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
     db_user = session.query(tables.User).filter(tables.User.id == id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")

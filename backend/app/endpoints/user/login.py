@@ -8,7 +8,6 @@ from app import tables
 from app.user_auth import login_user
 from ... import db
 from ...models import UserLogin, UserResponse
-from ...admin_auth import auth_admin, verify_password, create_token, login_admin
 from ...config import settings
 
 
@@ -20,7 +19,6 @@ def user_login(user: UserLogin, response: Response, session: Session = Depends(d
 
     user = login_user(
         login=user.login,
-        password=user.password,
         response=response,
         session=session,
     )

@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from ... import tables
 from ... import db
-from ...models import AdminLogin, AdminCreate, AdminUpdate, AdminResponse, ScoreSubmit
-from ...user_auth import hash_password, verify_password, create_token, auth_user
+from ...models import  ScoreSubmit
+from ...user_auth import auth_user
 
 
 router = APIRouter(prefix="/results", tags=["User - Results"])

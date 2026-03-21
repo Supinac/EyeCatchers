@@ -7,14 +7,6 @@ from sqlalchemy import select
 from . import db
 from .config import settings
 
-# --- Password hashing ---
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
 
 # --- JWT tokens ---
 SECRET_KEY = settings.SECRET_KEY
@@ -52,7 +44,7 @@ def auth_user(request: Request, session: Session = Depends(db.session)):
     return user
 
 
-def login_user(login: str, password: str, response: Response, session: Session):
+def login_user(login: str, response: Response, session: Session):
     """Authenticate user and set auth cookie. Callable from endpoint."""
     from .tables import User  # local import to avoid circular imports
 
@@ -60,7 +52,7 @@ def login_user(login: str, password: str, response: Response, session: Session):
         select(User).where(User.login == login)
     ).scalar_one_or_none()
 
-    if not user or not verify_password(password, user.password):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Wrong username or password",
