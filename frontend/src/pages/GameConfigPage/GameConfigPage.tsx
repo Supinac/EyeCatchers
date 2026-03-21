@@ -3,11 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
+import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds, SwapCount } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
 import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
+import type { GameDifficulty } from "../../games/core/types/GameDefinition";
 
 type ConfigOption<T extends string | number> = {
   id: T;
@@ -39,6 +40,21 @@ const gridOptions: ConfigOption<GridSize>[] = [
 const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
   { id: "static", label: "Static", description: "All figures keep the same size." },
   { id: "random", label: "Random", description: "Figure sizes vary in the grid." },
+];
+
+const swapCountOptions: ConfigOption<SwapCount>[] = [
+  { id: 5,  label: "5",  description: "Velmi jednoduché." },
+  { id: 10, label: "10", description: "Lehká úroveň." },
+  { id: 15, label: "15", description: "Střední obtížnost." },
+  { id: 20, label: "20", description: "Náročnější sledování." },
+  { id: 25, label: "25", description: "Těžké." },
+  { id: 30, label: "30", description: "Maximální obtížnost." },
+];
+
+const difficultyOptions: ConfigOption<GameDifficulty>[] = [
+  { id: "easy",   label: "Lehká",   description: "3 kruhy na obrazovce." },
+  { id: "medium", label: "Střední", description: "5 kruhů na obrazovce." },
+  { id: "hard",   label: "Těžká",   description: "8 kruhů na obrazovce." },
 ];
 
 function getGameIcon(gameKey: string) {
@@ -78,6 +94,8 @@ export function GameConfigPage() {
   const [maxGameSeconds, setMaxGameSeconds] = useState<MaxGameSeconds>(defaultFindCircleConfig.maxGameSeconds);
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
+  const [swapCount, setSwapCount] = useState<SwapCount>(15);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -86,13 +104,9 @@ export function GameConfigPage() {
   function handleStart() {
     saveSessionState({
       gameKey,
-      difficulty: "easy",
-      findCircle: {
-        previewSeconds,
-        maxGameSeconds,
-        gridSize,
-        figureSizeMode,
-      },
+      difficulty,
+      findCircle: { previewSeconds, maxGameSeconds, gridSize, figureSizeMode },
+      trackTheCircle: { swapCount },
     });
 
     const params = new URLSearchParams({
@@ -100,6 +114,8 @@ export function GameConfigPage() {
       maxTime: String(maxGameSeconds),
       grid: String(gridSize),
       sizeMode: figureSizeMode,
+      swapCount: String(swapCount),
+      difficulty,
     });
 
     navigate(`/play/${gameKey}?${params.toString()}`);
@@ -123,56 +139,66 @@ export function GameConfigPage() {
       </div>
 
       <div className={styles.panel}>
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Preview time</h2>
-          <div className={styles.grid}>
-            {previewOptions.map((option) => (
-              <ConfigTile
-                key={option.id}
-                option={option}
-                selected={previewSeconds === option.id}
-                onClick={() => setPreviewSeconds(option.id)}
-              />
-            ))}
-          </div>
-        </section>
+        {gameKey !== "track-the-circle" && (
+          <>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Preview time</h2>
+              <div className={styles.grid}>
+                {previewOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={previewSeconds === option.id} onClick={() => setPreviewSeconds(option.id)} />
+                ))}
+              </div>
+            </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Max game time</h2>
-          <div className={styles.grid}>
-            {maxGameTimeOptions.map((option) => (
-              <ConfigTile
-                key={option.id}
-                option={option}
-                selected={maxGameSeconds === option.id}
-                onClick={() => setMaxGameSeconds(option.id)}
-              />
-            ))}
-          </div>
-        </section>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Max game time</h2>
+              <div className={styles.grid}>
+                {maxGameTimeOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={maxGameSeconds === option.id} onClick={() => setMaxGameSeconds(option.id)} />
+                ))}
+              </div>
+            </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Grid size</h2>
-          <div className={styles.grid}>
-            {gridOptions.map((option) => (
-              <ConfigTile key={option.id} option={option} selected={gridSize === option.id} onClick={() => setGridSize(option.id)} />
-            ))}
-          </div>
-        </section>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Grid size</h2>
+              <div className={styles.grid}>
+                {gridOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={gridSize === option.id} onClick={() => setGridSize(option.id)} />
+                ))}
+              </div>
+            </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Figure size</h2>
-          <div className={styles.grid}>
-            {figureSizeOptions.map((option) => (
-              <ConfigTile
-                key={option.id}
-                option={option}
-                selected={figureSizeMode === option.id}
-                onClick={() => setFigureSizeMode(option.id)}
-              />
-            ))}
-          </div>
-        </section>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Figure size</h2>
+              <div className={styles.grid}>
+                {figureSizeOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={figureSizeMode === option.id} onClick={() => setFigureSizeMode(option.id)} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {gameKey === "track-the-circle" && (
+          <>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Obtížnost</h2>
+              <div className={styles.grid}>
+                {difficultyOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={difficulty === option.id} onClick={() => setDifficulty(option.id)} />
+                ))}
+              </div>
+            </section>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Počet přehození</h2>
+              <div className={styles.grid}>
+                {swapCountOptions.map((option) => (
+                  <ConfigTile key={option.id} option={option} selected={swapCount === option.id} onClick={() => setSwapCount(option.id)} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
 
       <button type="button" onClick={handleStart} className={styles.startButton}>

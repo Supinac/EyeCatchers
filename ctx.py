@@ -21,9 +21,9 @@ def print_file(path):
     try:
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
-        print(f'\n{"="*60}')
+        print(f'\n{"="*10}')
         print(f'FILE: {path}')
-        print(f'{"="*60}')
+        print(f'{"="*10}')
         print(content)
     except Exception as e:
         print(f'Chyba: {e}')

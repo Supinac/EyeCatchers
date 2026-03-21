@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, TextStyle, Application } from "pixi.js";
+import { Container, Graphics, Text, TextStyle } from "pixi.js";
 import { createPixiApp } from "../pixi/PixiAppFactory";
 import { getGameSize } from "../pixi/PixiResize";
 import { PixiTheme } from "../pixi/PixiTheme";
@@ -9,11 +9,9 @@ import {
   pickSwapPair,
   applySwap,
   evaluateGuess,
-  type CircleItem,
   type GameState,
 } from "./TrackTheCircleLogic";
 import {
-  getTrackConfig,
   HIGHLIGHT_DURATION_MS,
   SWAP_DURATION_MS,
   SWAP_PAUSE_MS,
@@ -149,11 +147,11 @@ export function mountTrackTheCircleScene({
     for (let i = 0; i < state.swapsTotal; i++) {
       if (destroyed) return;
 
-      const pair = pickSwapPair(state.circles);
+      const pair = pickSwapPair(state.circles, state);
       const spriteA = sprites.get(pair.a)!;
       const spriteB = sprites.get(pair.b)!;
 
-      const newCircles = applySwap(state.circles, pair);
+      const { circles: newCircles, newChance } = applySwap(state.circles, pair, state);
       const newA = newCircles.find(c => c.id === pair.a)!;
       const newB = newCircles.find(c => c.id === pair.b)!;
 
@@ -165,6 +163,7 @@ export function mountTrackTheCircleScene({
 
       // Aktualizace state po animaci
       state.circles = newCircles;
+      state.targetSwapChance = newChance;
 
       await delay(SWAP_PAUSE_MS);
     }

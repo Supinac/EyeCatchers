@@ -9,7 +9,6 @@ export type CircleItem = {
   isTarget: boolean;
   x: number;
   y: number;
-  swapWeight: number; // ← nové
 };
 
 export type SwapPair = {
@@ -23,6 +22,7 @@ export type GameState = {
   swapsTotal: number;
   swapsDone: number;
   finished: boolean;
+  targetSwapChance: number;
 };
 
 export function buildInitialState(
@@ -44,7 +44,6 @@ export function buildInitialState(
     isTarget: i === targetIndex,
     x: pos.x,
     y: pos.y,
-    swapWeight: 1,
   }));
 
   return {
@@ -53,6 +52,7 @@ export function buildInitialState(
     swapsTotal: swapCount,
     swapsDone: 0,
     finished: false,
+    targetSwapChance: 0.25,
   };
 }
 
@@ -81,48 +81,46 @@ export function generatePositions(count: number): { x: number; y: number }[] {
   return positions;
 }
 
-function weightedPickTwo(circles: CircleItem[]): SwapPair {
-  // Výběr prvního podle váhy
-  const totalWeight = circles.reduce((sum, c) => sum + c.swapWeight, 0);
-  let r = Math.random() * totalWeight;
-  let a = circles[circles.length - 1].id;
-  for (const c of circles) {
-    r -= c.swapWeight;
-    if (r <= 0) { a = c.id; break; }
+export function pickSwapPair(circles: CircleItem[], state: GameState): SwapPair {
+  const others = circles.filter(c => c.id !== state.targetId);
+  const targetMoves = Math.random() < state.targetSwapChance;
+
+  let a: number;
+  if (targetMoves) {
+    a = state.targetId;
+  } else {
+    a = others[getRandomInt(0, others.length - 1)].id;
   }
 
-  // Výběr druhého – ze zbytku, také weighted
   const rest = circles.filter(c => c.id !== a);
-  const totalRest = rest.reduce((sum, c) => sum + c.swapWeight, 0);
-  let r2 = Math.random() * totalRest;
-  let b = rest[rest.length - 1].id;
-  for (const c of rest) {
-    r2 -= c.swapWeight;
-    if (r2 <= 0) { b = c.id; break; }
-  }
+  const b = rest[getRandomInt(0, rest.length - 1)].id;
 
   return { a, b };
 }
 
-export function pickSwapPair(circles: CircleItem[]): SwapPair {
-  return weightedPickTwo(circles);
-}
+export function applySwap(
+  circles: CircleItem[],
+  pair: SwapPair,
+  state: GameState,
+): { circles: CircleItem[]; newChance: number } {
+  const targetMoved = pair.a === state.targetId || pair.b === state.targetId;
 
-export function applySwap(circles: CircleItem[], pair: SwapPair): CircleItem[] {
-  const movedIds = new Set([pair.a, pair.b]);
-
-  return circles.map(c => {
+  const newCircles = circles.map(c => {
     if (c.id === pair.a) {
       const other = circles.find(o => o.id === pair.b)!;
-      return { ...c, x: other.x, y: other.y, swapWeight: 1 }; // reset váhy
+      return { ...c, x: other.x, y: other.y };
     }
     if (c.id === pair.b) {
       const other = circles.find(o => o.id === pair.a)!;
-      return { ...c, x: other.x, y: other.y, swapWeight: 1 }; // reset váhy
+      return { ...c, x: other.x, y: other.y };
     }
-    // Nehýbal se – zvýšení váhy o 25 %
-    return { ...c, swapWeight: c.swapWeight + 0.25 };
+    return c;
   });
+
+  return {
+    circles: newCircles,
+    newChance: targetMoved ? 0.25 : Math.min(state.targetSwapChance + 0.25, 1),
+  };
 }
 
 export function evaluateGuess(state: GameState, guessedId: number): boolean {
