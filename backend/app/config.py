@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     SECRET_KEY: str = "oijahowa6"
+    DEFAULT_ADMIN_NAME: str = "Administrator"
+    DEFAULT_ADMIN_LOGIN: str = "admin"
+    DEFAULT_ADMIN_PASSWORD: str = "admin12345"
 
     model_config = SettingsConfigDict(env_file='.env')
 

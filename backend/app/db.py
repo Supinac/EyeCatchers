@@ -35,8 +35,26 @@ def connect_sqlite(db_name: str = "app.db"):
         
 def init():
     # Import models to ensure they are registered with Base.metadata
-    from . import models
+    from . import tables
+    from .admin_auth import hash_password
+    from .config import settings
+    from .tables import Admin
+
     Base.metadata.create_all(engine, checkfirst=True)
+
+    # Seed a default admin for first startup.
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    with SessionLocal() as db_session:
+        existing_admin = db_session.query(Admin).filter(Admin.login == settings.DEFAULT_ADMIN_LOGIN).first()
+        if existing_admin is None:
+            db_session.add(
+                Admin(
+                    name=settings.DEFAULT_ADMIN_NAME,
+                    login=settings.DEFAULT_ADMIN_LOGIN,
+                    password=hash_password(settings.DEFAULT_ADMIN_PASSWORD),
+                )
+            )
+            db_session.commit()
     
     
 def session():
