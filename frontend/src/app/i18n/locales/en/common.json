@@ -1,0 +1,26 @@
+{
+  "entry": {
+    "badge": "Welcome",
+    "title": "Who is playing today?",
+    "subtitle": "Students enter only their login. Administrators use the separate admin screen.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Enter login",
+    "helper": "Use the login created in the admin panel.",
+    "signingIn": "Signing in...",
+    "continue": "Continue",
+    "admin": "Admin"
+  },
+  "adminLogin": {
+    "badge": "Administrator",
+    "title": "Admin access",
+    "subtitle": "Use login and password to enter the administrator dashboard.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Enter admin login",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "helper": "Only administrator accounts can enter here.",
+    "signingIn": "Signing in...",
+    "login": "Login",
+    "studentLogin": "Student login"
+  }
+}

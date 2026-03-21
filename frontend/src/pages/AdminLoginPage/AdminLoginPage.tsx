@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
 import { useAdminLogin } from "../../features/auth/hooks/useAdminLogin";
 import { useAuth } from "../../features/auth/hooks/useAuth";
@@ -8,6 +9,7 @@ import styles from "./AdminLoginPage.module.css";
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { getAuthState } = useAuth();
   const { submit, isLoading, error, clearError } = useAdminLogin();
   const [username, setUsername] = useState("");
@@ -37,14 +39,14 @@ export function AdminLoginPage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <div className={styles.headerBlock}>
-          <div className={styles.badge}>Administrator</div>
-          <h1 className={styles.title}>Admin access</h1>
-          <p className={styles.subtitle}>Use login and password to enter the administrator dashboard.</p>
+          <div className={styles.badge}>{t("adminLogin.badge")}</div>
+          <h1 className={styles.title}>{t("adminLogin.title")}</h1>
+          <p className={styles.subtitle}>{t("adminLogin.subtitle")}</p>
         </div>
 
         <form className={styles.panel} onSubmit={handleSubmit}>
           <div className={styles.fieldGroup}>
-            <label htmlFor="admin-username" className={styles.label}>Login</label>
+            <label htmlFor="admin-username" className={styles.label}>{t("adminLogin.loginLabel")}</label>
             <input
               id="admin-username"
               className={`${styles.input} ${error ? styles.inputError : ""}`}
@@ -53,7 +55,7 @@ export function AdminLoginPage() {
                 setUsername(event.target.value);
                 if (error) clearError();
               }}
-              placeholder="Enter admin login"
+              placeholder={t("adminLogin.loginPlaceholder")}
               autoComplete="username"
               minLength={AUTH_LOGIN_MIN_LENGTH}
               maxLength={AUTH_FIELD_MAX_LENGTH}
@@ -62,7 +64,7 @@ export function AdminLoginPage() {
           </div>
 
           <div className={styles.fieldGroup}>
-            <label htmlFor="admin-password" className={styles.label}>Password</label>
+            <label htmlFor="admin-password" className={styles.label}>{t("adminLogin.passwordLabel")}</label>
             <input
               id="admin-password"
               className={`${styles.input} ${error ? styles.inputError : ""}`}
@@ -72,7 +74,7 @@ export function AdminLoginPage() {
                 setPassword(event.target.value);
                 if (error) clearError();
               }}
-              placeholder="Enter password"
+              placeholder={t("adminLogin.passwordPlaceholder")}
               autoComplete="current-password"
               minLength={AUTH_PASSWORD_MIN_LENGTH}
               maxLength={AUTH_FIELD_MAX_LENGTH}
@@ -80,14 +82,14 @@ export function AdminLoginPage() {
             />
           </div>
 
-          {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>Only administrator accounts can enter here.</div>}
+          {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>{t("adminLogin.helper")}</div>}
 
           <div className={styles.actions}>
             <button type="submit" className={styles.secondaryButton} disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Login"}
+              {isLoading ? t("adminLogin.signingIn") : t("adminLogin.login")}
             </button>
             <button type="button" className={styles.secondaryButton} onClick={() => navigate(routes.entry)} disabled={isLoading}>
-              Student login
+              {t("adminLogin.studentLogin")}
             </button>
           </div>
         </form>
