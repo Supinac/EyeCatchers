@@ -259,7 +259,7 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
 export function AdminDashboardPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { getAuthState, logout } = useAuth();
+  const { getAuthState, logout, logoutLocal } = useAuth();
   const auth = getAuthState();
 
   const [selectedRole, setSelectedRole] = useState<AuthRole>("child");
@@ -366,9 +366,9 @@ export function AdminDashboardPage() {
   const getRoleLabelLower = (role: AuthRole) => (role === "admin" ? t("admin.roleAdminLower") : t("admin.roleStudentLower"));
   const selectedRolePlural = selectedRole === "admin" ? t("admin.roleAdmins") : t("admin.roleStudents");
 
-  function handleLogout() {
-    logout();
-    navigate(routes.entry);
+  async function handleLogout() {
+    await logout("admin");
+    navigate(routes.entry, { replace: true });
   }
 
   function resetForm() {
@@ -468,8 +468,8 @@ export function AdminDashboardPage() {
       await loadUsers(nextHiddenDeletedIds);
 
       if (deletedOwnAccount) {
-        logout();
-        navigate(routes.entry);
+        logoutLocal();
+        navigate(routes.entry, { replace: true });
       }
     } catch (apiError) {
       setMessage(getApiErrorMessage(apiError, t("admin.messages.removeFailed", { role: getRoleLabelLower(deleteTarget.role) })));
