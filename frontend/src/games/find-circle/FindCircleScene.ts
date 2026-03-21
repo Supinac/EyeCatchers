@@ -164,6 +164,7 @@ export function mountFindCircleScene({
   const round = buildFindCircleRound({
     gridSize: config.gridSize,
     sizeMode: config.figureSizeMode,
+    correctCount: config.correctObjectCount,
   });
 
   let disposed = false;
@@ -326,6 +327,7 @@ export function mountFindCircleScene({
           maxGameSeconds: config.maxGameSeconds,
           gridSize: config.gridSize,
           figureSizeMode: config.figureSizeMode,
+          correctObjectCount: round.correctCount,
           targetKind: round.targetKind,
         },
       });

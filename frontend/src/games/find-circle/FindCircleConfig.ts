@@ -1,14 +1,15 @@
 import type { FigureSizeMode, FindCircleGameConfig, GridSize, MaxGameSeconds, PreviewSeconds } from "../core/types/GameConfig";
 
 export const defaultFindCircleConfig: FindCircleGameConfig = {
-  previewSeconds: 10,
+  previewSeconds: 5,
   maxGameSeconds: 60,
   gridSize: 3,
+  correctObjectCount: 3,
   figureSizeMode: "static",
 };
 
 export function getPreviewSeconds(value: number | null | undefined): PreviewSeconds {
-  if (value === 5 || value === 10 || value === 15 || value === 20) return value;
+  if (value === 1 || value === 2 || value === 5 || value === 10) return value;
   return defaultFindCircleConfig.previewSeconds;
 }
 
@@ -27,6 +28,12 @@ export function getFigureSizeMode(value: string | null | undefined): FigureSizeM
   return defaultFindCircleConfig.figureSizeMode;
 }
 
-export function getFindCircleCorrectCount(gridSize: GridSize) {
-  return gridSize;
+export function getMaxCorrectObjectCount(gridSize: GridSize) {
+  return gridSize * gridSize;
+}
+
+export function getFindCircleCorrectCount(gridSize: GridSize, value?: number | null) {
+  const maxCount = getMaxCorrectObjectCount(gridSize);
+  const normalizedValue = Number.isFinite(value) ? Math.round(Number(value)) : defaultFindCircleConfig.correctObjectCount;
+  return Math.min(maxCount, Math.max(1, normalizedValue));
 }

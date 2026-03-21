@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
 import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
-import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
-import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
+import { defaultFindCircleConfig, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
 
 type ConfigOption<T extends string | number> = {
@@ -16,10 +15,10 @@ type ConfigOption<T extends string | number> = {
 };
 
 const previewOptions: ConfigOption<PreviewSeconds>[] = [
-  { id: 5, label: "5 sec", description: "Quick preview before the grid appears." },
-  { id: 10, label: "10 sec", description: "Balanced memory time." },
-  { id: 15, label: "15 sec", description: "More time to look carefully." },
-  { id: 20, label: "20 sec", description: "Longest and calmest preview." },
+  { id: 1, label: "1 sec", description: "Very quick flash before the grid appears." },
+  { id: 2, label: "2 sec", description: "Short preview for a harder round." },
+  { id: 5, label: "5 sec", description: "Balanced memory time." },
+  { id: 10, label: "10 sec", description: "Longest and calmest preview." },
 ];
 
 const maxGameTimeOptions: ConfigOption<MaxGameSeconds>[] = [
@@ -40,12 +39,6 @@ const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
   { id: "static", label: "Static", description: "All figures keep the same size." },
   { id: "random", label: "Random", description: "Figure sizes vary in the grid." },
 ];
-
-function getGameIcon(gameKey: string) {
-  if (gameKey === "memory-pairs") return <StrategyIcon className={styles.gameIcon} />;
-  if (gameKey === "shape-match") return <ArcadeIcon className={styles.gameIcon} />;
-  return <PuzzleIcon className={styles.gameIcon} />;
-}
 
 function ConfigTile<T extends string | number>({
   option,
@@ -73,15 +66,22 @@ export function GameConfigPage() {
   const { gameKey = "" } = useParams();
   const navigate = useNavigate();
   const { saveSessionState } = useGameSession();
-  const [game, setGame] = useState<GameCatalogItem | null>(null);
+  const [, setGame] = useState<GameCatalogItem | null>(null);
   const [previewSeconds, setPreviewSeconds] = useState<PreviewSeconds>(defaultFindCircleConfig.previewSeconds);
   const [maxGameSeconds, setMaxGameSeconds] = useState<MaxGameSeconds>(defaultFindCircleConfig.maxGameSeconds);
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
+  const [correctObjectCount, setCorrectObjectCount] = useState<number>(defaultFindCircleConfig.correctObjectCount);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
   }, [gameKey]);
+
+  const maxCorrectObjectCount = useMemo(() => getMaxCorrectObjectCount(gridSize), [gridSize]);
+
+  useEffect(() => {
+    setCorrectObjectCount((current) => getFindCircleCorrectCount(gridSize, current));
+  }, [gridSize]);
 
   function handleStart() {
     saveSessionState({
@@ -91,6 +91,7 @@ export function GameConfigPage() {
         previewSeconds,
         maxGameSeconds,
         gridSize,
+        correctObjectCount,
         figureSizeMode,
       },
     });
@@ -99,6 +100,7 @@ export function GameConfigPage() {
       preview: String(previewSeconds),
       maxTime: String(maxGameSeconds),
       grid: String(gridSize),
+      correctCount: String(correctObjectCount),
       sizeMode: figureSizeMode,
     });
 
@@ -119,7 +121,7 @@ export function GameConfigPage() {
       </button>
 
       <div className={styles.header}>
-        <h1 className={styles.title}>{"Configuration"}</h1>
+        <h1 className={styles.title}>Configuration</h1>
       </div>
 
       <div className={styles.panel}>
@@ -157,6 +159,33 @@ export function GameConfigPage() {
             {gridOptions.map((option) => (
               <ConfigTile key={option.id} option={option} selected={gridSize === option.id} onClick={() => setGridSize(option.id)} />
             ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sliderHeader}>
+            <div>
+              <h2 className={styles.sectionTitle}>Right objects count</h2>
+              <p className={styles.sliderHint}>Choose how many correct figures will appear in the grid.</p>
+            </div>
+            <div className={styles.sliderValue}>{correctObjectCount}</div>
+          </div>
+
+          <div className={styles.sliderPanel}>
+            <input
+              className={styles.slider}
+              type="range"
+              min={1}
+              max={maxCorrectObjectCount}
+              step={1}
+              value={correctObjectCount}
+              onChange={(event) => setCorrectObjectCount(getFindCircleCorrectCount(gridSize, Number(event.target.value)))}
+            />
+
+            <div className={styles.sliderScale}>
+              <span>1</span>
+              <span>{maxCorrectObjectCount}</span>
+            </div>
           </div>
         </section>
 

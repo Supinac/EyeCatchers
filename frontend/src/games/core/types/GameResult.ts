@@ -11,6 +11,7 @@ export type GameResultStats = {
   maxGameSeconds?: number;
   gridSize?: number;
   figureSizeMode?: "static" | "random";
+  correctObjectCount?: number;
   targetKind?: string;
 };
 

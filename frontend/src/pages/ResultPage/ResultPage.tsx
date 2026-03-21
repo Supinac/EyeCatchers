@@ -53,6 +53,7 @@ export function ResultPage() {
     result.stats?.previewSeconds ? `Preview: ${result.stats.previewSeconds}s` : null,
     result.stats?.maxGameSeconds ? `Max time: ${result.stats.maxGameSeconds}s` : null,
     result.stats?.gridSize ? `Grid size: ${result.stats.gridSize} × ${result.stats.gridSize}` : null,
+    result.stats?.correctObjectCount ? `Right objects: ${result.stats.correctObjectCount}` : null,
     result.stats?.figureSizeMode ? `Figure size: ${formatLabel(result.stats.figureSizeMode)}` : null,
   ].filter(Boolean) as string[];
 

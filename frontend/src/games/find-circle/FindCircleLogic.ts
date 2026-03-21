@@ -33,23 +33,25 @@ function shuffle<T>(items: T[]) {
 export function buildFindCircleRound({
   gridSize,
   sizeMode,
+  correctCount,
 }: {
   gridSize: GridSize;
   sizeMode: FigureSizeMode;
+  correctCount: number;
 }) {
   const cellCount = gridSize * gridSize;
   const targetKind = shapePool[getRandomInt(0, shapePool.length - 1)] ?? "circle";
-  const correctCount = getFindCircleCorrectCount(gridSize);
+  const normalizedCorrectCount = getFindCircleCorrectCount(gridSize, correctCount);
   const wrongPool = shapePool.filter((shape) => shape !== targetKind);
 
-  const correctItems: FindCircleItem[] = Array.from({ length: correctCount }, (_, index) => ({
+  const correctItems: FindCircleItem[] = Array.from({ length: normalizedCorrectCount }, (_, index) => ({
     id: `correct_${index}`,
     kind: targetKind,
     isCorrect: true,
     scale: getRandomScale(sizeMode),
   }));
 
-  const wrongItems: FindCircleItem[] = Array.from({ length: cellCount - correctCount }, (_, index) => ({
+  const wrongItems: FindCircleItem[] = Array.from({ length: cellCount - normalizedCorrectCount }, (_, index) => ({
     id: `wrong_${index}`,
     kind: wrongPool[getRandomInt(0, wrongPool.length - 1)] ?? "square",
     isCorrect: false,
@@ -58,7 +60,7 @@ export function buildFindCircleRound({
 
   return {
     targetKind,
-    correctCount,
+    correctCount: normalizedCorrectCount,
     items: shuffle([...correctItems, ...wrongItems]),
   };
 }
