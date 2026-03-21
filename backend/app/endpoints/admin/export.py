@@ -2,6 +2,7 @@ import json
 from io import BytesIO
 from pathlib import Path
 from datetime import datetime
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Query
 from sqlalchemy import select, func
@@ -31,16 +32,27 @@ GAME_LABELS_CZ: dict[GameType, str] = {
 def _register_utf8_font() -> tuple[str, str]:
     # Use a Unicode font so Czech diacritics render correctly in PDF.
     regular_candidates = [
+        # Optional overrides for custom deployments.
+        os.getenv("PDF_FONT_REGULAR", ""),
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+        "C:/Windows/Fonts/DejaVuSans.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+        str(Path(__file__).resolve().parents[3] / "fonts" / "DejaVuSans.ttf"),
     ]
     bold_candidates = [
+        os.getenv("PDF_FONT_BOLD", ""),
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+        "C:/Windows/Fonts/DejaVuSans-Bold.ttf",
+        "C:/Windows/Fonts/arialbd.ttf",
+        str(Path(__file__).resolve().parents[3] / "fonts" / "DejaVuSans-Bold.ttf"),
     ]
 
-    regular_path = next((p for p in regular_candidates if Path(p).exists()), None)
-    bold_path = next((p for p in bold_candidates if Path(p).exists()), None)
+    regular_path = next((p for p in regular_candidates if p and Path(p).exists()), None)
+    bold_path = next((p for p in bold_candidates if p and Path(p).exists()), None)
     if not regular_path or not bold_path:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
