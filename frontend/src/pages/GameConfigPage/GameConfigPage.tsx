@@ -119,9 +119,7 @@ export function GameConfigPage() {
       </button>
 
       <div className={styles.header}>
-        <div className={styles.iconBox}>{getGameIcon(gameKey)}</div>
-        <h1 className={styles.title}>{game?.name ?? "Game"}</h1>
-        <p className={styles.subtitle}>Set only the options for this game: preview time, max game time, grid size and figure size.</p>
+        <h1 className={styles.title}>{"Configuration"}</h1>
       </div>
 
       <div className={styles.panel}>
