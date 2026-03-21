@@ -4,15 +4,14 @@ import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { deleteAdmin, deleteStudent, getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
+import { getAdminResults, normalizeAdminResults, type AdminGameResult, type SubmitScoreEntry } from "../../api/resultsApi";
 import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
   formatDateTime,
-  getSessionsForUser,
   getUserById,
   upsertUserFromApi,
 } from "../../features/users/model/userStore";
-import type { StoredGameSession } from "../../features/users/model/userTypes";
 import type { AuthRole } from "../../features/auth/model/authTypes";
 import {
   AUTH_FIELD_MAX_LENGTH,
@@ -27,20 +26,107 @@ import styles from "./AdminDashboardPage.module.css";
 
 function formatLabel(value: string | undefined) {
   if (!value) return "—";
-  return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
+const SETTING_PREFERRED_ORDER = [
+  "difficulty",
+  "previewTime",
+  "maxGameTime",
+  "gridSize",
+  "correctObjectCount",
+  "figureSizeMode",
+  "figureSizePercent",
+  "contentMode",
+  "placementMode",
+  "targetValue",
+];
+
+const RESULT_PREFERRED_ORDER = [
+  "accuracyPercent",
+  "correctHits",
+  "wrongHits",
+  "elapsedSeconds",
+  "remainingSeconds",
+  "totalTaps",
+  "score",
+  "maxScore",
+  "success",
+];
+
+function getEntryOrder(key: string, preferredOrder: string[]) {
+  const index = preferredOrder.indexOf(key);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function compareEntries(left: SubmitScoreEntry, right: SubmitScoreEntry, preferredOrder: string[]) {
+  const leftOrder = getEntryOrder(left.key, preferredOrder);
+  const rightOrder = getEntryOrder(right.key, preferredOrder);
+
+  if (leftOrder !== rightOrder) {
+    return leftOrder - rightOrder;
+  }
+
+  return left.tranlations.localeCompare(right.tranlations);
+}
+
+function formatEntryValue(entry: SubmitScoreEntry) {
+  const normalizedValue = entry.value.trim();
+
+  if (!normalizedValue) {
+    return "—";
+  }
+
+  if (entry.key === "success") {
+    return normalizedValue.toLowerCase() === "true" ? "Yes" : "No";
+  }
+
+  if (["previewTime", "maxGameTime", "elapsedSeconds", "remainingSeconds"].includes(entry.key)) {
+    return `${normalizedValue}s`;
+  }
+
+  if (["accuracyPercent", "figureSizePercent"].includes(entry.key)) {
+    return normalizedValue.endsWith("%") ? normalizedValue : `${normalizedValue}%`;
+  }
+
+  if (entry.key === "gridSize") {
+    return normalizedValue.replace(/x/gi, " × ");
+  }
+
+  if (/^[a-z][a-z0-9_-]*$/i.test(normalizedValue)) {
+    return formatLabel(normalizedValue);
+  }
+
+  return normalizedValue;
+}
+
+function getResultNumber(session: AdminGameResult, key: string) {
+  const value = session.results[key]?.value;
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getSessionRatio(session: AdminGameResult) {
+  const score = session.score ?? getResultNumber(session, "score") ?? 0;
+  const maxScore = session.maxScore ?? getResultNumber(session, "maxScore") ?? 0;
+  return maxScore > 0 ? score / maxScore : 0;
+}
+
+function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[], allResults: AdminGameResult[]) {
   return users.map((user) => {
-    const sessions = getSessionsForUser(String(user.id));
-    const bestSession = sessions.reduce<StoredGameSession | null>((best, current) => {
+    const sessions = allResults.filter((session) => session.userId === String(user.id));
+    const bestSession = sessions.reduce<AdminGameResult | null>((best, current) => {
       if (!best) {
         return current;
       }
 
-      const bestRatio = best.maxScore === 0 ? 0 : best.score / best.maxScore;
-      const currentRatio = current.maxScore === 0 ? 0 : current.score / current.maxScore;
-      return currentRatio > bestRatio ? current : best;
+      return getSessionRatio(current) > getSessionRatio(best) ? current : best;
     }, null);
 
     return {
@@ -49,7 +135,10 @@ function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
       login: user.login,
       fullName: user.name?.trim() || "—",
       gamesPlayed: sessions.length,
-      bestScoreLabel: bestSession ? `${bestSession.score}/${bestSession.maxScore}` : "—",
+      bestScoreLabel:
+        bestSession && bestSession.score != null && bestSession.maxScore != null
+          ? `${bestSession.score}/${bestSession.maxScore}`
+          : "—",
       lastPlayed: sessions[0]?.playedAt ? formatDateTime(sessions[0].playedAt) : "—",
     };
   });
@@ -78,25 +167,36 @@ function AdminStatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SessionResultCard({ session }: { session: StoredGameSession }) {
+function SessionResultCard({ session }: { session: AdminGameResult }) {
   const { t } = useTranslation();
-  const accuracyLabel = session.stats ? `${session.stats.accuracyPercent}%` : "—";
-  const correctFoundLabel = session.stats ? `${session.stats.correctHits}/${session.maxScore}` : `${session.score}/${session.maxScore}`;
-  const correctTapsLabel = session.stats ? String(session.stats.correctHits) : String(session.score);
-  const wrongLabel = session.stats ? String(session.stats.wrongHits) : "0";
-  const elapsedLabel = session.stats ? `${session.stats.elapsedSeconds}s` : "—";
+
+  const settingEntries = Object.values(session.settings).sort((left, right) => compareEntries(left, right, SETTING_PREFERRED_ORDER));
+  const resultEntries = Object.values(session.results).sort((left, right) => compareEntries(left, right, RESULT_PREFERRED_ORDER));
+
+  const accuracyEntry = session.results.accuracyPercent;
+  const correctHitsEntry = session.results.correctHits;
+  const wrongHitsEntry = session.results.wrongHits;
+  const elapsedEntry = session.results.elapsedSeconds;
+  const scoreValue = session.score ?? getResultNumber(session, "score");
+  const maxScoreValue = session.maxScore ?? getResultNumber(session, "maxScore");
+  const correctFoundLabel = scoreValue != null && maxScoreValue != null ? `${scoreValue}/${maxScoreValue}` : "—";
+
+  const statsToRender = [
+    accuracyEntry,
+    correctHitsEntry,
+    wrongHitsEntry,
+    elapsedEntry,
+  ].filter(Boolean) as SubmitScoreEntry[];
+
+  const extraStats = resultEntries.filter(
+    (entry) => !["score", "maxScore", "success", ...statsToRender.map((item) => item.key)].includes(entry.key),
+  );
+  const visibleStats = [...statsToRender, ...extraStats];
 
   const configPills = [
-    t("admin.session.pillGame", { value: formatLabel(session.gameKey) }),
-    t("admin.session.pillDifficulty", { value: formatLabel(session.difficulty) }),
-    session.stats?.previewSeconds ? t("admin.session.pillPreview", { value: session.stats.previewSeconds }) : null,
-    session.stats?.maxGameSeconds ? t("admin.session.pillMaxTime", { value: session.stats.maxGameSeconds }) : null,
-    session.stats?.contentMode ? t("admin.session.pillMode", { value: formatLabel(session.stats.contentMode) }) : null,
-    session.stats?.gridSize ? t("admin.session.pillGridSize", { value: `${session.stats.gridSize} × ${session.stats.gridSize}` }) : null,
-    session.stats?.correctObjectCount ? t("admin.session.pillRightObjects", { value: session.stats.correctObjectCount }) : null,
-    session.stats?.figureSizeMode ? t("admin.session.pillFigureSize", { value: formatLabel(session.stats.figureSizeMode) }) : null,
-    session.stats?.targetValue ? t("admin.session.pillTarget", { value: session.stats.targetValue }) : null,
-  ].filter(Boolean) as string[];
+    t("admin.session.pillGame", { value: session.gameTitle }),
+    ...settingEntries.map((entry) => `${entry.tranlations}: ${formatEntryValue(entry)}`),
+  ];
 
   return (
     <article className={styles.sessionCard}>
@@ -127,10 +227,18 @@ function SessionResultCard({ session }: { session: StoredGameSession }) {
       </div>
 
       <div className={styles.sessionStatsGrid}>
-        <AdminStatCard label={t("admin.session.accuracy")} value={accuracyLabel} />
-        <AdminStatCard label={t("admin.session.correctTaps")} value={correctTapsLabel} />
-        <AdminStatCard label={t("admin.session.wrongTaps")} value={wrongLabel} />
-        <AdminStatCard label={t("admin.session.timeUsed")} value={elapsedLabel} />
+        {visibleStats.length ? (
+          visibleStats.map((entry) => (
+            <AdminStatCard key={`${session.id}-${entry.key}`} label={entry.tranlations} value={formatEntryValue(entry)} />
+          ))
+        ) : (
+          <>
+            <AdminStatCard label={t("admin.session.accuracy")} value="—" />
+            <AdminStatCard label={t("admin.session.correctTaps")} value="—" />
+            <AdminStatCard label={t("admin.session.wrongTaps")} value="—" />
+            <AdminStatCard label={t("admin.session.timeUsed")} value="—" />
+          </>
+        )}
       </div>
     </article>
   );
@@ -158,6 +266,7 @@ export function AdminDashboardPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [studentRows, setStudentRows] = useState<DashboardRow[]>([]);
   const [adminRows, setAdminRows] = useState<DashboardRow[]>([]);
+  const [adminResults, setAdminResults] = useState<AdminGameResult[]>([]);
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [tableError, setTableError] = useState("");
 
@@ -175,8 +284,8 @@ export function AdminDashboardPage() {
     [viewedUserId, version],
   );
   const viewedSessions = useMemo(
-    () => (viewedUser ? getSessionsForUser(viewedUser.id) : []),
-    [viewedUser, version],
+    () => (viewedUser ? adminResults.filter((session) => session.userId === viewedUser.id) : []),
+    [adminResults, viewedUser],
   );
 
   async function loadUsers(hiddenIdsOverride?: string[]) {
@@ -184,8 +293,9 @@ export function AdminDashboardPage() {
     setTableError("");
 
     try {
-      const [studentsResponse, adminsResponse] = await Promise.all([getStudents(), getAdmins()]);
+      const [studentsResponse, adminsResponse, resultsResponse] = await Promise.all([getStudents(), getAdmins(), getAdminResults()]);
       const hiddenIds = new Set(hiddenIdsOverride ?? hiddenDeletedIds);
+      const normalizedResults = normalizeAdminResults(resultsResponse).filter((session) => !hiddenIds.has(session.userId));
 
       studentsResponse.forEach((user) => {
         upsertUserFromApi({
@@ -208,8 +318,9 @@ export function AdminDashboardPage() {
       const visibleStudents = studentsResponse.filter((user) => !hiddenIds.has(String(user.id)));
       const visibleAdmins = adminsResponse.filter((user) => !hiddenIds.has(String(user.id)) && !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
 
-      setStudentRows(mapApiUsersToRows("child", visibleStudents));
-      setAdminRows(mapApiUsersToRows("admin", visibleAdmins));
+      setAdminResults(normalizedResults);
+      setStudentRows(mapApiUsersToRows("child", visibleStudents, normalizedResults));
+      setAdminRows(mapApiUsersToRows("admin", visibleAdmins, normalizedResults));
     } catch (apiError) {
       setTableError(getApiErrorMessage(apiError, "Failed to load users."));
     } finally {
@@ -307,6 +418,8 @@ export function AdminDashboardPage() {
       const nextHiddenDeletedIds = [...new Set([...hiddenDeletedIds, targetId])];
       setHiddenDeletedIds(nextHiddenDeletedIds);
 
+      setAdminResults((current) => current.filter((session) => session.userId !== targetId));
+
       if (targetRole === "admin") {
         setAdminRows((current) => current.filter((row) => row.id !== targetId));
       } else {
@@ -387,7 +500,7 @@ export function AdminDashboardPage() {
         password: selectedRole === "admin" ? trimmedPassword : undefined,
       });
 
-      const nextRow = mapApiUsersToRows(selectedRole, [response])[0];
+      const nextRow = mapApiUsersToRows(selectedRole, [response], adminResults)[0];
       if (selectedRole === "admin") {
         if (!isSameAdminAccount(auth, { id: response.id, login: response.login, role: "admin" })) {
           setAdminRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
