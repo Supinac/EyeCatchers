@@ -1,4 +1,4 @@
-import type { ContentMode, FigureSizeMode, FindCircleGameConfig, GridSize, MaxGameSeconds, PreviewSeconds } from "../core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, FindCircleGameConfig, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds } from "../core/types/GameConfig";
 
 export const defaultFindCircleConfig: FindCircleGameConfig = {
   previewSeconds: 5,
@@ -7,6 +7,7 @@ export const defaultFindCircleConfig: FindCircleGameConfig = {
   correctObjectCount: 3,
   figureSizeMode: "static",
   contentMode: "figures",
+  placementMode: "grid",
 };
 
 export function getPreviewSeconds(value: number | null | undefined): PreviewSeconds {
@@ -32,6 +33,11 @@ export function getFigureSizeMode(value: string | null | undefined): FigureSizeM
 export function getContentMode(value: string | null | undefined): ContentMode {
   if (value === "figures" || value === "letters" || value === "numbers") return value;
   return defaultFindCircleConfig.contentMode;
+}
+
+export function getPlacementMode(value: string | null | undefined): PlacementMode {
+  if (value === "grid" || value === "random") return value;
+  return defaultFindCircleConfig.placementMode;
 }
 
 export function getMaxCorrectObjectCount(gridSize: GridSize) {

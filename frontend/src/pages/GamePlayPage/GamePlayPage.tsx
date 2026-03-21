@@ -12,12 +12,18 @@ import {
   getFindCircleCorrectCount,
   getGridSize,
   getMaxGameSeconds,
+  getPlacementMode,
   getPreviewSeconds,
 } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GamePlayPage.module.css";
 
 function formatLabel(value: string | undefined) {
   if (!value) return "—";
+  if (value === "letters") return "Czech letters";
+  if (value === "figures") return "Figures";
+  if (value === "numbers") return "Numbers";
+  if (value === "grid") return "Grid";
+  if (value === "random") return "Random positions";
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -33,6 +39,7 @@ export function GamePlayPage() {
     const grid = getGridSize(Number(searchParams.get("grid")) || undefined);
     const sizeMode = getFigureSizeMode(searchParams.get("sizeMode"));
     const contentMode = getContentMode(searchParams.get("contentMode"));
+    const placementMode = getPlacementMode(searchParams.get("placementMode"));
     const correctCount = getFindCircleCorrectCount(grid, Number(searchParams.get("correctCount")) || undefined);
 
     return {
@@ -45,6 +52,7 @@ export function GamePlayPage() {
         correctObjectCount: correctCount,
         figureSizeMode: sizeMode,
         contentMode,
+        placementMode,
       },
     };
   }, [difficulty, gameKey, searchParams]);
@@ -66,9 +74,10 @@ export function GamePlayPage() {
         <div className={styles.meta}>
           <span>{config.findCircle?.previewSeconds}s preview</span>
           <span>{config.findCircle?.maxGameSeconds}s max time</span>
-          <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} grid</span>
+          <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} items</span>
           <span>{config.findCircle?.correctObjectCount} correct</span>
           <span>{formatLabel(config.findCircle?.contentMode)}</span>
+          <span>{formatLabel(config.findCircle?.placementMode)}</span>
           <span>{formatLabel(config.findCircle?.figureSizeMode)} size</span>
         </div>
       </div>

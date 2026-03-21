@@ -8,15 +8,30 @@ import type { FindCircleGameConfig } from "../core/types/GameConfig";
 
 const COLORS = {
   white: 0xffffff,
-  muted: 0x9f9f9f,
   panel: 0x060606,
   panelBorder: 0x2a2a2a,
   correct: 0x22c55e,
   wrong: 0xef4444,
 };
 
+type ItemPosition = {
+  x: number;
+  y: number;
+};
+
 function getRounded(value: number) {
   return Math.round(value);
+}
+
+function shuffle<T>(items: T[]) {
+  const result = [...items];
+
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+
+  return result;
 }
 
 function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: number) {
@@ -176,9 +191,107 @@ function createGridItem({
 }
 
 function formatModeLabel(contentMode: FindCircleGameConfig["contentMode"]) {
-  if (contentMode === "letters") return "letter";
+  if (contentMode === "letters") return "Czech letter";
   if (contentMode === "numbers") return "number";
   return "figure";
+}
+
+function getGridPositions({
+  count,
+  gridSize,
+  width,
+  height,
+  topSpace,
+  bottomSpace,
+  padding,
+  gap,
+}: {
+  count: number;
+  gridSize: number;
+  width: number;
+  height: number;
+  topSpace: number;
+  bottomSpace: number;
+  padding: number;
+  gap: number;
+}) {
+  const availableWidth = width - padding * 2;
+  const availableHeight = height - topSpace - bottomSpace;
+  const cellSize = Math.min(
+    (availableWidth - gap * (gridSize - 1)) / gridSize,
+    (availableHeight - gap * (gridSize - 1)) / gridSize,
+  );
+  const gridWidth = cellSize * gridSize + gap * (gridSize - 1);
+  const gridHeight = cellSize * gridSize + gap * (gridSize - 1);
+  const startX = (width - gridWidth) / 2 + cellSize / 2;
+  const startY = topSpace + Math.max(0, (availableHeight - gridHeight) / 2) + cellSize / 2;
+
+  const positions: ItemPosition[] = Array.from({ length: count }, (_, index) => {
+    const col = index % gridSize;
+    const row = Math.floor(index / gridSize);
+
+    return {
+      x: startX + col * (cellSize + gap),
+      y: startY + row * (cellSize + gap),
+    };
+  });
+
+  return { positions, itemSize: cellSize };
+}
+
+function getRandomPositions({
+  count,
+  width,
+  height,
+  topSpace,
+  bottomSpace,
+  padding,
+  baseSize,
+  gridSize,
+}: {
+  count: number;
+  width: number;
+  height: number;
+  topSpace: number;
+  bottomSpace: number;
+  padding: number;
+  baseSize: number;
+  gridSize: number;
+}) {
+  const playLeft = padding;
+  const playRight = width - padding;
+  const playTop = topSpace;
+  const playBottom = height - bottomSpace;
+  const density = Math.max(count * 2.4, count + 10);
+  const aspectRatio = (playRight - playLeft) / Math.max(playBottom - playTop, 1);
+  const cols = Math.max(gridSize + 2, Math.ceil(Math.sqrt(density * Math.max(aspectRatio, 0.8))));
+  const rows = Math.max(gridSize + 2, Math.ceil(density / cols));
+  const slotWidth = (playRight - playLeft) / cols;
+  const slotHeight = (playBottom - playTop) / rows;
+  const itemSize = Math.max(72, Math.min(baseSize * 0.88, Math.min(slotWidth, slotHeight) * 0.82));
+  const jitterX = Math.max(0, (slotWidth - itemSize) * 0.34);
+  const jitterY = Math.max(0, (slotHeight - itemSize) * 0.34);
+
+  const candidates: ItemPosition[] = [];
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const centerX = playLeft + slotWidth * (col + 0.5);
+      const centerY = playTop + slotHeight * (row + 0.5);
+      const randomX = centerX + (Math.random() * 2 - 1) * jitterX;
+      const randomY = centerY + (Math.random() * 2 - 1) * jitterY;
+
+      candidates.push({
+        x: Math.min(playRight - itemSize / 2, Math.max(playLeft + itemSize / 2, randomX)),
+        y: Math.min(playBottom - itemSize / 2, Math.max(playTop + itemSize / 2, randomY)),
+      });
+    }
+  }
+
+  return {
+    positions: shuffle(candidates).slice(0, count),
+    itemSize,
+  };
 }
 
 export function mountFindCircleScene({
@@ -235,7 +348,7 @@ export function mountFindCircleScene({
   previewLayer.addChild(previewTitle);
 
   const previewHint = new Text(
-    "It will disappear, then select every matching item in the grid.",
+    "It will disappear, then select every matching item on the screen.",
     new TextStyle({
       fill: "#bdbdbd",
       fontSize: Math.max(16, Math.min(22, width * 0.018)),
@@ -282,7 +395,7 @@ export function mountFindCircleScene({
   previewLayer.addChild(countdownText);
 
   const topTitle = new Text(
-    `Select all matching ${config.contentMode === "figures" ? "figures" : "items"}`,
+    "Select all matching items",
     new TextStyle({
       fill: "#ffffff",
       fontSize: Math.max(26, Math.min(46, width * 0.03)),
@@ -327,16 +440,29 @@ export function mountFindCircleScene({
   const topSpace = 196;
   const bottomSpace = 28;
   const gap = Math.max(10, Math.min(18, width * 0.012));
-  const availableWidth = width - gridPaddingX * 2;
-  const availableHeight = height - topSpace - bottomSpace;
-  const cellSize = Math.min(
-    (availableWidth - gap * (config.gridSize - 1)) / config.gridSize,
-    (availableHeight - gap * (config.gridSize - 1)) / config.gridSize,
-  );
-  const gridWidth = cellSize * config.gridSize + gap * (config.gridSize - 1);
-  const gridHeight = cellSize * config.gridSize + gap * (config.gridSize - 1);
-  const startX = (width - gridWidth) / 2 + cellSize / 2;
-  const startY = topSpace + Math.max(0, (availableHeight - gridHeight) / 2) + cellSize / 2;
+  const gridLayout = getGridPositions({
+    count: round.items.length,
+    gridSize: config.gridSize,
+    width,
+    height,
+    topSpace,
+    bottomSpace,
+    padding: gridPaddingX,
+    gap,
+  });
+  const layout =
+    config.placementMode === "random"
+      ? getRandomPositions({
+          count: round.items.length,
+          width,
+          height,
+          topSpace,
+          bottomSpace,
+          padding: gridPaddingX,
+          baseSize: gridLayout.itemSize,
+          gridSize: config.gridSize,
+        })
+      : gridLayout;
 
   function finishRound(success: boolean) {
     if (completed || disposed) return;
@@ -367,6 +493,7 @@ export function mountFindCircleScene({
           figureSizeMode: config.figureSizeMode,
           correctObjectCount: round.correctCount,
           contentMode: config.contentMode,
+          placementMode: config.placementMode,
           targetValue: round.targetValue,
         },
       });
@@ -382,7 +509,7 @@ export function mountFindCircleScene({
   round.items.forEach((item, index) => {
     const gridItem = createGridItem({
       item,
-      cellSize,
+      cellSize: layout.itemSize,
       canInteract,
       onTap: (clickedItem, updateState) => {
         totalTaps += 1;
@@ -406,10 +533,11 @@ export function mountFindCircleScene({
       },
     });
 
-    const col = index % config.gridSize;
-    const row = Math.floor(index / config.gridSize);
-    gridItem.x = startX + col * (cellSize + gap);
-    gridItem.y = startY + row * (cellSize + gap);
+    const position = layout.positions[index];
+    if (!position) return;
+
+    gridItem.x = position.x;
+    gridItem.y = position.y;
     gameLayer.addChild(gridItem);
   });
 

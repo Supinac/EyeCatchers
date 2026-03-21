@@ -1,4 +1,4 @@
-import type { ContentMode, FigureSizeMode } from "./GameConfig";
+import type { ContentMode, FigureSizeMode, PlacementMode } from "./GameConfig";
 import type { GameDifficulty } from "./GameDefinition";
 
 export type GameResultStats = {
@@ -14,6 +14,7 @@ export type GameResultStats = {
   figureSizeMode?: FigureSizeMode;
   correctObjectCount?: number;
   contentMode?: ContentMode;
+  placementMode?: PlacementMode;
   targetValue?: string;
 };
 

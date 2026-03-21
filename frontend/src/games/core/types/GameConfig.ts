@@ -5,6 +5,7 @@ export type MaxGameSeconds = 30 | 60 | 90 | 120;
 export type GridSize = 2 | 3 | 4 | 5;
 export type FigureSizeMode = "static" | "random";
 export type ContentMode = "figures" | "letters" | "numbers";
+export type PlacementMode = "grid" | "random";
 
 export type FindCircleGameConfig = {
   previewSeconds: PreviewSeconds;
@@ -13,6 +14,7 @@ export type FindCircleGameConfig = {
   correctObjectCount: number;
   figureSizeMode: FigureSizeMode;
   contentMode: ContentMode;
+  placementMode: PlacementMode;
 };
 
 export type GameConfig = {

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PlacementMode, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { defaultFindCircleConfig, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
@@ -37,8 +37,13 @@ const gridOptions: ConfigOption<GridSize>[] = [
 
 const contentOptions: ConfigOption<ContentMode>[] = [
   { id: "figures", label: "Figures", description: "Circle, square, triangle and other simple icons." },
-  { id: "letters", label: "English letters", description: "Big bold A–Z letters for kids." },
+  { id: "letters", label: "Czech letters", description: "Big bold Czech uppercase letters for kids." },
   { id: "numbers", label: "Numbers", description: "Big bold digits from 0 to 9." },
+];
+
+const placementOptions: ConfigOption<PlacementMode>[] = [
+  { id: "grid", label: "Grid", description: "Objects are placed into a clean grid." },
+  { id: "random", label: "Random positions", description: "Objects are scattered across the whole view." },
 ];
 
 const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
@@ -79,6 +84,7 @@ export function GameConfigPage() {
   const [correctObjectCount, setCorrectObjectCount] = useState<number>(defaultFindCircleConfig.correctObjectCount);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
   const [contentMode, setContentMode] = useState<ContentMode>(defaultFindCircleConfig.contentMode);
+  const [placementMode, setPlacementMode] = useState<PlacementMode>(defaultFindCircleConfig.placementMode);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -101,6 +107,7 @@ export function GameConfigPage() {
         correctObjectCount,
         figureSizeMode,
         contentMode,
+        placementMode,
       },
     });
 
@@ -111,6 +118,7 @@ export function GameConfigPage() {
       correctCount: String(correctObjectCount),
       sizeMode: figureSizeMode,
       contentMode,
+      placementMode,
     });
 
     navigate(`/play/${gameKey}?${params.toString()}`);
@@ -175,7 +183,7 @@ export function GameConfigPage() {
           <div className={styles.sliderHeader}>
             <div>
               <h2 className={styles.sectionTitle}>Right objects count</h2>
-              <p className={styles.sliderHint}>Choose how many correct items will appear in the grid.</p>
+              <p className={styles.sliderHint}>Choose how many correct items will appear on the screen.</p>
             </div>
             <div className={styles.sliderValue}>{correctObjectCount}</div>
           </div>
@@ -207,6 +215,20 @@ export function GameConfigPage() {
                 option={option}
                 selected={contentMode === option.id}
                 onClick={() => setContentMode(option.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Placement mode</h2>
+          <div className={styles.grid}>
+            {placementOptions.map((option) => (
+              <ConfigTile
+                key={option.id}
+                option={option}
+                selected={placementMode === option.id}
+                onClick={() => setPlacementMode(option.id)}
               />
             ))}
           </div>
