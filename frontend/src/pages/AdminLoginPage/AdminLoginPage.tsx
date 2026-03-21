@@ -43,51 +43,60 @@ export function AdminLoginPage() {
 
   return (
     <main className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate(routes.entry)}>
-        <span aria-hidden="true">←</span>
-        <span>Back</span>
-      </button>
+      <div className={styles.shell}>
 
-      <form className={styles.panel} onSubmit={handleSubmit}>
-        <div className={styles.iconWrap} aria-hidden="true">◎</div>
-        <div className={styles.header}>
+        <div className={styles.headerBlock}>
+          <div className={styles.badge}>Administrator</div>
           <h1 className={styles.title}>Admin access</h1>
-          <p className={styles.subtitle}>Sign in to manage users and review played games.</p>
+          <p className={styles.subtitle}>Use the same calm login style, but with both login and password for administrators.</p>
         </div>
 
-        <div className={styles.field}>
-          <label htmlFor="admin-username">Login</label>
-          <input
-            id="admin-username"
-            value={username}
-            onChange={(event) => {
-              setUsername(event.target.value);
-              if (error) setError("");
-            }}
-            placeholder="Enter admin login"
-            autoComplete="username"
-          />
-        </div>
+        <form className={styles.panel} onSubmit={handleSubmit}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="admin-username" className={styles.label}>Login</label>
+            <input
+              id="admin-username"
+              className={`${styles.input} ${error ? styles.inputError : ""}`}
+              value={username}
+              onChange={(event) => {
+                setUsername(event.target.value);
+                if (error) setError("");
+              }}
+              placeholder="Enter admin login"
+              autoComplete="username"
+            />
+          </div>
 
-        <div className={styles.field}>
-          <label htmlFor="admin-password">Password</label>
-          <input
-            id="admin-password"
-            type="password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              if (error) setError("");
-            }}
-            placeholder="Enter password"
-            autoComplete="current-password"
-          />
-        </div>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="admin-password" className={styles.label}>Password</label>
+            <input
+              id="admin-password"
+              className={`${styles.input} ${error ? styles.inputError : ""}`}
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (error) setError("");
+              }}
+              placeholder="Enter password"
+              autoComplete="current-password"
+            />
+          </div>
 
-        {error ? <p className={styles.error}>{error}</p> : <p className={styles.info}>Only administrator accounts can enter here.</p>}
+          {error ? (
+            <div className={styles.errorBadge}>{error}</div>
+          ) : (
+            <div className={styles.helper}>Only administrator accounts can enter here.</div>
+          )}
 
-        <button type="submit" className={styles.secondaryButton}>Login</button>
-      </form>
+          <div className={styles.actions}>
+            <button type="submit" className={styles.secondaryButton}>Login</button>
+            <button type="button" className={styles.secondaryButton} onClick={() => navigate(routes.entry)}>
+              Student login
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }
