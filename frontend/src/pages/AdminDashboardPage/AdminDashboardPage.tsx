@@ -9,7 +9,7 @@ import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
   formatDateTime,
-  getUserById,
+  getUserByLogin,
   upsertUserFromApi,
 } from "../../features/users/model/userStore";
 import type { AuthRole } from "../../features/auth/model/authTypes";
@@ -118,6 +118,10 @@ function getSessionRatio(session: AdminGameResult) {
   return maxScore > 0 ? score / maxScore : 0;
 }
 
+function getDashboardRowId(role: AuthRole, apiId: string | number) {
+  return `${role}:${String(apiId)}`;
+}
+
 function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[], allResults: AdminGameResult[]) {
   return users.map((user) => {
     const sessions = allResults.filter((session) => session.userId === String(user.id));
@@ -130,7 +134,8 @@ function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[], allRes
     }, null);
 
     return {
-      id: String(user.id),
+      id: getDashboardRowId(role, user.id),
+      apiId: String(user.id),
       role,
       login: user.login,
       fullName: user.name?.trim() || "—",
@@ -150,7 +155,7 @@ function isSameAdminAccount(
   auth: ReturnType<ReturnType<typeof useAuth>["getAuthState"]>,
   candidate: { id?: number | string; login?: string; role?: AuthRole },
 ) {
-  if (!auth || auth.role !== "admin") {
+  if (!auth || auth.role !== "admin" || candidate.role !== "admin") {
     return false;
   }
 
@@ -198,6 +203,8 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
     ...settingEntries.map((entry) => `${entry.tranlations}: ${formatEntryValue(entry)}`),
   ];
 
+  const playedAtLabel = session.playedAt ? formatDateTime(session.playedAt) : "—";
+
   return (
     <article className={styles.sessionCard}>
       <div className={styles.sessionHeader}>
@@ -209,7 +216,7 @@ function SessionResultCard({ session }: { session: AdminGameResult }) {
           </div>
           <div>
             <h4 className={styles.sessionTitle}>{session.gameTitle}</h4>
-            <p className={styles.sessionMetaLine}>{t("admin.session.playedAt", { value: formatDateTime(session.playedAt) })}</p>
+            <p className={styles.sessionMetaLine}>{t("admin.session.playedAt", { value: playedAtLabel })}</p>
           </div>
         </div>
         <div className={styles.sessionScoreBlock}>
@@ -279,13 +286,29 @@ export function AdminDashboardPage() {
     () => (selectedRole === "admin" ? adminRows : studentRows).filter((row) => !hiddenDeletedIdsSet.has(row.id)),
     [adminRows, hiddenDeletedIdsSet, selectedRole, studentRows],
   );
+  const viewedRow = useMemo(
+    () => (viewedUserId ? allTableRows.find((row) => row.id === viewedUserId) : undefined),
+    [allTableRows, viewedUserId],
+  );
   const viewedUser = useMemo(
-    () => (viewedUserId ? getUserById(viewedUserId) : undefined),
-    [viewedUserId, version],
+    () => (viewedRow ? getUserByLogin(viewedRow.login, viewedRow.role) : undefined),
+    [viewedRow, version],
+  );
+  const viewedDisplayName = useMemo(() => {
+    if (!viewedRow) {
+      return "";
+    }
+
+    const localFullName = `${viewedUser?.name ?? ""} ${viewedUser?.surname ?? ""}`.trim();
+    return localFullName || viewedRow.fullName.trim() || viewedRow.login;
+  }, [viewedRow, viewedUser]);
+  const viewedCreatedAtLabel = useMemo(
+    () => (viewedUser?.createdAt ? formatDateTime(viewedUser.createdAt) : "—"),
+    [viewedUser],
   );
   const viewedSessions = useMemo(
-    () => (viewedUser ? adminResults.filter((session) => session.userId === viewedUser.id) : []),
-    [adminResults, viewedUser],
+    () => (viewedRow && viewedRow.role === "child" ? adminResults.filter((session) => session.userId === viewedRow.apiId) : []),
+    [adminResults, viewedRow],
   );
 
   async function loadUsers(hiddenIdsOverride?: string[]) {
@@ -295,7 +318,7 @@ export function AdminDashboardPage() {
     try {
       const [studentsResponse, adminsResponse, resultsResponse] = await Promise.all([getStudents(), getAdmins(), getAdminResults()]);
       const hiddenIds = new Set(hiddenIdsOverride ?? hiddenDeletedIds);
-      const normalizedResults = normalizeAdminResults(resultsResponse).filter((session) => !hiddenIds.has(session.userId));
+      const normalizedResults = normalizeAdminResults(resultsResponse);
 
       studentsResponse.forEach((user) => {
         upsertUserFromApi({
@@ -315,8 +338,10 @@ export function AdminDashboardPage() {
         });
       });
 
-      const visibleStudents = studentsResponse.filter((user) => !hiddenIds.has(String(user.id)));
-      const visibleAdmins = adminsResponse.filter((user) => !hiddenIds.has(String(user.id)) && !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }));
+      const visibleStudents = studentsResponse.filter((user) => !hiddenIds.has(getDashboardRowId("child", user.id)));
+      const visibleAdmins = adminsResponse.filter(
+        (user) => !hiddenIds.has(getDashboardRowId("admin", user.id)) && !isSameAdminAccount(auth, { id: user.id, login: user.login, role: "admin" }),
+      );
 
       setAdminResults(normalizedResults);
       setStudentRows(mapApiUsersToRows("child", visibleStudents, normalizedResults));
@@ -367,7 +392,7 @@ export function AdminDashboardPage() {
       return;
     }
 
-    if (isSameAdminAccount(auth, { id: userId, login: targetRow.login, role: targetRow.role })) {
+    if (isSameAdminAccount(auth, { id: targetRow.apiId, login: targetRow.login, role: targetRow.role })) {
       setMessage(t("admin.messages.cannotRemoveOwnAccount"));
       setMessageType("error");
       return;
@@ -385,7 +410,7 @@ export function AdminDashboardPage() {
       return;
     }
 
-    if (isSameAdminAccount(auth, { id: deleteTarget.id, login: deleteTarget.login, role: deleteTarget.role })) {
+    if (isSameAdminAccount(auth, { id: deleteTarget.apiId, login: deleteTarget.login, role: deleteTarget.role })) {
       setMessage(t("admin.messages.cannotRemoveOwnAccount"));
       setMessageType("error");
       handleCloseDeleteModal();
@@ -393,9 +418,10 @@ export function AdminDashboardPage() {
     }
 
     const targetId = deleteTarget.id;
+    const targetApiId = deleteTarget.apiId;
     const targetRole = deleteTarget.role;
     const targetLogin = deleteTarget.login;
-    const deletedOwnAccount = isSameAdminAccount(auth, { id: targetId, login: targetLogin, role: targetRole });
+    const deletedOwnAccount = isSameAdminAccount(auth, { id: targetApiId, login: targetLogin, role: targetRole });
 
     setIsDeleting(true);
     setMessage("");
@@ -403,12 +429,15 @@ export function AdminDashboardPage() {
 
     try {
       if (targetRole === "admin") {
-        await deleteAdmin(Number(targetId));
+        await deleteAdmin(Number(targetApiId));
       } else {
-        await deleteStudent(Number(targetId));
+        await deleteStudent(Number(targetApiId));
       }
 
-      deleteUser(targetId);
+      const localUser = getUserByLogin(targetLogin, targetRole);
+      if (localUser) {
+        deleteUser(localUser.id);
+      }
 
       if (viewedUserId === targetId) {
         setViewedUserId("");
@@ -418,7 +447,7 @@ export function AdminDashboardPage() {
       const nextHiddenDeletedIds = [...new Set([...hiddenDeletedIds, targetId])];
       setHiddenDeletedIds(nextHiddenDeletedIds);
 
-      setAdminResults((current) => current.filter((session) => session.userId !== targetId));
+      setAdminResults((current) => current.filter((session) => session.userId !== targetApiId));
 
       if (targetRole === "admin") {
         setAdminRows((current) => current.filter((row) => row.id !== targetId));
@@ -760,15 +789,15 @@ export function AdminDashboardPage() {
         </div>
       ) : null}
 
-      {isUserModalOpen && viewedUser ? (
+      {isUserModalOpen && viewedRow ? (
         <div className={styles.modalOverlay} onClick={() => setIsUserModalOpen(false)}>
           <div className={`${styles.modalCard} ${styles.userModalCard}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
                 <p className={styles.modalEyebrow}>{t("admin.modal.userResults")}</p>
-                <h2>{`${viewedUser.name} ${viewedUser.surname}`.trim() || viewedUser.login}</h2>
+                <h2>{viewedDisplayName}</h2>
                 <p className={styles.detailMeta}>
-                  @{viewedUser.login} · {getRoleLabel(viewedUser.role === "admin" ? "admin" : "child")} · {t("admin.modal.createdAt", { value: formatDateTime(viewedUser.createdAt) })}
+                  @{viewedRow.login} · {getRoleLabel(viewedRow.role === "admin" ? "admin" : "child")} · {t("admin.modal.createdAt", { value: viewedCreatedAtLabel })}
                 </p>
               </div>
               <button type="button" className={styles.closeButton} onClick={() => setIsUserModalOpen(false)}>

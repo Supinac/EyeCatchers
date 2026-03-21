@@ -21,7 +21,12 @@ export type AdminResultResponse = {
   game_type: string;
   settings: SubmitScoreMap | SubmitScoreEntry[] | string | null;
   results: SubmitScoreMap | SubmitScoreEntry[] | string | null;
-  created_at?: string | null;
+  created_at?: string | number | null;
+  createdAt?: string | number | null;
+  played_at?: string | number | null;
+  playedAt?: string | number | null;
+  timestamp?: string | number | null;
+  date?: string | number | null;
 };
 
 export type AdminGameResult = {
@@ -29,7 +34,7 @@ export type AdminGameResult = {
   userId: string;
   gameKey: string;
   gameTitle: string;
-  playedAt: string;
+  playedAt: string | null;
   success: boolean;
   score: number | null;
   maxScore: number | null;
@@ -182,6 +187,56 @@ function parseNumber(value: string | undefined) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normalizePlayedAt(value: unknown) {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value <= 0) {
+      return null;
+    }
+
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const asNumber = Number(trimmed);
+  if (Number.isFinite(asNumber) && asNumber > 0) {
+    const numericDate = new Date(asNumber);
+    if (Number.isFinite(numericDate.getTime())) {
+      return numericDate.toISOString();
+    }
+  }
+
+  const timestamp = new Date(trimmed).getTime();
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+}
+
+function extractPlayedAt(item: AdminResultResponse) {
+  return normalizePlayedAt(
+    item.created_at ?? item.createdAt ?? item.played_at ?? item.playedAt ?? item.timestamp ?? item.date,
+  );
+}
+
+function getPlayedAtSortValue(value: string | null) {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
 export function normalizeAdminResult(item: AdminResultResponse): AdminGameResult {
   const settings = normalizeEntryMap(item.settings);
   const results = normalizeEntryMap(item.results);
@@ -192,7 +247,7 @@ export function normalizeAdminResult(item: AdminResultResponse): AdminGameResult
     userId: String(item.user_id),
     gameKey,
     gameTitle: formatTitle(gameKey),
-    playedAt: item.created_at ?? new Date(0).toISOString(),
+    playedAt: extractPlayedAt(item),
     success: parseBoolean(results.success?.value),
     score: parseNumber(results.score?.value),
     maxScore: parseNumber(results.maxScore?.value),
@@ -205,7 +260,7 @@ export function normalizeAdminResult(item: AdminResultResponse): AdminGameResult
 export function normalizeAdminResults(items: AdminResultResponse[]) {
   return items
     .map(normalizeAdminResult)
-    .sort((left, right) => new Date(right.playedAt).getTime() - new Date(left.playedAt).getTime());
+    .sort((left, right) => getPlayedAtSortValue(right.playedAt) - getPlayedAtSortValue(left.playedAt));
 }
 
 export function buildSubmitScoreRequest(result: GameResult): SubmitScoreRequest {
