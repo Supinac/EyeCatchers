@@ -41,7 +41,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
         </svg>
       </div>
 
-      {isLocked ? <div className={styles.lockOverlay}></div> : null}
+      {isLocked ? <div className={styles.lockOverlay}>Coming soon</div> : null}
     </button>
   );
 }

@@ -33,8 +33,8 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   if (kind === "square") {
-    const rectWidth = getRounded(roundedSize * 1.12);
-    const rectHeight = getRounded(roundedSize * 0.76);
+    const rectWidth = getRounded(roundedSize * 1.14);
+    const rectHeight = getRounded(roundedSize * 0.78);
     graphic.drawRoundedRect(
       -rectWidth / 2,
       -rectHeight / 2,
@@ -47,23 +47,14 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   if (kind === "triangle") {
-    const points = [
-      new Point(0, -half),
-      new Point(half, half),
-      new Point(-half, half),
-    ];
+    const points = [new Point(0, -half), new Point(half, half), new Point(-half, half)];
     graphic.drawPolygon(points);
     graphic.endFill();
     return;
   }
 
   if (kind === "diamond") {
-    const points = [
-      new Point(0, -half),
-      new Point(half, 0),
-      new Point(0, half),
-      new Point(-half, 0),
-    ];
+    const points = [new Point(0, -half), new Point(half, 0), new Point(0, half), new Point(-half, 0)];
     graphic.drawPolygon(points);
     graphic.endFill();
     return;
@@ -103,6 +94,41 @@ function makeCounterLabel(text: string) {
   );
 }
 
+function createTextSymbol(value: string, size: number, color: number) {
+  const label = new Text(
+    value,
+    new TextStyle({
+      fill: color,
+      fontSize: Math.max(28, Math.round(size)),
+      fontFamily: "Arial",
+      fontWeight: "900",
+      align: "center",
+    }),
+  );
+  label.anchor.set(0.5);
+  return label;
+}
+
+function createSymbolDisplay(item: FindCircleItem, size: number, color: number) {
+  if (item.contentType === "shape") {
+    const graphic = new Graphics();
+    drawShape(graphic, item.value as ShapeKind, size, color);
+    return graphic;
+  }
+
+  return createTextSymbol(item.value, size, color);
+}
+
+function createPreviewDisplay(value: string, isShape: boolean, size: number, color: number) {
+  if (isShape) {
+    const graphic = new Graphics();
+    drawShape(graphic, value as ShapeKind, size, color);
+    return graphic;
+  }
+
+  return createTextSymbol(value, size, color);
+}
+
 function createGridItem({
   item,
   cellSize,
@@ -116,7 +142,7 @@ function createGridItem({
 }) {
   const container = new Container();
   const card = new Graphics();
-  const symbol = new Graphics();
+  const symbolLayer = new Container();
   const symbolSize = cellSize * 0.38 * item.scale;
 
   function paint(state: "idle" | "correct" | "wrong") {
@@ -124,11 +150,12 @@ function createGridItem({
     const symbolColor = state === "correct" ? COLORS.correct : state === "wrong" ? COLORS.wrong : COLORS.white;
 
     drawCard(card, cellSize, borderColor);
-    drawShape(symbol, item.kind, symbolSize, symbolColor);
+    symbolLayer.removeChildren().forEach((child) => child.destroy());
+    symbolLayer.addChild(createSymbolDisplay(item, symbolSize, symbolColor));
   }
 
   paint("idle");
-  container.addChild(card, symbol);
+  container.addChild(card, symbolLayer);
   container.eventMode = "static";
   container.cursor = "pointer";
   container.hitArea = new Rectangle(-cellSize / 2, -cellSize / 2, cellSize, cellSize);
@@ -148,6 +175,12 @@ function createGridItem({
   return container;
 }
 
+function formatModeLabel(contentMode: FindCircleGameConfig["contentMode"]) {
+  if (contentMode === "letters") return "letter";
+  if (contentMode === "numbers") return "number";
+  return "figure";
+}
+
 export function mountFindCircleScene({
   mountElement,
   difficulty,
@@ -165,6 +198,7 @@ export function mountFindCircleScene({
     gridSize: config.gridSize,
     sizeMode: config.figureSizeMode,
     correctCount: config.correctObjectCount,
+    contentMode: config.contentMode,
   });
 
   let disposed = false;
@@ -187,7 +221,7 @@ export function mountFindCircleScene({
   app.stage.hitArea = new Rectangle(0, 0, app.screen.width, app.screen.height);
 
   const previewTitle = new Text(
-    "Remember this shape",
+    `Remember this ${formatModeLabel(config.contentMode)}`,
     new TextStyle({
       fill: "#ffffff",
       fontSize: Math.max(28, Math.min(52, width * 0.038)),
@@ -201,7 +235,7 @@ export function mountFindCircleScene({
   previewLayer.addChild(previewTitle);
 
   const previewHint = new Text(
-    "It will disappear, then select every matching figure in the grid.",
+    "It will disappear, then select every matching item in the grid.",
     new TextStyle({
       fill: "#bdbdbd",
       fontSize: Math.max(16, Math.min(22, width * 0.018)),
@@ -223,11 +257,15 @@ export function mountFindCircleScene({
   previewCard.y = height / 2;
   previewLayer.addChild(previewCard);
 
-  const previewShape = new Graphics();
-  drawShape(previewShape, round.targetKind, previewCardSize * 0.42, COLORS.white);
-  previewShape.x = width / 2;
-  previewShape.y = height / 2;
-  previewLayer.addChild(previewShape);
+  const previewDisplay = createPreviewDisplay(
+    round.targetValue,
+    round.items[0]?.contentType === "shape",
+    previewCardSize * (round.items[0]?.contentType === "shape" ? 0.42 : 0.54),
+    COLORS.white,
+  );
+  previewDisplay.x = width / 2;
+  previewDisplay.y = height / 2;
+  previewLayer.addChild(previewDisplay);
 
   const countdownText = new Text(
     `Starting in ${previewLeft}s`,
@@ -244,7 +282,7 @@ export function mountFindCircleScene({
   previewLayer.addChild(countdownText);
 
   const topTitle = new Text(
-    "Select all matching shapes",
+    `Select all matching ${config.contentMode === "figures" ? "figures" : "items"}`,
     new TextStyle({
       fill: "#ffffff",
       fontSize: Math.max(26, Math.min(46, width * 0.03)),
@@ -258,7 +296,7 @@ export function mountFindCircleScene({
   gameLayer.addChild(topTitle);
 
   const statusText = new Text(
-    "The preview is hidden now. Tap every correct figure.",
+    "The preview is hidden now. Tap every correct item.",
     new TextStyle({
       fill: "#bdbdbd",
       fontSize: Math.max(15, Math.min(21, width * 0.016)),
@@ -328,7 +366,8 @@ export function mountFindCircleScene({
           gridSize: config.gridSize,
           figureSizeMode: config.figureSizeMode,
           correctObjectCount: round.correctCount,
-          targetKind: round.targetKind,
+          contentMode: config.contentMode,
+          targetValue: round.targetValue,
         },
       });
     }, 700);

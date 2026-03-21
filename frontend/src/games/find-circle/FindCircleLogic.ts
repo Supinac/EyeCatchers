@@ -1,21 +1,25 @@
-import type { FigureSizeMode, GridSize } from "../core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, GridSize } from "../core/types/GameConfig";
 import { getRandomInt } from "../core/utils/random";
 import { getFindCircleCorrectCount } from "./FindCircleConfig";
 
 export type ShapeKind = "circle" | "square" | "triangle" | "diamond" | "star";
+export type SymbolContentType = "shape" | "text";
 
 const shapePool: ShapeKind[] = ["circle", "square", "triangle", "diamond", "star"];
+const letterPool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const numberPool = "0123456789".split("");
 
 export type FindCircleItem = {
   id: string;
-  kind: ShapeKind;
+  value: string;
+  contentType: SymbolContentType;
   isCorrect: boolean;
   scale: number;
 };
 
 function getRandomScale(sizeMode: FigureSizeMode) {
   if (sizeMode === "static") return 1;
-  const scales = [0.72, 0.82, 0.92, 1, 1.08, 1.16];
+  const scales = [0.55, 0.75, 1, 1.25, 1.5];
   return scales[getRandomInt(0, scales.length - 1)] ?? 1;
 }
 
@@ -30,36 +34,66 @@ function shuffle<T>(items: T[]) {
   return result;
 }
 
+function getPoolByMode(contentMode: ContentMode) {
+  if (contentMode === "letters") {
+    return {
+      contentType: "text" as const,
+      pool: letterPool,
+      label: "letter",
+    };
+  }
+
+  if (contentMode === "numbers") {
+    return {
+      contentType: "text" as const,
+      pool: numberPool,
+      label: "number",
+    };
+  }
+
+  return {
+    contentType: "shape" as const,
+    pool: shapePool,
+    label: "figure",
+  };
+}
+
 export function buildFindCircleRound({
   gridSize,
   sizeMode,
   correctCount,
+  contentMode,
 }: {
   gridSize: GridSize;
   sizeMode: FigureSizeMode;
   correctCount: number;
+  contentMode: ContentMode;
 }) {
   const cellCount = gridSize * gridSize;
-  const targetKind = shapePool[getRandomInt(0, shapePool.length - 1)] ?? "circle";
   const normalizedCorrectCount = getFindCircleCorrectCount(gridSize, correctCount);
-  const wrongPool = shapePool.filter((shape) => shape !== targetKind);
+  const source = getPoolByMode(contentMode);
+  const targetValue = source.pool[getRandomInt(0, source.pool.length - 1)] ?? source.pool[0] ?? "?";
+  const wrongPool = source.pool.filter((entry) => entry !== targetValue);
 
   const correctItems: FindCircleItem[] = Array.from({ length: normalizedCorrectCount }, (_, index) => ({
     id: `correct_${index}`,
-    kind: targetKind,
+    value: targetValue,
+    contentType: source.contentType,
     isCorrect: true,
     scale: getRandomScale(sizeMode),
   }));
 
   const wrongItems: FindCircleItem[] = Array.from({ length: cellCount - normalizedCorrectCount }, (_, index) => ({
     id: `wrong_${index}`,
-    kind: wrongPool[getRandomInt(0, wrongPool.length - 1)] ?? "square",
+    value: wrongPool[getRandomInt(0, wrongPool.length - 1)] ?? wrongPool[0] ?? targetValue,
+    contentType: source.contentType,
     isCorrect: false,
     scale: getRandomScale(sizeMode),
   }));
 
   return {
-    targetKind,
+    targetValue,
+    targetLabel: source.label,
     correctCount: normalizedCorrectCount,
     items: shuffle([...correctItems, ...wrongItems]),
   };

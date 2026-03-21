@@ -52,6 +52,7 @@ export function ResultPage() {
     `Game: ${formatLabel(result.gameKey)}`,
     result.stats?.previewSeconds ? `Preview: ${result.stats.previewSeconds}s` : null,
     result.stats?.maxGameSeconds ? `Max time: ${result.stats.maxGameSeconds}s` : null,
+    result.stats?.contentMode ? `Mode: ${formatLabel(result.stats.contentMode)}` : null,
     result.stats?.gridSize ? `Grid size: ${result.stats.gridSize} × ${result.stats.gridSize}` : null,
     result.stats?.correctObjectCount ? `Right objects: ${result.stats.correctObjectCount}` : null,
     result.stats?.figureSizeMode ? `Figure size: ${formatLabel(result.stats.figureSizeMode)}` : null,
@@ -67,7 +68,7 @@ export function ResultPage() {
           <h1 className={styles.title}>{result.success ? "Great job" : "Round finished"}</h1>
           <p className={styles.subtitle}>
             {result.success
-              ? "You found all correct figures. Here is a bigger overview of how the round went."
+              ? "You found all correct items. Here is a bigger overview of how the round went."
               : "The round has ended. Check the main results below and start another try."}
           </p>
         </div>

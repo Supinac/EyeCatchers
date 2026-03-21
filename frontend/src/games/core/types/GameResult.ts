@@ -1,3 +1,4 @@
+import type { ContentMode, FigureSizeMode } from "./GameConfig";
 import type { GameDifficulty } from "./GameDefinition";
 
 export type GameResultStats = {
@@ -10,9 +11,10 @@ export type GameResultStats = {
   previewSeconds?: number;
   maxGameSeconds?: number;
   gridSize?: number;
-  figureSizeMode?: "static" | "random";
+  figureSizeMode?: FigureSizeMode;
   correctObjectCount?: number;
-  targetKind?: string;
+  contentMode?: ContentMode;
+  targetValue?: string;
 };
 
 export type GameResult = {

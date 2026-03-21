@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey } from "../../api/gamesApi";
 import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
-import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
+import type { ContentMode, FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { defaultFindCircleConfig, getFindCircleCorrectCount, getMaxCorrectObjectCount } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
@@ -35,9 +35,15 @@ const gridOptions: ConfigOption<GridSize>[] = [
   { id: 5, label: "5 × 5", description: "25 objects on screen." },
 ];
 
+const contentOptions: ConfigOption<ContentMode>[] = [
+  { id: "figures", label: "Figures", description: "Circle, square, triangle and other simple icons." },
+  { id: "letters", label: "English letters", description: "Big bold A–Z letters for kids." },
+  { id: "numbers", label: "Numbers", description: "Big bold digits from 0 to 9." },
+];
+
 const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
-  { id: "static", label: "Static", description: "All figures keep the same size." },
-  { id: "random", label: "Random", description: "Figure sizes vary in the grid." },
+  { id: "static", label: "Static", description: "All items keep the same size." },
+  { id: "random", label: "Random", description: "Items become much smaller or bigger." },
 ];
 
 function ConfigTile<T extends string | number>({
@@ -72,6 +78,7 @@ export function GameConfigPage() {
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
   const [correctObjectCount, setCorrectObjectCount] = useState<number>(defaultFindCircleConfig.correctObjectCount);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
+  const [contentMode, setContentMode] = useState<ContentMode>(defaultFindCircleConfig.contentMode);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -93,6 +100,7 @@ export function GameConfigPage() {
         gridSize,
         correctObjectCount,
         figureSizeMode,
+        contentMode,
       },
     });
 
@@ -102,6 +110,7 @@ export function GameConfigPage() {
       grid: String(gridSize),
       correctCount: String(correctObjectCount),
       sizeMode: figureSizeMode,
+      contentMode,
     });
 
     navigate(`/play/${gameKey}?${params.toString()}`);
@@ -166,7 +175,7 @@ export function GameConfigPage() {
           <div className={styles.sliderHeader}>
             <div>
               <h2 className={styles.sectionTitle}>Right objects count</h2>
-              <p className={styles.sliderHint}>Choose how many correct figures will appear in the grid.</p>
+              <p className={styles.sliderHint}>Choose how many correct items will appear in the grid.</p>
             </div>
             <div className={styles.sliderValue}>{correctObjectCount}</div>
           </div>
@@ -186,6 +195,20 @@ export function GameConfigPage() {
               <span>1</span>
               <span>{maxCorrectObjectCount}</span>
             </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Content mode</h2>
+          <div className={styles.grid}>
+            {contentOptions.map((option) => (
+              <ConfigTile
+                key={option.id}
+                option={option}
+                selected={contentMode === option.id}
+                onClick={() => setContentMode(option.id)}
+              />
+            ))}
           </div>
         </section>
 
