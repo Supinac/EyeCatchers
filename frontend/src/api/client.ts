@@ -65,8 +65,8 @@ export function getApiErrorMessage(error: unknown, fallback = "Something went wr
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(buildUrl(path), {
-    ...init,
     credentials: "include",
+    ...init,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",

@@ -1,15 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { registerAdmin, registerStudent } from "../../api/authApi";
+import { getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
 import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
   formatDateTime,
   getSessionsForUser,
   getUserById,
-  getUserStatsRows,
   upsertUserFromApi,
 } from "../../features/users/model/userStore";
 import type { StoredGameSession } from "../../features/users/model/userTypes";
@@ -28,6 +27,31 @@ import styles from "./AdminDashboardPage.module.css";
 function formatLabel(value: string | undefined) {
   if (!value) return "—";
   return value.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function mapApiUsersToRows(role: AuthRole, users: UserListItemResponse[]) {
+  return users.map((user) => {
+    const sessions = getSessionsForUser(String(user.id));
+    const bestSession = sessions.reduce<StoredGameSession | null>((best, current) => {
+      if (!best) {
+        return current;
+      }
+
+      const bestRatio = best.maxScore === 0 ? 0 : best.score / best.maxScore;
+      const currentRatio = current.maxScore === 0 ? 0 : current.score / current.maxScore;
+      return currentRatio > bestRatio ? current : best;
+    }, null);
+
+    return {
+      id: String(user.id),
+      role,
+      login: user.login,
+      fullName: user.name?.trim() || "—",
+      gamesPlayed: sessions.length,
+      bestScoreLabel: bestSession ? `${bestSession.score}/${bestSession.maxScore}` : "—",
+      lastPlayed: sessions[0]?.playedAt ? formatDateTime(sessions[0].playedAt) : "—",
+    };
+  });
 }
 
 function AdminStatCard({ label, value }: { label: string; value: string }) {
@@ -113,11 +137,14 @@ export function AdminDashboardPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [version, setVersion] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [studentRows, setStudentRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
+  const [adminRows, setAdminRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [tableError, setTableError] = useState("");
 
-  const rows = useMemo(() => getUserStatsRows(), [version]);
   const filteredRows = useMemo(
-    () => rows.filter((row) => row.role === selectedRole),
-    [rows, selectedRole],
+    () => (selectedRole === "admin" ? adminRows : studentRows),
+    [adminRows, selectedRole, studentRows],
   );
   const viewedUser = useMemo(
     () => (viewedUserId ? getUserById(viewedUserId) : undefined),
@@ -131,6 +158,44 @@ export function AdminDashboardPage() {
     () => (deleteTargetId ? getUserById(deleteTargetId) : undefined),
     [deleteTargetId, version],
   );
+
+  async function loadUsers() {
+    setIsTableLoading(true);
+    setTableError("");
+
+    try {
+      const [studentsResponse, adminsResponse] = await Promise.all([getStudents(), getAdmins()]);
+
+      studentsResponse.forEach((user) => {
+        upsertUserFromApi({
+          id: user.id,
+          role: "child",
+          login: user.login,
+          name: user.name,
+        });
+      });
+
+      adminsResponse.forEach((user) => {
+        upsertUserFromApi({
+          id: user.id,
+          role: "admin",
+          login: user.login,
+          name: user.name,
+        });
+      });
+
+      setStudentRows(mapApiUsersToRows("child", studentsResponse));
+      setAdminRows(mapApiUsersToRows("admin", adminsResponse));
+    } catch (apiError) {
+      setTableError(getApiErrorMessage(apiError, "Failed to load users."));
+    } finally {
+      setIsTableLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadUsers();
+  }, []);
 
   function handleLogout() {
     logout();
@@ -182,6 +247,12 @@ export function AdminDashboardPage() {
     if (viewedUserId === deleteTargetId) {
       setViewedUserId("");
       setIsUserModalOpen(false);
+    }
+
+    if (deleteTarget?.role === "admin") {
+      setAdminRows((current) => current.filter((row) => row.id !== deleteTargetId));
+    } else {
+      setStudentRows((current) => current.filter((row) => row.id !== deleteTargetId));
     }
 
     setVersion((current) => current + 1);
@@ -250,6 +321,13 @@ export function AdminDashboardPage() {
         password: selectedRole === "admin" ? trimmedPassword : undefined,
       });
 
+      const nextRow = mapApiUsersToRows(selectedRole, [response])[0];
+      if (selectedRole === "admin") {
+        setAdminRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+      } else {
+        setStudentRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
+      }
+
       setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${response.login} was created.`);
       setMessageType("success");
       setVersion((current) => current + 1);
@@ -310,6 +388,10 @@ export function AdminDashboardPage() {
             </button>
           </div>
 
+          {tableError ? (
+            <div className={`${styles.feedback} ${styles.feedbackError}`}>{tableError}</div>
+          ) : null}
+
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -323,7 +405,13 @@ export function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.length ? (
+                {isTableLoading ? (
+                  <tr>
+                    <td colSpan={6} className={styles.emptyTable}>
+                      Loading {selectedRole === "admin" ? "admins" : "students"}...
+                    </td>
+                  </tr>
+                ) : filteredRows.length ? (
                   filteredRows.map((row) => (
                     <tr key={row.id}>
                       <td>{row.fullName.trim() || "—"}</td>
