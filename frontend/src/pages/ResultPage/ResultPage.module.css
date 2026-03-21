@@ -72,7 +72,7 @@
   line-height: 1.6;
 }
 
-.scoreBlock {
+.summaryBlock {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -83,7 +83,7 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.scoreLabel {
+.summaryLabel {
   display: block;
   margin-bottom: 8px;
   color: rgba(255, 255, 255, 0.56);
@@ -92,27 +92,21 @@
   text-transform: uppercase;
 }
 
-.scoreValue {
+.summaryValue {
   font-size: clamp(52px, 6vw, 92px);
   line-height: 0.95;
   font-weight: 800;
   letter-spacing: -0.06em;
 }
 
-.scoreMax {
-  color: rgba(255, 255, 255, 0.48);
-  font-size: 0.5em;
-  font-weight: 700;
-}
-
-.scoreMeta {
+.summaryMeta {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
-.scorePill {
+.summaryPill {
   min-height: 42px;
   padding: 0 16px;
   display: inline-flex;
@@ -142,10 +136,6 @@
   gap: 18px;
 }
 
-.statCardSubtle {
-  background: rgba(255, 255, 255, 0.035);
-}
-
 .statLabel {
   color: rgba(255, 255, 255, 0.56);
   font-size: 0.95rem;
@@ -161,23 +151,53 @@
 .actions {
   margin-top: auto;
   display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
 }
 
 .actionButton {
-  min-width: 180px;
+  min-height: 70px;
+  min-width: 220px;
+  border-radius: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 1.12rem;
+  font-weight: 700;
+  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.actionButton:hover {
+  transform: translateY(-1px);
+}
+
+.actionButtonPrimary {
+  background: #fff;
+  color: #000;
+  border-color: transparent;
+}
+
+.actionButtonPrimary:hover {
+  background: #efefef;
+}
+
+.actionButtonSecondary {
+  background: #0a0a0a;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.actionButtonSecondary:hover {
+  background: #121212;
 }
 
 @media (max-width: 1200px) {
   .statsGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -192,26 +212,30 @@
     border-radius: 28px;
   }
 
-  .scoreBlock {
+  .summaryBlock {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .scoreMeta {
+  .summaryMeta {
     justify-content: flex-start;
   }
+}
 
-  .statsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 700px) {
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actionButton {
+    width: 100%;
+    min-width: 0;
   }
 }
 
 @media (max-width: 620px) {
   .statsGrid {
     grid-template-columns: 1fr;
-  }
-
-  .actionButton {
-    width: 100%;
   }
 }
