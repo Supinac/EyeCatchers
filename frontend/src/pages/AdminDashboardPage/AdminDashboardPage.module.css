@@ -1,94 +1,160 @@
 .page {
   min-height: 100vh;
   padding: 28px;
-  display: grid;
-  gap: 28px;
   background: #000;
+  color: #fff;
 }
 
-.topbar,
-.header,
-.statsGrid,
-.tableWrap {
-  width: min(100%, 1180px);
+.frame {
+  width: min(100%, 1220px);
   margin: 0 auto;
+  display: grid;
+  gap: 20px;
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+  gap: 24px;
 }
 
-.logoutButton {
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 14px;
-  color: rgba(255,255,255,0.82);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.14);
-  cursor: pointer;
-}
-
-.userBadge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: rgba(255,255,255,0.76);
-}
-
-.avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-}
-
-.header {
-  text-align: center;
-}
-
-.title {
-  margin: 0 0 8px;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-}
-
-.subtitle {
-  margin: 0;
-  color: rgba(255,255,255,0.64);
-}
-
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.statCard {
-  padding: 22px;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.04);
+.headingBlock {
   display: grid;
   gap: 8px;
 }
 
-.statCard span {
-  color: rgba(255,255,255,0.6);
+.eyebrow,
+.modalEyebrow {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.52);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
 }
 
-.statCard strong {
-  font-size: 2rem;
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.subtitle,
+.detailMeta {
+  margin: 0;
+  max-width: 700px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.userBadge,
+.panel,
+.historyCard,
+.modalCard,
+.historyRow {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0a0a0a;
+}
+
+.userBadge {
+  min-height: 52px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userBadge strong,
+.userBadge span {
+  display: block;
+}
+
+.userBadge span {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.85rem;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #111;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.logoutButton,
+.segmentButton,
+.createButton,
+.viewButton,
+.closeButton,
+.secondaryButton,
+.primaryButton {
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.logoutButton:hover,
+.segmentButton:hover,
+.createButton:hover,
+.viewButton:hover,
+.secondaryButton:hover,
+.primaryButton:hover,
+.closeButton:hover {
+  transform: translateY(-1px);
+}
+
+.logoutButton {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  color: #fff;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.panel {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 6px;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #070707;
+}
+
+.segmentButton {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.segmentButtonActive {
+  background: #fff;
+  color: #000;
 }
 
 .tableWrap {
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.03);
+  overflow-x: auto;
 }
 
 .table {
@@ -96,39 +162,308 @@
   border-collapse: collapse;
 }
 
+.table thead {
+  background: #080808;
+}
+
 .table th,
 .table td {
   text-align: left;
-  padding: 18px 20px;
-}
-
-.table thead {
-  background: rgba(255,255,255,0.04);
+  padding: 18px 22px;
+  vertical-align: middle;
 }
 
 .table th {
-  color: rgba(255,255,255,0.62);
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.9rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .table tbody tr {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
+  background: #0f0f0f;
 }
 
-@media (max-width: 800px) {
+.actionColumn,
+.actionCell {
+  text-align: right;
+}
+
+.viewButton {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.viewButton:hover,
+.viewButton:focus-visible {
+  background: #141414;
+}
+
+.tableFooter {
+  display: flex;
+  justify-content: center;
+  padding: 20px 22px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.createButton,
+.primaryButton {
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 16px;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
+}
+
+.historyCard {
+  border-radius: 24px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.historyTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.historyTitleRow h3 {
+  margin: 0;
+}
+
+.historyTitleRow span,
+.historyPrimary span,
+.historySecondary,
+.emptyState,
+.feedback {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.historyList {
+  display: grid;
+  gap: 10px;
+}
+
+.historyRow {
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.historyPrimary,
+.historySecondary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.historyPrimary strong {
+  font-size: 1rem;
+}
+
+.historySecondary {
+  font-size: 0.92rem;
+}
+
+.emptyState,
+.emptyTable {
+  padding: 18px 22px;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.emptyState {
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+}
+
+.emptyTable {
+  text-align: center;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 20;
+}
+
+.modalCard {
+  width: min(100%, 520px);
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4);
+}
+
+.userModalCard {
+  width: min(100%, 960px);
+  max-height: min(86vh, 900px);
+  display: grid;
+  gap: 18px;
+}
+
+.userModalBody {
+  overflow: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+}
+
+.closeButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0d0d0d;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.modalForm {
+  display: grid;
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldGroup label {
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.94rem;
+}
+
+.fieldGroup input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px;
+  background: #050505;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  color: #fff;
+  outline: none;
+}
+
+.fieldGroup input:focus {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: #090909;
+}
+
+.feedback {
+  min-height: 20px;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.feedbackSuccess {
+  color: #b8ffc8;
+}
+
+.feedbackError {
+  color: #ffb1b1;
+}
+
+.modalActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.secondaryButton {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #0a0a0a;
+  color: #fff;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .topbar,
+  .historyTitleRow,
+  .modalHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbarActions {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 700px) {
   .page {
-    padding: 20px;
+    padding: 18px;
   }
 
-  .statsGrid {
+  .topbarActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table th,
+  .table td,
+  .tableFooter,
+  .historyCard,
+  .emptyTable,
+  .emptyState {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .table th:nth-child(3),
+  .table th:nth-child(4),
+  .table th:nth-child(5),
+  .table td:nth-child(3),
+  .table td:nth-child(4),
+  .table td:nth-child(5) {
+    min-width: 120px;
+  }
+
+  .modalOverlay {
+    padding: 16px;
+  }
+
+  .modalCard {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .userModalCard {
+    width: 100%;
+    max-height: 90vh;
+  }
+
+  .modalActions {
     grid-template-columns: 1fr;
-  }
-
-  .tableWrap {
-    overflow-x: auto;
   }
 }

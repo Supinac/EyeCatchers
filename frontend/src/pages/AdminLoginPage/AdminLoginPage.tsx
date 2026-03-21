@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../features/auth/hooks/useAuth";
 import { routes } from "../../app/router/routes";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import { validateAdminCredentials } from "../../features/users/model/userStore";
 import styles from "./AdminLoginPage.module.css";
-
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin";
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
@@ -28,13 +26,19 @@ export function AdminLoginPage() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      login({ displayName: username, role: "admin" });
-      navigate(routes.adminDashboard);
+    const admin = validateAdminCredentials(username, password);
+    if (!admin) {
+      setError("Invalid admin credentials.");
       return;
     }
 
-    setError("Invalid admin credentials.");
+    login({
+      userId: admin.id,
+      login: admin.login,
+      displayName: `${admin.name} ${admin.surname}`,
+      role: "admin",
+    });
+    navigate(routes.adminDashboard);
   }
 
   return (
@@ -48,11 +52,11 @@ export function AdminLoginPage() {
         <div className={styles.iconWrap} aria-hidden="true">◎</div>
         <div className={styles.header}>
           <h1 className={styles.title}>Admin access</h1>
-          <p className={styles.subtitle}>Use a separate login for the admin area.</p>
+          <p className={styles.subtitle}>Sign in to manage users and review played games.</p>
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="admin-username">Username</label>
+          <label htmlFor="admin-username">Login</label>
           <input
             id="admin-username"
             value={username}
@@ -60,7 +64,7 @@ export function AdminLoginPage() {
               setUsername(event.target.value);
               if (error) setError("");
             }}
-            placeholder="Enter username"
+            placeholder="Enter admin login"
             autoComplete="username"
           />
         </div>
@@ -80,7 +84,7 @@ export function AdminLoginPage() {
           />
         </div>
 
-        {error ? <p className={styles.error}>{error}</p> : <p className={styles.hint}>Demo login: admin / admin</p>}
+        {error ? <p className={styles.error}>{error}</p> : <p className={styles.info}>Only administrator accounts can enter here.</p>}
 
         <button type="submit" className={styles.secondaryButton}>Login</button>
       </form>

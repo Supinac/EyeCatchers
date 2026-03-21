@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../features/auth/hooks/useAuth";
 import { routes } from "../../app/router/routes";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import { getUserByLogin } from "../../features/users/model/userStore";
 import styles from "./EntryPage.module.css";
 
 export function EntryPage() {
@@ -24,11 +25,22 @@ export function EntryPage() {
   function handleKidEnter() {
     const trimmed = login.trim();
     if (!trimmed) {
-      setError("Please enter a child login.");
+      setError("Please enter student login.");
       return;
     }
 
-    saveLogin({ displayName: trimmed, role: "child" });
+    const student = getUserByLogin(trimmed, "child");
+    if (!student) {
+      setError("Student login was not found.");
+      return;
+    }
+
+    saveLogin({
+      userId: student.id,
+      login: student.login,
+      displayName: `${student.name} ${student.surname}`,
+      role: "child",
+    });
     navigate(routes.games);
   }
 
@@ -37,41 +49,41 @@ export function EntryPage() {
   }
 
   return (
-      <main className={styles.page}>
-        <div className={styles.shell}>
-          <div className={styles.headerBlock}>
-            <div className={styles.badge}>Welcome</div>
-            <h1 className={styles.title}>Who is playing today?</h1>
-            <p className={styles.subtitle}>For a child, enter only the login name. For an admin, open the admin login screen.</p>
-          </div>
-
-          <section className={styles.panel}>
-            <label htmlFor="child-login" className={styles.label}>Login</label>
-            <input
-                id="child-login"
-                className={`${styles.input} ${error ? styles.inputError : ""}`}
-                value={login}
-                onChange={(event) => {
-                  setLogin(event.target.value);
-                  if (error) setError("");
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    handleKidEnter();
-                  }
-                }}
-                placeholder="Enter login"
-                autoComplete="off"
-            />
-
-            {error ? <div className={styles.errorBadge}>{error}</div> : null}
-
-            <div className={styles.actions}>
-              <button type="button" className={styles.secondaryButton} onClick={handleKidEnter}>Continue</button>
-              <button type="button" className={styles.secondaryButton} onClick={handleAdminClick}>Admin</button>
-            </div>
-          </section>
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <div className={styles.headerBlock}>
+          <div className={styles.badge}>Welcome</div>
+          <h1 className={styles.title}>Who is playing today?</h1>
+          <p className={styles.subtitle}>Students enter only their login. Administrators use the separate admin screen.</p>
         </div>
-      </main>
+
+        <section className={styles.panel}>
+          <label htmlFor="child-login" className={styles.label}>Login</label>
+          <input
+            id="child-login"
+            className={`${styles.input} ${error ? styles.inputError : ""}`}
+            value={login}
+            onChange={(event) => {
+              setLogin(event.target.value);
+              if (error) setError("");
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleKidEnter();
+              }
+            }}
+            placeholder="Enter login"
+            autoComplete="off"
+          />
+
+          {error ? <div className={styles.errorBadge}>{error}</div> : <div className={styles.helper}>Use the login created in the admin panel.</div>}
+
+          <div className={styles.actions}>
+            <button type="button" className={styles.secondaryButton} onClick={handleKidEnter}>Continue</button>
+            <button type="button" className={styles.secondaryButton} onClick={handleAdminClick}>Admin</button>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
