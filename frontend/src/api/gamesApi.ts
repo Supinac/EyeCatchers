@@ -2,7 +2,7 @@ import { simulateDelay } from "./client";
 import type { GameCatalogItem, GameDifficulty } from "../games/core/types/GameDefinition";
 
 const games: GameCatalogItem[] = [
-  { key: "find-circle", name: "Find Circle", enabled: true, implemented: true },
+  { key: "find-circle", name: "Game", enabled: true, implemented: true },
   { key: "memory-pairs", name: "Memory Pairs", enabled: true, implemented: false },
   { key: "shape-match", name: "Shape Match", enabled: true, implemented: false },
   { key: "count-items", name: "Count Items", enabled: true, implemented: false },

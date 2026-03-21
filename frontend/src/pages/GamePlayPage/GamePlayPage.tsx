@@ -6,17 +6,18 @@ import { PixiGameHost } from "../../games/pixi/PixiGameHost";
 import type { GameDifficulty } from "../../games/core/types/GameDefinition";
 import type { GameResult } from "../../games/core/types/GameResult";
 import type { GameConfig } from "../../games/core/types/GameConfig";
-import { getFigureSizeMode, getGridSize, getPreviewSeconds } from "../../games/find-circle/FindCircleConfig";
+import { getFigureSizeMode, getGridSize, getMaxGameSeconds, getPreviewSeconds } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GamePlayPage.module.css";
 
 export function GamePlayPage() {
   const { gameKey = "find-circle" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const difficulty = (searchParams.get("difficulty") as GameDifficulty) || "easy";
+  const difficulty = ((searchParams.get("difficulty") as GameDifficulty) || "easy") as GameDifficulty;
 
   const config = useMemo<GameConfig>(() => {
     const preview = getPreviewSeconds(Number(searchParams.get("preview")) || undefined);
+    const maxTime = getMaxGameSeconds(Number(searchParams.get("maxTime")) || undefined);
     const grid = getGridSize(Number(searchParams.get("grid")) || undefined);
     const sizeMode = getFigureSizeMode(searchParams.get("sizeMode"));
 
@@ -25,6 +26,7 @@ export function GamePlayPage() {
       difficulty,
       findCircle: {
         previewSeconds: preview,
+        maxGameSeconds: maxTime,
         gridSize: grid,
         figureSizeMode: sizeMode,
       },
@@ -47,6 +49,7 @@ export function GamePlayPage() {
         </ButtonLink>
         <div className={styles.meta}>
           <span>{config.findCircle?.previewSeconds}s preview</span>
+          <span>{config.findCircle?.maxGameSeconds}s max time</span>
           <span>{config.findCircle?.gridSize}×{config.findCircle?.gridSize} grid</span>
           <span>{config.findCircle?.figureSizeMode} figures</span>
         </div>

@@ -1,8 +1,8 @@
-import type { GameDifficulty } from "../core/types/GameDefinition";
-import type { FigureSizeMode, FindCircleGameConfig, GridSize, PreviewSeconds } from "../core/types/GameConfig";
+import type { FigureSizeMode, FindCircleGameConfig, GridSize, MaxGameSeconds, PreviewSeconds } from "../core/types/GameConfig";
 
 export const defaultFindCircleConfig: FindCircleGameConfig = {
   previewSeconds: 10,
+  maxGameSeconds: 60,
   gridSize: 3,
   figureSizeMode: "static",
 };
@@ -10,6 +10,11 @@ export const defaultFindCircleConfig: FindCircleGameConfig = {
 export function getPreviewSeconds(value: number | null | undefined): PreviewSeconds {
   if (value === 5 || value === 10 || value === 15 || value === 20) return value;
   return defaultFindCircleConfig.previewSeconds;
+}
+
+export function getMaxGameSeconds(value: number | null | undefined): MaxGameSeconds {
+  if (value === 30 || value === 60 || value === 90 || value === 120) return value;
+  return defaultFindCircleConfig.maxGameSeconds;
 }
 
 export function getGridSize(value: number | null | undefined): GridSize {
@@ -22,8 +27,6 @@ export function getFigureSizeMode(value: string | null | undefined): FigureSizeM
   return defaultFindCircleConfig.figureSizeMode;
 }
 
-export function getFindCircleCorrectCount(difficulty: GameDifficulty, gridSize: GridSize) {
-  const cellCount = gridSize * gridSize;
-  const base = difficulty === "easy" ? 2 : difficulty === "medium" ? 3 : 4;
-  return Math.min(base, Math.max(1, Math.floor(cellCount / 2)));
+export function getFindCircleCorrectCount(gridSize: GridSize) {
+  return gridSize;
 }

@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
-import { getGameByKey, getGameDifficulties } from "../../api/gamesApi";
-import type { GameCatalogItem, GameDifficulty } from "../../games/core/types/GameDefinition";
-import type { FigureSizeMode, GridSize, PreviewSeconds } from "../../games/core/types/GameConfig";
+import { getGameByKey } from "../../api/gamesApi";
+import type { GameCatalogItem } from "../../games/core/types/GameDefinition";
+import type { FigureSizeMode, GridSize, MaxGameSeconds, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
-import type { GameMode, GameTimer } from "../../features/game-session/model/sessionTypes";
 import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
 
@@ -16,53 +15,18 @@ type ConfigOption<T extends string | number> = {
   description: string;
 };
 
-const difficultyDescriptions: Record<GameDifficulty, string> = {
-  easy: "Fewer correct objects to find.",
-  medium: "Balanced focus and memory challenge.",
-  hard: "More matching objects to remember.",
-};
-
-const modeOptions: ConfigOption<GameMode>[] = [
-  {
-    id: "guided",
-    label: "Guided",
-    description: "Extra structure with clearer prompts.",
-  },
-  {
-    id: "free-play",
-    label: "Free Play",
-    description: "Explore the game with less pressure.",
-  },
-  {
-    id: "single",
-    label: "Classic",
-    description: "Standard one-player mode.",
-  },
-];
-
-const timerOptions: ConfigOption<GameTimer>[] = [
-  {
-    id: "none",
-    label: "No Timer",
-    description: "Play at your own pace.",
-  },
-  {
-    id: "relaxed",
-    label: "Relaxed",
-    description: "Gentle time guidance only.",
-  },
-  {
-    id: "short",
-    label: "Short",
-    description: "A faster session for quick practice.",
-  },
-];
-
 const previewOptions: ConfigOption<PreviewSeconds>[] = [
   { id: 5, label: "5 sec", description: "Quick preview before the grid appears." },
   { id: 10, label: "10 sec", description: "Balanced memory time." },
   { id: 15, label: "15 sec", description: "More time to look carefully." },
   { id: 20, label: "20 sec", description: "Longest and calmest preview." },
+];
+
+const maxGameTimeOptions: ConfigOption<MaxGameSeconds>[] = [
+  { id: 30, label: "30 sec", description: "Fast round with quick decisions." },
+  { id: 60, label: "60 sec", description: "Balanced time for most players." },
+  { id: 90, label: "90 sec", description: "More time for larger grids." },
+  { id: 120, label: "120 sec", description: "Longest and calmest game timer." },
 ];
 
 const gridOptions: ConfigOption<GridSize>[] = [
@@ -110,48 +74,30 @@ export function GameConfigPage() {
   const navigate = useNavigate();
   const { saveSessionState } = useGameSession();
   const [game, setGame] = useState<GameCatalogItem | null>(null);
-  const [difficulties, setDifficulties] = useState<GameDifficulty[]>(["easy"]);
-  const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
-  const [mode, setMode] = useState<GameMode>("guided");
-  const [timer, setTimer] = useState<GameTimer>("none");
   const [previewSeconds, setPreviewSeconds] = useState<PreviewSeconds>(defaultFindCircleConfig.previewSeconds);
+  const [maxGameSeconds, setMaxGameSeconds] = useState<MaxGameSeconds>(defaultFindCircleConfig.maxGameSeconds);
   const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
   const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
-    void getGameDifficulties(gameKey).then((items) => {
-      setDifficulties(items);
-      setDifficulty(items[0] ?? "easy");
-    });
   }, [gameKey]);
-
-  const difficultyOptions = useMemo<ConfigOption<GameDifficulty>[]>(() => {
-    return difficulties.map((item) => ({
-      id: item,
-      label: item.charAt(0).toUpperCase() + item.slice(1),
-      description: difficultyDescriptions[item],
-    }));
-  }, [difficulties]);
 
   function handleStart() {
     saveSessionState({
       gameKey,
-      difficulty,
-      mode,
-      timer,
+      difficulty: "easy",
       findCircle: {
         previewSeconds,
+        maxGameSeconds,
         gridSize,
         figureSizeMode,
       },
     });
 
     const params = new URLSearchParams({
-      difficulty,
-      mode,
-      timer,
       preview: String(previewSeconds),
+      maxTime: String(maxGameSeconds),
       grid: String(gridSize),
       sizeMode: figureSizeMode,
     });
@@ -175,24 +121,10 @@ export function GameConfigPage() {
       <div className={styles.header}>
         <div className={styles.iconBox}>{getGameIcon(gameKey)}</div>
         <h1 className={styles.title}>{game?.name ?? "Game"}</h1>
-        <p className={styles.subtitle}>Set the preview time, grid size and figure sizing before the round starts.</p>
+        <p className={styles.subtitle}>Set only the options for this game: preview time, max game time, grid size and figure size.</p>
       </div>
 
       <div className={styles.panel}>
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Difficulty</h2>
-          <div className={styles.grid}>
-            {difficultyOptions.map((option) => (
-              <ConfigTile
-                key={option.id}
-                option={option}
-                selected={difficulty === option.id}
-                onClick={() => setDifficulty(option.id)}
-              />
-            ))}
-          </div>
-        </section>
-
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Preview time</h2>
           <div className={styles.grid}>
@@ -202,6 +134,20 @@ export function GameConfigPage() {
                 option={option}
                 selected={previewSeconds === option.id}
                 onClick={() => setPreviewSeconds(option.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Max game time</h2>
+          <div className={styles.grid}>
+            {maxGameTimeOptions.map((option) => (
+              <ConfigTile
+                key={option.id}
+                option={option}
+                selected={maxGameSeconds === option.id}
+                onClick={() => setMaxGameSeconds(option.id)}
               />
             ))}
           </div>
@@ -226,24 +172,6 @@ export function GameConfigPage() {
                 selected={figureSizeMode === option.id}
                 onClick={() => setFigureSizeMode(option.id)}
               />
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Mode</h2>
-          <div className={styles.grid}>
-            {modeOptions.map((option) => (
-              <ConfigTile key={option.id} option={option} selected={mode === option.id} onClick={() => setMode(option.id)} />
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Timer</h2>
-          <div className={styles.grid}>
-            {timerOptions.map((option) => (
-              <ConfigTile key={option.id} option={option} selected={timer === option.id} onClick={() => setTimer(option.id)} />
             ))}
           </div>
         </section>

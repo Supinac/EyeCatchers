@@ -18,14 +18,17 @@ const COLORS = {
 function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: number) {
   graphic.clear();
   graphic.lineStyle(5, color, 1);
+  graphic.beginFill(color, 1);
 
   if (kind === "circle") {
     graphic.drawCircle(0, 0, size / 2);
+    graphic.endFill();
     return;
   }
 
   if (kind === "square") {
     graphic.drawRoundedRect(-size / 2, -size / 2, size, size, Math.max(10, size * 0.14));
+    graphic.endFill();
     return;
   }
 
@@ -34,6 +37,7 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
     graphic.lineTo(size / 2, size / 2);
     graphic.lineTo(-size / 2, size / 2);
     graphic.lineTo(0, -size / 2);
+    graphic.endFill();
     return;
   }
 
@@ -43,6 +47,7 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
     graphic.lineTo(0, size / 2);
     graphic.lineTo(-size / 2, 0);
     graphic.lineTo(0, -size / 2);
+    graphic.endFill();
     return;
   }
 
@@ -57,6 +62,7 @@ function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: numb
   }
 
   graphic.drawPolygon(points);
+  graphic.endFill();
 }
 
 function drawCard(graphic: Graphics, size: number, borderColor: number) {
@@ -82,10 +88,12 @@ function makeCounterLabel(text: string) {
 function createGridItem({
   item,
   cellSize,
+  canInteract,
   onTap,
 }: {
   item: FindCircleItem;
   cellSize: number;
+  canInteract: () => boolean;
   onTap: (item: FindCircleItem, updateState: (state: "correct" | "wrong") => void) => void;
 }) {
   const container = new Container();
@@ -110,7 +118,7 @@ function createGridItem({
   let locked = false;
 
   container.on("pointertap", () => {
-    if (locked) return;
+    if (locked || !canInteract()) return;
 
     onTap(item, (state) => {
       locked = true;
@@ -136,7 +144,6 @@ export function mountFindCircleScene({
   const app = createPixiApp(mountElement);
   const { width, height } = getGameSize(mountElement);
   const round = buildFindCircleRound({
-    difficulty,
     gridSize: config.gridSize,
     sizeMode: config.figureSizeMode,
   });
@@ -146,6 +153,7 @@ export function mountFindCircleScene({
   let foundCount = 0;
   let wrongCount = 0;
   let previewLeft = config.previewSeconds;
+  let gameTimeLeft = config.maxGameSeconds;
 
   const timers: number[] = [];
   const root = new Container();
@@ -250,8 +258,14 @@ export function mountFindCircleScene({
   counterText.y = 108;
   gameLayer.addChild(counterText);
 
+  const timeLeftText = makeCounterLabel(`Time left ${gameTimeLeft}s`);
+  timeLeftText.anchor.set(0.5, 0);
+  timeLeftText.x = width / 2;
+  timeLeftText.y = 136;
+  gameLayer.addChild(timeLeftText);
+
   const gridPaddingX = Math.max(18, width * 0.03);
-  const topSpace = 168;
+  const topSpace = 196;
   const bottomSpace = 28;
   const gap = Math.max(10, Math.min(18, width * 0.012));
   const availableWidth = width - gridPaddingX * 2;
@@ -265,29 +279,34 @@ export function mountFindCircleScene({
   const startX = (width - gridWidth) / 2 + cellSize / 2;
   const startY = topSpace + Math.max(0, (availableHeight - gridHeight) / 2) + cellSize / 2;
 
-  function finishRound() {
+  function finishRound(success: boolean) {
     if (completed || disposed) return;
     completed = true;
-    statusText.text = "Great job";
+    statusText.text = success ? "Great job" : "Time is over";
 
     const finishTimer = window.setTimeout(() => {
       if (disposed) return;
       onComplete({
         gameKey: "find-circle",
         difficulty,
-        score: Math.max(round.correctCount - wrongCount, 0),
+        score: Math.max(foundCount - wrongCount, 0),
         maxScore: round.correctCount,
-        success: true,
+        success,
       });
     }, 700);
 
     timers.push(finishTimer);
   }
 
+  function canInteract() {
+    return !completed && !disposed && gameLayer.visible;
+  }
+
   round.items.forEach((item, index) => {
     const gridItem = createGridItem({
       item,
       cellSize,
+      canInteract,
       onTap: (clickedItem, updateState) => {
         if (clickedItem.isCorrect) {
           foundCount += 1;
@@ -296,7 +315,7 @@ export function mountFindCircleScene({
           updateState("correct");
 
           if (foundCount >= round.correctCount) {
-            finishRound();
+            finishRound(true);
           }
 
           return;
@@ -315,6 +334,25 @@ export function mountFindCircleScene({
     gameLayer.addChild(gridItem);
   });
 
+  function startGameTimer() {
+    const timerInterval = window.setInterval(() => {
+      if (completed || disposed) {
+        window.clearInterval(timerInterval);
+        return;
+      }
+
+      gameTimeLeft -= 1;
+      timeLeftText.text = `Time left ${Math.max(gameTimeLeft, 0)}s`;
+
+      if (gameTimeLeft <= 0) {
+        window.clearInterval(timerInterval);
+        finishRound(false);
+      }
+    }, 1000);
+
+    timers.push(timerInterval);
+  }
+
   const interval = window.setInterval(() => {
     previewLeft -= 1;
 
@@ -326,6 +364,7 @@ export function mountFindCircleScene({
     countdownText.text = "Go";
     previewLayer.visible = false;
     gameLayer.visible = true;
+    startGameTimer();
     window.clearInterval(interval);
   }, 1000);
 

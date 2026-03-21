@@ -1,4 +1,3 @@
-import type { GameDifficulty } from "../core/types/GameDefinition";
 import type { FigureSizeMode, GridSize } from "../core/types/GameConfig";
 import { getRandomInt } from "../core/utils/random";
 import { getFindCircleCorrectCount } from "./FindCircleConfig";
@@ -32,17 +31,15 @@ function shuffle<T>(items: T[]) {
 }
 
 export function buildFindCircleRound({
-  difficulty,
   gridSize,
   sizeMode,
 }: {
-  difficulty: GameDifficulty;
   gridSize: GridSize;
   sizeMode: FigureSizeMode;
 }) {
   const cellCount = gridSize * gridSize;
   const targetKind = shapePool[getRandomInt(0, shapePool.length - 1)] ?? "circle";
-  const correctCount = getFindCircleCorrectCount(difficulty, gridSize);
+  const correctCount = getFindCircleCorrectCount(gridSize);
   const wrongPool = shapePool.filter((shape) => shape !== targetKind);
 
   const correctItems: FindCircleItem[] = Array.from({ length: correctCount }, (_, index) => ({
