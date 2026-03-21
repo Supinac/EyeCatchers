@@ -11,13 +11,15 @@ function getIcon(icon: GameCardViewModel["icon"]) {
 
 export function GameCard({ game }: { game: GameCardViewModel }) {
   const navigate = useNavigate();
+  const isLocked = !game.implemented;
 
   return (
     <button
       type="button"
-      className={styles.card}
-      onClick={() => navigate(`/game/${game.key}`)}
+      className={`${styles.card} ${isLocked ? styles.cardLocked : ""}`}
+      onClick={isLocked ? undefined : () => navigate(`/game/${game.key}`)}
       aria-label={`${game.name}. ${game.implemented ? "Ready to open" : "Coming soon"}`}
+      disabled={isLocked}
     >
       <div className={styles.iconBox}>{getIcon(game.icon)}</div>
 
@@ -27,7 +29,7 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
       </div>
 
       <div className={styles.playWrap}>
-        <span className={styles.playText}>{game.implemented ? "Play" : "Soon"}</span>
+        <span className={styles.playText}>{game.implemented ? "Play" : "Locked"}</span>
         <svg className={styles.playArrow} width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path
             d="M6 12L10 8L6 4"
@@ -38,6 +40,8 @@ export function GameCard({ game }: { game: GameCardViewModel }) {
           />
         </svg>
       </div>
+
+      {isLocked ? <div className={styles.lockOverlay}></div> : null}
     </button>
   );
 }

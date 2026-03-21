@@ -1,4 +1,4 @@
-import { Container, Graphics, Rectangle, Text, TextStyle } from "pixi.js";
+import { Container, Graphics, Point, Rectangle, Text, TextStyle } from "pixi.js";
 import { createPixiApp } from "../pixi/PixiAppFactory";
 import { getGameSize } from "../pixi/PixiResize";
 import { buildFindCircleRound, type FindCircleItem, type ShapeKind } from "./FindCircleLogic";
@@ -15,50 +15,68 @@ const COLORS = {
   wrong: 0xef4444,
 };
 
+function getRounded(value: number) {
+  return Math.round(value);
+}
+
 function drawShape(graphic: Graphics, kind: ShapeKind, size: number, color: number) {
   graphic.clear();
-  graphic.lineStyle(5, color, 1);
   graphic.beginFill(color, 1);
 
+  const roundedSize = Math.max(24, getRounded(size));
+  const half = roundedSize / 2;
+
   if (kind === "circle") {
-    graphic.drawCircle(0, 0, size / 2);
+    graphic.drawCircle(0, 0, half);
     graphic.endFill();
     return;
   }
 
   if (kind === "square") {
-    graphic.drawRoundedRect(-size / 2, -size / 2, size, size, Math.max(10, size * 0.14));
+    const rectWidth = getRounded(roundedSize * 1.12);
+    const rectHeight = getRounded(roundedSize * 0.76);
+    graphic.drawRoundedRect(
+      -rectWidth / 2,
+      -rectHeight / 2,
+      rectWidth,
+      rectHeight,
+      Math.max(10, Math.round(rectHeight * 0.22)),
+    );
     graphic.endFill();
     return;
   }
 
   if (kind === "triangle") {
-    graphic.moveTo(0, -size / 2);
-    graphic.lineTo(size / 2, size / 2);
-    graphic.lineTo(-size / 2, size / 2);
-    graphic.lineTo(0, -size / 2);
+    const points = [
+      new Point(0, -half),
+      new Point(half, half),
+      new Point(-half, half),
+    ];
+    graphic.drawPolygon(points);
     graphic.endFill();
     return;
   }
 
   if (kind === "diamond") {
-    graphic.moveTo(0, -size / 2);
-    graphic.lineTo(size / 2, 0);
-    graphic.lineTo(0, size / 2);
-    graphic.lineTo(-size / 2, 0);
-    graphic.lineTo(0, -size / 2);
+    const points = [
+      new Point(0, -half),
+      new Point(half, 0),
+      new Point(0, half),
+      new Point(-half, 0),
+    ];
+    graphic.drawPolygon(points);
     graphic.endFill();
     return;
   }
 
-  const outerRadius = size / 2;
-  const innerRadius = size / 4.4;
-  const points: number[] = [];
+  const outerRadius = half;
+  const innerRadius = roundedSize / 4.4;
+  const points: Point[] = [];
 
   for (let index = 0; index < 10; index += 1) {
     const angle = -Math.PI / 2 + index * (Math.PI / 5);
     const radius = index % 2 === 0 ? outerRadius : innerRadius;
-    points.push(Math.cos(angle) * radius, Math.sin(angle) * radius);
+    points.push(new Point(Math.cos(angle) * radius, Math.sin(angle) * radius));
   }
 
   graphic.drawPolygon(points);
@@ -152,8 +170,10 @@ export function mountFindCircleScene({
   let completed = false;
   let foundCount = 0;
   let wrongCount = 0;
+  let totalTaps = 0;
   let previewLeft = config.previewSeconds;
   let gameTimeLeft = config.maxGameSeconds;
+  let gameStartedAt = 0;
 
   const timers: number[] = [];
   const root = new Container();
@@ -284,6 +304,9 @@ export function mountFindCircleScene({
     completed = true;
     statusText.text = success ? "Great job" : "Time is over";
 
+    const elapsedSeconds = gameStartedAt > 0 ? Math.max(1, Math.round((Date.now() - gameStartedAt) / 1000)) : 0;
+    const accuracyPercent = totalTaps > 0 ? Math.round((foundCount / totalTaps) * 100) : 0;
+
     const finishTimer = window.setTimeout(() => {
       if (disposed) return;
       onComplete({
@@ -292,6 +315,19 @@ export function mountFindCircleScene({
         score: Math.max(foundCount - wrongCount, 0),
         maxScore: round.correctCount,
         success,
+        stats: {
+          correctHits: foundCount,
+          wrongHits: wrongCount,
+          totalTaps,
+          accuracyPercent,
+          elapsedSeconds,
+          remainingSeconds: Math.max(gameTimeLeft, 0),
+          previewSeconds: config.previewSeconds,
+          maxGameSeconds: config.maxGameSeconds,
+          gridSize: config.gridSize,
+          figureSizeMode: config.figureSizeMode,
+          targetKind: round.targetKind,
+        },
       });
     }, 700);
 
@@ -308,6 +344,8 @@ export function mountFindCircleScene({
       cellSize,
       canInteract,
       onTap: (clickedItem, updateState) => {
+        totalTaps += 1;
+
         if (clickedItem.isCorrect) {
           foundCount += 1;
           counterText.text = `Found ${foundCount}/${round.correctCount}`;
@@ -335,6 +373,8 @@ export function mountFindCircleScene({
   });
 
   function startGameTimer() {
+    gameStartedAt = Date.now();
+
     const timerInterval = window.setInterval(() => {
       if (completed || disposed) {
         window.clearInterval(timerInterval);

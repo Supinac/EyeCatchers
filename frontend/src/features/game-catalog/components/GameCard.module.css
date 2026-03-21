@@ -25,6 +25,26 @@
   outline: none;
 }
 
+.cardLocked {
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cardLocked:hover,
+.cardLocked:focus-visible {
+  transform: none;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cardLocked .iconBox,
+.cardLocked .content,
+.cardLocked .playWrap {
+  filter: blur(3px);
+  opacity: 0.5;
+}
+
 .iconBox {
   width: 108px;
   height: 108px;
@@ -50,6 +70,14 @@
   border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
   transform: scale(1.04);
+}
+
+.cardLocked:hover .iconBox,
+.cardLocked:focus-visible .iconBox {
+  color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transform: none;
 }
 
 .content {
@@ -103,6 +131,22 @@
 .card:hover .playArrow,
 .card:focus-visible .playArrow {
   transform: translateX(2px);
+}
+
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(24px, 2vw, 32px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.28) 100%);
+  border-radius: 32px;
 }
 
 @media (max-width: 1280px) {
