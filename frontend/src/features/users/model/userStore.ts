@@ -177,6 +177,43 @@ export function getUserByLogin(login: string, role?: AuthRole): UserRecord | nul
   return ensureUserStore().users.find((user) => user.login.toLowerCase() === normalized && (!role || user.role === role)) ?? null;
 }
 
+export function upsertUserFromApi(input: {
+  id: string | number;
+  role: AuthRole;
+  login: string;
+  name: string;
+  password?: string;
+}): UserRecord {
+  const store = ensureUserStore();
+  const normalizedId = String(input.id);
+  const normalizedLogin = input.login.trim();
+  const normalizedName = input.name.trim();
+
+  const nextUser: UserRecord = {
+    id: normalizedId,
+    role: input.role,
+    login: normalizedLogin,
+    name: normalizedName,
+    surname: "",
+    password: input.role === "admin" ? input.password?.trim() : undefined,
+    createdAt: new Date().toISOString(),
+  };
+
+  const existingUser = store.users.find((user) => user.id === normalizedId);
+  const users = existingUser
+    ? store.users.map((user) => (user.id === normalizedId ? { ...user, ...nextUser, createdAt: user.createdAt } : user))
+    : [...store.users.filter((user) => user.login.toLowerCase() !== normalizedLogin.toLowerCase()), nextUser];
+
+  persistStore({
+    users,
+    sessions: store.sessions,
+  });
+
+  return existingUser
+    ? users.find((user) => user.id === normalizedId) ?? nextUser
+    : nextUser;
+}
+
 export function validateAdminCredentials(login: string, password: string): UserRecord | null {
   const normalizedLogin = login.trim().toLowerCase();
   const normalizedPassword = password.trim();

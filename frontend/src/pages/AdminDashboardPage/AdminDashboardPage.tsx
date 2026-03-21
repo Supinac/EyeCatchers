@@ -2,16 +2,27 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { registerAdmin, registerStudent } from "../../api/authApi";
+import { getApiErrorMessage } from "../../api/client";
 import {
-  createUser,
   deleteUser,
   formatDateTime,
   getSessionsForUser,
   getUserById,
   getUserStatsRows,
+  upsertUserFromApi,
 } from "../../features/users/model/userStore";
 import type { StoredGameSession } from "../../features/users/model/userTypes";
 import type { AuthRole } from "../../features/auth/model/authTypes";
+import {
+  AUTH_FIELD_MAX_LENGTH,
+  AUTH_LOGIN_MIN_LENGTH,
+  AUTH_NAME_MIN_LENGTH,
+  AUTH_PASSWORD_MIN_LENGTH,
+  validateLogin,
+  validateName,
+  validatePassword,
+} from "../../features/auth/utils/authValidation";
 import styles from "./AdminDashboardPage.module.css";
 
 function formatLabel(value: string | undefined) {
@@ -101,6 +112,7 @@ export function AdminDashboardPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [version, setVersion] = useState(0);
+  const [isCreating, setIsCreating] = useState(false);
 
   const rows = useMemo(() => getUserStatsRows(), [version]);
   const filteredRows = useMemo(
@@ -183,33 +195,77 @@ export function AdminDashboardPage() {
     }
   }
 
-  function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateUser(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const trimmedFullName = fullName.trim();
+    const trimmedName = fullName.trim();
+    const trimmedLogin = login.trim();
+    const trimmedPassword = password.trim();
 
-    const result = createUser({
-      role: selectedRole,
-      login,
-      fullName: trimmedFullName,
-      password: selectedRole === "admin" ? password : undefined,
-    });
-
-    if (!result.ok) {
-      setMessage(result.message);
+    const nameError = validateName(trimmedName);
+    if (nameError) {
+      setMessage(nameError);
       setMessageType("error");
       return;
     }
 
-    setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${result.user.login} was created.`);
-    setMessageType("success");
-    setVersion((current) => current + 1);
-    resetForm();
-    window.setTimeout(() => {
-      setIsCreateModalOpen(false);
-      setMessage("");
-      setMessageType("");
-    }, 500);
+    const loginError = validateLogin(trimmedLogin);
+    if (loginError) {
+      setMessage(loginError);
+      setMessageType("error");
+      return;
+    }
+
+    if (selectedRole === "admin") {
+      const passwordError = validatePassword(trimmedPassword);
+      if (passwordError) {
+        setMessage(passwordError);
+        setMessageType("error");
+        return;
+      }
+    }
+
+    setIsCreating(true);
+    setMessage("");
+    setMessageType("");
+
+    try {
+      const response =
+        selectedRole === "admin"
+          ? await registerAdmin({
+              name: trimmedName,
+              login: trimmedLogin,
+              password: trimmedPassword,
+            })
+          : await registerStudent({
+              name: trimmedName,
+              login: trimmedLogin,
+            });
+
+      upsertUserFromApi({
+        id: response.id,
+        role: selectedRole,
+        login: response.login,
+        name: response.name,
+        password: selectedRole === "admin" ? trimmedPassword : undefined,
+      });
+
+      setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${response.login} was created.`);
+      setMessageType("success");
+      setVersion((current) => current + 1);
+      resetForm();
+
+      window.setTimeout(() => {
+        setIsCreateModalOpen(false);
+        setMessage("");
+        setMessageType("");
+      }, 500);
+    } catch (apiError) {
+      setMessage(getApiErrorMessage(apiError, `Failed to create ${selectedRole === "admin" ? "admin" : "student"}.`));
+      setMessageType("error");
+    } finally {
+      setIsCreating(false);
+    }
   }
 
   return (
@@ -337,6 +393,9 @@ export function AdminDashboardPage() {
                   value={login}
                   onChange={(event) => setLogin(event.target.value)}
                   placeholder="e.g. oliver"
+                  minLength={AUTH_LOGIN_MIN_LENGTH}
+                  maxLength={AUTH_FIELD_MAX_LENGTH}
+                  disabled={isCreating}
                 />
               </div>
 
@@ -347,6 +406,9 @@ export function AdminDashboardPage() {
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   placeholder="e.g. Oliver Smith"
+                  minLength={AUTH_NAME_MIN_LENGTH}
+                  maxLength={AUTH_FIELD_MAX_LENGTH}
+                  disabled={isCreating}
                 />
               </div>
 
@@ -359,6 +421,9 @@ export function AdminDashboardPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Admin password"
+                    minLength={AUTH_PASSWORD_MIN_LENGTH}
+                    maxLength={AUTH_FIELD_MAX_LENGTH}
+                    disabled={isCreating}
                   />
                 </div>
               ) : null}
@@ -379,11 +444,11 @@ export function AdminDashboardPage() {
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setIsCreateModalOpen(false)}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setIsCreateModalOpen(false)} disabled={isCreating}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryButton}>
-                  Create {selectedRole === "admin" ? "admin" : "student"}
+                <button type="submit" className={styles.primaryButton} disabled={isCreating}>
+                  {isCreating ? "Creating..." : `Create ${selectedRole === "admin" ? "admin" : "student"}`}
                 </button>
               </div>
             </form>

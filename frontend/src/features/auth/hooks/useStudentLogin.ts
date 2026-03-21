@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import { studentLogin } from "../../../api/authApi";
 import { getApiErrorMessage } from "../../../api/client";
-import { useAuth } from "./useAuth";
 import { validateLogin } from "../utils/authValidation";
+import { useAuth } from "./useAuth";
 
 export function useStudentLogin() {
   const { login } = useAuth();
@@ -12,8 +12,8 @@ export function useStudentLogin() {
   const submit = useCallback(
     async (studentLoginValue: string) => {
       const trimmedLogin = studentLoginValue.trim();
+      const loginError = validateLogin(trimmedLogin);
 
-      const loginError = validateLogin(trimmedLogin, "Login");
       if (loginError) {
         setError(loginError);
         return false;

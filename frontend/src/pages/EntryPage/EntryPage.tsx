@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useStudentLogin } from "../../features/auth/hooks/useStudentLogin";
-import { AUTH_LOGIN_MIN_LENGTH, AUTH_TEXT_MAX_LENGTH } from "../../features/auth/utils/authValidation";
+import { AUTH_FIELD_MAX_LENGTH, AUTH_LOGIN_MIN_LENGTH } from "../../features/auth/utils/authValidation";
 import styles from "./EntryPage.module.css";
 
 export function EntryPage() {
@@ -58,7 +58,7 @@ export function EntryPage() {
             placeholder="Enter login"
             autoComplete="username"
             minLength={AUTH_LOGIN_MIN_LENGTH}
-            maxLength={AUTH_TEXT_MAX_LENGTH}
+            maxLength={AUTH_FIELD_MAX_LENGTH}
             disabled={isLoading}
           />
 

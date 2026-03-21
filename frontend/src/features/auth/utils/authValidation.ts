@@ -1,66 +1,50 @@
 export const AUTH_NAME_MIN_LENGTH = 4;
 export const AUTH_LOGIN_MIN_LENGTH = 4;
 export const AUTH_PASSWORD_MIN_LENGTH = 8;
-export const AUTH_TEXT_MAX_LENGTH = 40;
+export const AUTH_FIELD_MAX_LENGTH = 40;
 
-function isBlank(value: string) {
-  return value.trim().length === 0;
+function getTrimmedLength(value: string) {
+  return value.trim().length;
 }
 
-function hasExceededMaxLength(value: string) {
-  return value.trim().length > AUTH_TEXT_MAX_LENGTH;
-}
+export function validateName(name: string): string | null {
+  const length = getTrimmedLength(name);
 
-export function validateName(value: string) {
-  const trimmedValue = value.trim();
-
-  if (isBlank(value)) {
-    return "Please enter name.";
-  }
-
-  if (trimmedValue.length < AUTH_NAME_MIN_LENGTH) {
+  if (length < AUTH_NAME_MIN_LENGTH) {
     return `Name must be at least ${AUTH_NAME_MIN_LENGTH} characters long.`;
   }
 
-  if (hasExceededMaxLength(value)) {
-    return `Name must be at most ${AUTH_TEXT_MAX_LENGTH} characters long.`;
+  if (length > AUTH_FIELD_MAX_LENGTH) {
+    return `Name must be at most ${AUTH_FIELD_MAX_LENGTH} characters long.`;
   }
 
-  return "";
+  return null;
 }
 
-export function validateLogin(value: string, label = "Login") {
-  const trimmedValue = value.trim();
+export function validateLogin(login: string): string | null {
+  const length = getTrimmedLength(login);
 
-  if (isBlank(value)) {
-    return `Please enter ${label.toLowerCase()}.`;
+  if (length < AUTH_LOGIN_MIN_LENGTH) {
+    return `Login must be at least ${AUTH_LOGIN_MIN_LENGTH} characters long.`;
   }
 
-  if (trimmedValue.length < AUTH_LOGIN_MIN_LENGTH) {
-    return `${label} must be at least ${AUTH_LOGIN_MIN_LENGTH} characters long.`;
+  if (length > AUTH_FIELD_MAX_LENGTH) {
+    return `Login must be at most ${AUTH_FIELD_MAX_LENGTH} characters long.`;
   }
 
-  if (hasExceededMaxLength(value)) {
-    return `${label} must be at most ${AUTH_TEXT_MAX_LENGTH} characters long.`;
-  }
-
-  return "";
+  return null;
 }
 
-export function validatePassword(value: string, label = "Password") {
-  const trimmedValue = value.trim();
+export function validatePassword(password: string): string | null {
+  const length = getTrimmedLength(password);
 
-  if (isBlank(value)) {
-    return `Please enter ${label.toLowerCase()}.`;
+  if (length < AUTH_PASSWORD_MIN_LENGTH) {
+    return `Password must be at least ${AUTH_PASSWORD_MIN_LENGTH} characters long.`;
   }
 
-  if (trimmedValue.length < AUTH_PASSWORD_MIN_LENGTH) {
-    return `${label} must be at least ${AUTH_PASSWORD_MIN_LENGTH} characters long.`;
+  if (length > AUTH_FIELD_MAX_LENGTH) {
+    return `Password must be at most ${AUTH_FIELD_MAX_LENGTH} characters long.`;
   }
 
-  if (hasExceededMaxLength(value)) {
-    return `${label} must be at most ${AUTH_TEXT_MAX_LENGTH} characters long.`;
-  }
-
-  return "";
+  return null;
 }
