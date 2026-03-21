@@ -1,5 +1,5 @@
 import { getRandomInt } from "../core/utils/random";
-import { getTrackConfig, SYMBOL_POOL, SYMBOL_TYPES, type SymbolType, type TrackConfig } from "./TrackTheCircleConfig";
+import { getTrackConfig, SYMBOL_POOL, SYMBOL_TYPES, type SymbolType } from "./TrackTheCircleConfig";
 import type { GameDifficulty } from "../core/types/GameDefinition";
 
 export type CircleItem = {
@@ -9,11 +9,12 @@ export type CircleItem = {
   isTarget: boolean;
   x: number;
   y: number;
+  swapWeight: number; // ← nové
 };
 
 export type SwapPair = {
-  a: number; // id
-  b: number; // id
+  a: number;
+  b: number;
 };
 
 export type GameState = {
@@ -43,6 +44,7 @@ export function buildInitialState(
     isTarget: i === targetIndex,
     x: pos.x,
     y: pos.y,
+    swapWeight: 1,
   }));
 
   return {
@@ -54,16 +56,12 @@ export function buildInitialState(
   };
 }
 
-export function generatePositions(
-  count: number,
-): { x: number; y: number }[] {
-  // Vrací relativní pozice v rozsahu 0–1, scéna je přepočítá na px
+export function generatePositions(count: number): { x: number; y: number }[] {
   const positions: { x: number; y: number }[] = [];
   const margin = 0.15;
   const usable = 1 - margin * 2;
 
   if (count <= 4) {
-    // Rozložit do řady
     for (let i = 0; i < count; i++) {
       positions.push({
         x: margin + (usable / (count - 1 || 1)) * i,
@@ -71,7 +69,6 @@ export function generatePositions(
       });
     }
   } else {
-    // Rozložit do kruhu
     for (let i = 0; i < count; i++) {
       const angle = (2 * Math.PI * i) / count - Math.PI / 2;
       positions.push({
@@ -84,27 +81,47 @@ export function generatePositions(
   return positions;
 }
 
-export function pickSwapPair(circles: CircleItem[]): SwapPair {
-  const ids = circles.map(c => c.id);
-  const a = ids[getRandomInt(0, ids.length - 1)];
-  let b = ids[getRandomInt(0, ids.length - 1)];
-  while (b === a) {
-    b = ids[getRandomInt(0, ids.length - 1)];
+function weightedPickTwo(circles: CircleItem[]): SwapPair {
+  // Výběr prvního podle váhy
+  const totalWeight = circles.reduce((sum, c) => sum + c.swapWeight, 0);
+  let r = Math.random() * totalWeight;
+  let a = circles[circles.length - 1].id;
+  for (const c of circles) {
+    r -= c.swapWeight;
+    if (r <= 0) { a = c.id; break; }
   }
+
+  // Výběr druhého – ze zbytku, také weighted
+  const rest = circles.filter(c => c.id !== a);
+  const totalRest = rest.reduce((sum, c) => sum + c.swapWeight, 0);
+  let r2 = Math.random() * totalRest;
+  let b = rest[rest.length - 1].id;
+  for (const c of rest) {
+    r2 -= c.swapWeight;
+    if (r2 <= 0) { b = c.id; break; }
+  }
+
   return { a, b };
 }
 
+export function pickSwapPair(circles: CircleItem[]): SwapPair {
+  return weightedPickTwo(circles);
+}
+
 export function applySwap(circles: CircleItem[], pair: SwapPair): CircleItem[] {
+  const movedIds = new Set([pair.a, pair.b]);
+
   return circles.map(c => {
     if (c.id === pair.a) {
       const other = circles.find(o => o.id === pair.b)!;
-      return { ...c, x: other.x, y: other.y };
+      return { ...c, x: other.x, y: other.y, swapWeight: 1 }; // reset váhy
     }
     if (c.id === pair.b) {
       const other = circles.find(o => o.id === pair.a)!;
-      return { ...c, x: other.x, y: other.y };
+      return { ...c, x: other.x, y: other.y, swapWeight: 1 }; // reset váhy
     }
-    return c;
+    // Nehýbal se – zvýšení váhy o 25 %
+    return { ...c, swapWeight: c.swapWeight + 0.25 };
   });
 }
 
