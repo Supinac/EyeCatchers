@@ -7,7 +7,7 @@ from ...models import  UserCreate, UserResponse, UserUpdate
 router = APIRouter(prefix="/user", tags=["Admin - user"])
 
 
-@router.get("/", status_code=200, response_model=UserResponse)
+@router.get("/", status_code=200, response_model=list[UserResponse])
 def user_login(session: Session = Depends(db.session)):
     pass
 
