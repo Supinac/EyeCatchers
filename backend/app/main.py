@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, Response
 from .config import settings
 from . import db
 from .endpoints.admin import router as admin_router
+from .endpoints.user import router as user_router
 
 
 # if not db.ping(host=settings.DB_HOST, port=int(settings.DB_PORT)):
@@ -39,5 +40,5 @@ app.add_middleware(
 )
 
 
-# app.include_router(user.router)
 app.include_router(admin_router.router)
+app.include_router(user_router.router)

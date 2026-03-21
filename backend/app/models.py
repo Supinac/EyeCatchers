@@ -1,6 +1,4 @@
-from typing_extensions import Self
-
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from enum import Enum
 import json
 
@@ -9,6 +7,7 @@ MAX_STRING_LENGTH: int = 40
 
 # Request schemas
 class AdminResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id:         int
     login:      str
     name:       str
@@ -19,9 +18,9 @@ class AdminCreate(BaseModel):
     password:   str                     = Field(min_length=8, max_length=255)
 
 class AdminUpdate(BaseModel):
-    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    password:   str | None              = Field(min_length=8, max_length=255)
+    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    password:   str | None              = Field(min_length=8, max_length=255, default=None)
 
 
 
@@ -41,8 +40,8 @@ class UserCreate(BaseModel):
     login:      str                     = Field(min_length=4, max_length=MAX_STRING_LENGTH)
 
 class UserUpdate(BaseModel):
-    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
-    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH)
+    name:       str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
+    login:      str | None              = Field(min_length=4, max_length=MAX_STRING_LENGTH, default=None)
 
 class UserLogin(BaseModel):
     login:      str                     = Field(min_length=4, max_length=MAX_STRING_LENGTH)
