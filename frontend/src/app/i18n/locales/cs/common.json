@@ -41,7 +41,10 @@
     "messages": {
       "removed": "{{role}} {{login}} byl odstraněn.",
       "created": "{{role}} {{login}} byl vytvořen.",
-      "createFailed": "Nepodařilo se vytvořit {{role}}."
+      "createFailed": "Nepodařilo se vytvořit {{role}}.",
+      "removeFailed": "Nepodařilo se odstranit {{role}}.",
+      "loadFailed": "Nepodařilo se načíst uživatele.",
+      "cannotRemoveOwnAccount": "Nemůžeš odstranit svůj vlastní administrátorský účet."
     },
     "table": {
       "fullName": "Celé jméno",
@@ -50,7 +53,8 @@
       "bestScore": "Nejlepší skóre",
       "lastPlayed": "Naposledy hráno",
       "action": "Akce",
-      "empty": "Nebyli nalezeni žádní {{role}}."
+      "empty": "Nebyli nalezeni žádní {{role}}.",
+      "loading": "Načítám {{role}}..."
     },
     "actions": {
       "view": "Zobrazit",
@@ -89,6 +93,7 @@
       "helperStudent": "Student vyžaduje login a celé jméno.",
       "cancel": "Zrušit",
       "creating": "Vytvářím...",
+      "removing": "Odebírám...",
       "create": "Vytvořit {{role}}",
       "deleteUser": "Smazat uživatele",
       "removeRole": "Odebrat {{role}}?",

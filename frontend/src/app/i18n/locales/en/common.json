@@ -41,7 +41,10 @@
     "messages": {
       "removed": "{{role}} {{login}} was removed.",
       "created": "{{role}} {{login}} was created.",
-      "createFailed": "Failed to create {{role}}."
+      "createFailed": "Failed to create {{role}}.",
+      "removeFailed": "Failed to remove {{role}}.",
+      "loadFailed": "Failed to load users.",
+      "cannotRemoveOwnAccount": "You cannot remove your own admin account."
     },
     "table": {
       "fullName": "Full name",
@@ -50,7 +53,8 @@
       "bestScore": "Best score",
       "lastPlayed": "Last played",
       "action": "Action",
-      "empty": "No {{role}} found."
+      "empty": "No {{role}} found.",
+      "loading": "Loading {{role}}..."
     },
     "actions": {
       "view": "View",
@@ -89,6 +93,7 @@
       "helperStudent": "Students require login and full name.",
       "cancel": "Cancel",
       "creating": "Creating...",
+      "removing": "Removing...",
       "create": "Create {{role}}",
       "deleteUser": "Delete user",
       "removeRole": "Remove {{role}}?",
