@@ -16,10 +16,10 @@ const games: GameCardViewModel[] = [
     icon: "puzzle",
   },
   {
-    key: "shape-match",
-    name: "Shape Match",
-    description: "Choose the correct shape with large clear targets and a very simple layout.",
-    implemented: false,
+    key: "keys",
+    name: "Keys",
+    description: "Choose the correct key teeths with large clear targets and a very simple layout.",
+    implemented: true,
     icon: "arcade",
   },
 ];

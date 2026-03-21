@@ -1,3 +1,4 @@
+import { KeysGameConfig } from "src/games/keys/KeysGameConfig";
 import type { GameDifficulty } from "./GameDefinition";
 
 export type PreviewSeconds = 5 | 10 | 15 | 20;
