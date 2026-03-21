@@ -211,7 +211,7 @@ export function AdminDashboardPage() {
       setStudentRows(mapApiUsersToRows("child", visibleStudents));
       setAdminRows(mapApiUsersToRows("admin", visibleAdmins));
     } catch (apiError) {
-      setTableError(getApiErrorMessage(apiError, "Failed to load users."));
+      setTableError(getApiErrorMessage(apiError, t("admin.messages.loadFailed")));
     } finally {
       setIsTableLoading(false);
     }
@@ -257,7 +257,7 @@ export function AdminDashboardPage() {
     }
 
     if (isSameAdminAccount(auth, { id: userId, login: targetRow.login, role: targetRow.role })) {
-      setMessage("You cannot remove your own admin account.");
+      setMessage(t("admin.messages.cannotRemoveOwnAccount"));
       setMessageType("error");
       return;
     }
@@ -275,7 +275,7 @@ export function AdminDashboardPage() {
     }
 
     if (isSameAdminAccount(auth, { id: deleteTarget.id, login: deleteTarget.login, role: deleteTarget.role })) {
-      setMessage("You cannot remove your own admin account.");
+      setMessage(t("admin.messages.cannotRemoveOwnAccount"));
       setMessageType("error");
       handleCloseDeleteModal();
       return;
@@ -315,7 +315,7 @@ export function AdminDashboardPage() {
 
       setDeleteTarget(null);
       setVersion((current) => current + 1);
-      setMessage(`${targetRole === "admin" ? "Admin" : "Student"} ${targetLogin} was removed.`);
+      setMessage(t("admin.messages.removed", { role: getRoleLabel(targetRole), login: targetLogin }));
       setMessageType("success");
 
       await loadUsers(nextHiddenDeletedIds);
@@ -325,7 +325,7 @@ export function AdminDashboardPage() {
         navigate(routes.entry);
       }
     } catch (apiError) {
-      setMessage(getApiErrorMessage(apiError, `Failed to remove ${deleteTarget.role === "admin" ? "admin" : "student"}.`));
+      setMessage(getApiErrorMessage(apiError, t("admin.messages.removeFailed", { role: getRoleLabelLower(deleteTarget.role) })));
       setMessageType("error");
     } finally {
       setIsDeleting(false);
@@ -396,7 +396,7 @@ export function AdminDashboardPage() {
         setStudentRows((current) => [...current.filter((row) => row.id !== nextRow.id), nextRow].sort((left, right) => left.login.localeCompare(right.login)));
       }
 
-      setMessage(`${selectedRole === "admin" ? "Admin" : "Student"} ${response.login} was created.`);
+      setMessage(t("admin.messages.created", { role: getRoleLabel(selectedRole), login: response.login }));
       setMessageType("success");
       setVersion((current) => current + 1);
       resetForm();
@@ -476,7 +476,7 @@ export function AdminDashboardPage() {
                 {isTableLoading ? (
                   <tr>
                     <td colSpan={6} className={styles.emptyTable}>
-                      Loading {selectedRole === "admin" ? "admins" : "students"}...
+                      {t("admin.table.loading", { role: selectedRolePlural })}
                     </td>
                   </tr>
                 ) : filteredRows.length ? (
@@ -636,10 +636,10 @@ export function AdminDashboardPage() {
 
               <div className={styles.modalActions}>
                 <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>
-                  Cancel
+                  {t("admin.modal.cancel")}
                 </button>
                 <button type="button" className={styles.dangerButton} onClick={handleDeleteUser} disabled={isDeleting}>
-                  {isDeleting ? "Removing..." : "Remove user"}
+                  {isDeleting ? t("admin.modal.removing") : t("admin.modal.removeUser")}
                 </button>
               </div>
             </div>
