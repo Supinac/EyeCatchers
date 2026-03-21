@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from sqlalchemy import select
@@ -11,14 +13,24 @@ from ...report import record_to_html, records_to_html, records_to_csv
 router = APIRouter(prefix="/results/export", tags=["Admin - Export"])
 
 
+def _ensure_dict(value) -> dict:
+    """SQLite stores JSON columns as strings — parse them if needed."""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    return value if isinstance(value, dict) else {}
+
+
 def _score_to_dict(score: tables.UserScore, user_name: str = "?") -> dict:
     return {
         "id": score.id,
         "user_id": score.user_id,
         "user_name": user_name,
         "game_type": score.game_type.value if hasattr(score.game_type, "value") else str(score.game_type),
-        "settings": score.settings or {},
-        "results": score.results or {},
+        "settings": _ensure_dict(score.settings),
+        "results": _ensure_dict(score.results),
         "created_at": score.created_at,
     }
 
@@ -53,8 +65,8 @@ def export_result_html(
         user_id=score.user_id,
         user_name=user_name,
         game_type=game_type,
-        settings=score.settings or {},
-        results=score.results or {},
+        settings=_ensure_dict(score.settings),
+        results=_ensure_dict(score.results),
         created_at=score.created_at,
     )
 
