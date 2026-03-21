@@ -1,0 +1,12 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from ... import tables, db
+from ...admin_auth import auth_admin
+
+
+router = APIRouter(prefix="/results/export", tags=["Admin - Export"])
+
+

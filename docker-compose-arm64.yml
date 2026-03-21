@@ -30,9 +30,9 @@ services:
   client:
     build:
       context: ./frontend
-      args:
-        NEXT_PUBLIC_BASE_URL: http://localhost:80/api
       platform: linux/arm64
+    environment:
+      VITE_API_BASE_URL: http://localhost/api
     restart: unless-stopped
     depends_on:
       - api
@@ -99,5 +99,4 @@ networks:
   backend:
     name: backend
     driver: bridge
-
 
