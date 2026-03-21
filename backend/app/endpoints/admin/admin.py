@@ -3,6 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from ... import tables
 from ... import db
 from ...models import AdminLogin, AdminCreate, AdminUpdate, AdminResponse
 from ...auth import hash_password, verify_password, create_token, get_current_user
@@ -14,15 +16,41 @@ router = APIRouter(prefix="/admin", tags=["Admin - admin"])
 
 @router.get("/", status_code=200, response_model=List[AdminResponse])
 def get_admins(session: Session = Depends(db.session)):
-    return 
+    admin_list = session.execute(select(tables.Admin)).scalars().all()
+    return admin_list
 
 @router.post("/", status_code=201, response_model=AdminResponse)
 def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
-    pass
+    admin = session.execute(select(tables.Admin)).scalar_one_or_none()
+    if admin:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Admin already exists",
+        )
+    admin = tables.Admin(
+        name=user.name,
+        password=hash_password(user.password),
+    )
+    session.add(admin)
+    session.commit()
+    session.refresh(admin)
+    return admin
 
 @router.patch("/", status_code=200, response_model=AdminResponse)
 def update_admin(user: AdminUpdate, session: Session = Depends(db.session)):
-    pass
+    AdminUpdate = session.execute(select(tables.Admin)).scalar_one_or_none()
+    if not AdminUpdate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found",
+        )
+    for key, value in user.dict(exclude_unset=True).items():
+        setattr(AdminUpdate, key, value)
+    session.add(AdminUpdate)
+    session.commit()
+    session.refresh(AdminUpdate)
+    return AdminUpdate
+
 
 # @router.post("/register", status_code=201, response_model=UserResponse)
 # def register(request: UserRegister, session: Session = Depends(db.session)):

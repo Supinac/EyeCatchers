@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
+from app import tables
 from ... import db
 from ...models import  UserCreate, UserResponse, UserUpdate
 
@@ -9,7 +11,8 @@ router = APIRouter(prefix="/user", tags=["Admin - user"])
 
 @router.get("/", status_code=200, response_model=list[UserResponse])
 def user_login(session: Session = Depends(db.session)):
-    pass
+    user_list = session.query(tables.User).all()
+    return user_list
 
 @router.post("/", status_code=201, response_model=UserResponse)
 def user_register(user: UserCreate, session: Session = Depends(db.session)):
