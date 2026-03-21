@@ -1,5 +1,5 @@
 import type { GameDifficulty } from "../../../games/core/types/GameDefinition";
-import type { FindCircleGameConfig } from "../../../games/core/types/GameConfig";
+import type { FindCircleGameConfig, TrackTheCircleGameConfig } from "../../../games/core/types/GameConfig";
 
 export type GameMode = "guided" | "free-play" | "single";
 export type GameTimer = "none" | "short" | "relaxed";
@@ -10,4 +10,5 @@ export type SessionState = {
   mode?: GameMode;
   timer?: GameTimer;
   findCircle?: FindCircleGameConfig;
+  trackTheCircle?: TrackTheCircleGameConfig;
 };

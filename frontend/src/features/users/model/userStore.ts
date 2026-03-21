@@ -4,7 +4,7 @@ import { getAuthState } from "../../auth/model/authStore";
 import type { AuthRole } from "../../auth/model/authTypes";
 import type { StoredGameSession, UserRecord, UserStatsRow, UserStoreData } from "./userTypes";
 
-const STORAGE_KEY = "autism_users_store_v1";
+const STORAGE_KEY = "users_store_v1";
 
 const GAME_TITLES: Record<string, string> = {
   "find-circle": "Find Circle",
@@ -177,6 +177,43 @@ export function getUserByLogin(login: string, role?: AuthRole): UserRecord | nul
   return ensureUserStore().users.find((user) => user.login.toLowerCase() === normalized && (!role || user.role === role)) ?? null;
 }
 
+export function upsertUserFromApi(input: {
+  id: string | number;
+  role: AuthRole;
+  login: string;
+  name: string;
+  password?: string;
+}): UserRecord {
+  const store = ensureUserStore();
+  const normalizedId = String(input.id);
+  const normalizedLogin = input.login.trim();
+  const normalizedName = input.name.trim();
+
+  const nextUser: UserRecord = {
+    id: normalizedId,
+    role: input.role,
+    login: normalizedLogin,
+    name: normalizedName,
+    surname: "",
+    password: input.role === "admin" ? input.password?.trim() : undefined,
+    createdAt: new Date().toISOString(),
+  };
+
+  const existingUser = store.users.find((user) => user.id === normalizedId);
+  const users = existingUser
+    ? store.users.map((user) => (user.id === normalizedId ? { ...user, ...nextUser, createdAt: user.createdAt } : user))
+    : [...store.users.filter((user) => user.login.toLowerCase() !== normalizedLogin.toLowerCase()), nextUser];
+
+  persistStore({
+    users,
+    sessions: store.sessions,
+  });
+
+  return existingUser
+    ? users.find((user) => user.id === normalizedId) ?? nextUser
+    : nextUser;
+}
+
 export function validateAdminCredentials(login: string, password: string): UserRecord | null {
   const normalizedLogin = login.trim().toLowerCase();
   const normalizedPassword = password.trim();
@@ -293,6 +330,7 @@ export function recordGameForCurrentUser(result: GameResult) {
     maxScore: result.maxScore,
     success: result.success,
     playedAt: new Date().toISOString(),
+    stats: result.stats,
   };
 
   persistStore({
@@ -354,11 +392,17 @@ export function getDashboardSummary() {
 }
 
 export function formatDateTime(value: string) {
+  const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime())) {
+    return "—";
+  }
+
   return new Intl.DateTimeFormat("en-GB", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(value));
+  }).format(date);
 }
