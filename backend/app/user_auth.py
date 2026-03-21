@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from . import db
 from .config import settings
+from .tables import User
 
 
 # --- JWT tokens ---
@@ -13,6 +13,7 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = settings.TOKEN_EXPIRE_MINUTES
 COOKIE_NAME = "user_login_token"
+
 
 def create_token(user_id: int) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
@@ -46,7 +47,6 @@ def auth_user(request: Request, session: Session = Depends(db.session)):
 
 def login_user(login: str, response: Response, session: Session):
     """Authenticate user and set auth cookie. Callable from endpoint."""
-    from .tables import User  # local import to avoid circular imports
 
     user = session.execute(
         select(User).where(User.login == login)
@@ -71,3 +71,7 @@ def login_user(login: str, response: Response, session: Session):
     )
 
     return user
+
+def logout_user(response: Response):
+    """Clear auth cookie. Callable from endpoint."""
+    response.delete_cookie(key=COOKIE_NAME)

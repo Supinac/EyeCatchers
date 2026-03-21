@@ -1,0 +1,405 @@
+{
+  "entry": {
+    "badge": "Vítej",
+    "title": "Kdo hraje?",
+    "subtitle": "Studenti zadávají pouze login. Administrátoři se přihlašují jménem a heslem v samostatné administrátorské sekci.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Zadej login",
+    "helper": "Použij login vytvořený administrátorem.",
+    "signingIn": "Přihlašuji...",
+    "continue": "Pokračovat",
+    "admin": "Admin"
+  },
+  "adminLogin": {
+    "badge": "Administrátor",
+    "title": "Přístup administrátora",
+    "subtitle": "Použij login a heslo pro vstup na administrátorský panel.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Zadej administrátorský login",
+    "passwordLabel": "Heslo",
+    "passwordPlaceholder": "Zadej heslo",
+    "helper": "Sem se mohou přihlásit pouze administrátorské účty.",
+    "signingIn": "Přihlašuji...",
+    "login": "Přihlásit",
+    "studentLogin": "Login pro studenty"
+  },
+  "admin": {
+    "eyebrow": "Administrace",
+    "title": "Uživatelé",
+    "subtitle": "Přepínej mezi studenty a administrátory, vytvářej nové účty, prohlížej výsledky studentů a odstraňuj uživatele podle potřeby.",
+    "userRoleLabel": "Administrátor",
+    "logout": "Odhlásit",
+    "students": "Studenti",
+    "admins": "Administrátoři",
+    "roleAdmin": "Admin",
+    "roleStudent": "Student",
+    "roleAdminLower": "admina",
+    "roleStudentLower": "studenta",
+    "roleAdmins": "administrátory",
+    "roleStudents": "studenty",
+    "userFallback": "uživatel",
+    "messages": {
+      "removed": "{{role}} {{login}} byl odstraněn.",
+      "created": "{{role}} {{login}} byl vytvořen.",
+      "createFailed": "Nepodařilo se vytvořit {{role}}.",
+      "removeFailed": "Nepodařilo se odstranit {{role}}.",
+      "loadFailed": "Nepodařilo se načíst uživatele.",
+      "cannotRemoveOwnAccount": "Nemůžeš odstranit svůj vlastní administrátorský účet."
+    },
+    "table": {
+      "fullName": "Celé jméno",
+      "login": "Login",
+      "gamesPlayed": "Odehrané hry",
+      "bestScore": "Nejlepší skóre",
+      "lastPlayed": "Naposledy hráno",
+      "action": "Akce",
+      "empty": "Nebyli nalezeni žádní {{role}}.",
+      "loading": "Načítám {{role}}..."
+    },
+    "actions": {
+      "view": "Zobrazit",
+      "remove": "Odebrat",
+      "createNew": "Vytvořit nového {{role}}"
+    },
+    "session": {
+      "statusFinished": "Dokončeno",
+      "statusNotFinished": "Nedokončeno",
+      "correctFound": "Správně nalezeno",
+      "accuracy": "Přesnost",
+      "correctTaps": "Správná kliknutí",
+      "wrongTaps": "Špatná kliknutí",
+      "timeUsed": "Využitý čas",
+      "pillGame": "Hra: {{value}}",
+      "pillDifficulty": "Obtížnost: {{value}}",
+      "pillPreview": "Náhled: {{value}} s",
+      "pillMaxTime": "Max čas: {{value}} s",
+      "pillMode": "Režim: {{value}}",
+      "pillGridSize": "Velikost mřížky: {{value}}",
+      "pillRightObjects": "Počet správných objektů: {{value}}",
+      "pillFigureSize": "Velikost tvarů: {{value}}",
+      "pillTarget": "Cíl: {{value}}"
+    },
+    "modal": {
+      "createAccount": "Vytvořit účet",
+      "createNew": "Vytvořit nového {{role}}",
+      "labelLogin": "Login",
+      "labelFullName": "Celé jméno",
+      "labelPassword": "Heslo",
+      "placeholderLogin": "např. oliver",
+      "placeholderFullName": "např. Oliver Smith",
+      "placeholderPassword": "Heslo admina",
+      "helperAdmin": "Admin vyžaduje login, celé jméno a heslo.",
+      "helperStudent": "Student vyžaduje login a celé jméno.",
+      "cancel": "Zrušit",
+      "creating": "Vytvářím...",
+      "removing": "Odebírám...",
+      "create": "Vytvořit {{role}}",
+      "deleteUser": "Smazat uživatele",
+      "removeRole": "Odebrat {{role}}?",
+      "deleteWarning": "Tato akce trvale odstraní uživatelský účet.",
+      "deleteWarningWithResults": "Tato akce trvale odstraní uživatelský účet i všechny uložené výsledky her.",
+      "removeUser": "Odebrat uživatele",
+      "userResults": "Výsledky uživatele",
+      "createdAt": "Vytvořeno {{value}}",
+      "playedGames": "Odehrané hry",
+      "historySubtitle": "Přehled odehraných her a jejich nastavení.",
+      "total": "Celkem {{value}}",
+      "noGames": "Tento uživatel ještě neodehrál žádnou hru."
+    }
+  },
+  "home": {
+    "greeting": "Ahoj, {{name}}",
+    "childFallback": "Dítě",
+    "logout": "Odhlásit",
+    "title": "Vyber hru",
+    "subtitle": "Velké přehledné kartičky v černobílém designu.",
+    "footerHint": "Klepni na kartu pro pokračování."
+  },
+  "games": {
+    "readyToOpen": "Připraveno k otevření",
+    "play": "Hrát",
+    "locked": "Zamčeno",
+    "items": {
+      "find-circle": {
+        "title": "Paměťová hra",
+        "description": "Zapamatuj si hledaný objekt a potom najdi všechny správné možnosti."
+      },
+      "track-the-circle": {
+        "title": "Sleduj označený symbol",
+        "description": "Sleduj označený symbol při přesunech a na konci vyber jeho správnou pozici."
+      },
+      "shape-match": {
+        "title": "Přiřazení tvarů",
+        "description": "Vyber správný tvar pomocí velkých a přehledných cílů."
+      },
+      "memory-pairs": {
+        "title": "Pexeso"
+      },
+      "count-items": {
+        "title": "Počítání objektů"
+      },
+      "find-different": {
+        "title": "Najdi rozdíl"
+      },
+      "repeat-sequence": {
+        "title": "Opakuj sekvenci"
+      }
+    }
+  },
+  "values": {
+    "easy": "Lehká",
+    "medium": "Střední",
+    "hard": "Těžká",
+    "fixed": "Pevná",
+    "random": "Náhodná",
+    "figures": "Tvary",
+    "letters": "Písmena",
+    "numbers": "Čísla",
+    "grid": "Mřížka",
+    "unlimited": "Bez omezení",
+    "true": "Ano",
+    "false": "Ne",
+    "circle": "Kruh",
+    "square": "Čtverec",
+    "triangle": "Trojúhelník",
+    "star": "Hvězda",
+    "diamond": "Kosočtverec",
+    "rectangle": "Obdélník",
+    "hexagon": "Šestiúhelník",
+    "random positions": "Náhodné pozice",
+    "czech letters": "Písmena"
+  },
+  "config": {
+    "back": "Zpět",
+    "title": "Nastavení hry",
+    "start": "Spustit hru",
+    "labels": {
+      "difficulty": "Obtížnost",
+      "previewTime": "Doba náhledu",
+      "maxGameTime": "Maximální čas hry",
+      "gridSize": "Velikost mřížky",
+      "correctObjectCount": "Počet správných objektů",
+      "figureSizeMode": "Režim velikosti objektů",
+      "figureSizePercent": "Velikost objektů v procentech",
+      "contentMode": "Režim obsahu",
+      "placementMode": "Rozložení objektů",
+      "swapCount": "Počet přesunů",
+      "swapDurationMs": "Rychlost přesunu",
+      "symbolSize": "Velikost symbolů"
+    },
+    "hints": {
+      "correctObjectCount": "Vyber, kolik správných objektů se objeví na obrazovce.",
+      "figureSizePercent": "100 % vyplní téměř celý prostor objektu. 50 % bude přibližně poloviční velikost.",
+      "symbolSize": "Uprav velikost písmen, čísel a tvarů na obrazovce."
+    },
+    "options": {
+      "previewTime": {
+        "1": {
+          "label": "1 s",
+          "description": "Velmi krátký náhled před začátkem hry."
+        },
+        "2": {
+          "label": "2 s",
+          "description": "Krátký náhled pro těžší kolo."
+        },
+        "5": {
+          "label": "5 s",
+          "description": "Vyvážený čas na zapamatování."
+        },
+        "10": {
+          "label": "10 s",
+          "description": "Nejdelší a nejklidnější náhled."
+        }
+      },
+      "maxGameTime": {
+        "30": {
+          "label": "30 s",
+          "description": "Rychlé kolo s rychlým rozhodováním."
+        },
+        "60": {
+          "label": "60 s",
+          "description": "Vyvážený čas pro většinu hráčů."
+        },
+        "90": {
+          "label": "90 s",
+          "description": "Více času pro větší mřížky."
+        },
+        "unlimited": {
+          "label": "Bez omezení",
+          "description": "Kolo skončí až po nalezení všech správných objektů."
+        }
+      },
+      "gridSize": {
+        "2": {
+          "label": "2 × 2",
+          "description": "4 objekty na obrazovce."
+        },
+        "3": {
+          "label": "3 × 3",
+          "description": "9 objektů na obrazovce."
+        },
+        "4": {
+          "label": "4 × 4",
+          "description": "16 objektů na obrazovce."
+        },
+        "5": {
+          "label": "5 × 5",
+          "description": "25 objektů na obrazovce."
+        }
+      },
+      "contentMode": {
+        "figures": {
+          "label": "Tvary",
+          "description": "Kruh, čtverec, trojúhelník a další jednoduché tvary."
+        },
+        "letters": {
+          "label": "Písmena",
+          "description": "Velká tučná písmena vhodná pro děti."
+        },
+        "numbers": {
+          "label": "Čísla",
+          "description": "Velké tučné číslice od 0 do 9."
+        }
+      },
+      "placementMode": {
+        "grid": {
+          "label": "Mřížka",
+          "description": "Objekty jsou umístěné v přehledné mřížce."
+        },
+        "random": {
+          "label": "Náhodné pozice",
+          "description": "Objekty jsou rozmístěné po celé ploše."
+        }
+      },
+      "figureSizeMode": {
+        "fixed": {
+          "label": "Pevná",
+          "description": "Všechny objekty mají stejnou velikost."
+        },
+        "random": {
+          "label": "Náhodná",
+          "description": "Objekty mění velikost v rámci zvoleného procenta."
+        }
+      },
+      "difficulty": {
+        "easy": {
+          "label": "Lehká",
+          "description": "3 symboly na obrazovce."
+        },
+        "medium": {
+          "label": "Střední",
+          "description": "5 symbolů na obrazovce."
+        },
+        "hard": {
+          "label": "Těžká",
+          "description": "8 symbolů na obrazovce."
+        }
+      },
+      "swapCount": {
+        "5": {
+          "label": "5",
+          "description": "Velmi jednoduché."
+        },
+        "10": {
+          "label": "10",
+          "description": "Lehká úroveň."
+        },
+        "15": {
+          "label": "15",
+          "description": "Střední obtížnost."
+        },
+        "20": {
+          "label": "20",
+          "description": "Náročnější sledování."
+        },
+        "25": {
+          "label": "25",
+          "description": "Těžké."
+        },
+        "30": {
+          "label": "30",
+          "description": "Maximální obtížnost."
+        }
+      },
+      "swapDurationMs": {
+        "200": {
+          "label": "0,2 s",
+          "description": "Velmi rychlé."
+        },
+        "400": {
+          "label": "0,4 s",
+          "description": "Rychlé."
+        },
+        "600": {
+          "label": "0,6 s",
+          "description": "Střední."
+        },
+        "800": {
+          "label": "0,8 s",
+          "description": "Pomalé."
+        },
+        "1000": {
+          "label": "1,0 s",
+          "description": "Velmi pomalé."
+        },
+        "1200": {
+          "label": "1,2 s",
+          "description": "Nejpomalejší."
+        }
+      }
+    },
+    "meta": {
+      "previewTime": "{{value}} náhled",
+      "maxGameTimeLimited": "{{value}} max čas",
+      "maxGameTimeUnlimited": "Bez omezení času",
+      "gridSize": "{{value}} položek",
+      "correctObjectCount": "{{value}} správně",
+      "figureSizePercent": "{{value}} velikost {{mode}}",
+      "swapCount": "{{value}} přesunů",
+      "swapDurationMs": "{{value}} rychlost",
+      "symbolSize": "{{value}} symboly"
+    }
+  },
+  "resultPage": {
+    "emptyBadge": "Zatím bez výsledku",
+    "emptyTitle": "Nejprve spusť hru",
+    "emptySubtitle": "Na této obrazovce zatím není žádný dokončený pokus.",
+    "badgeSuccess": "Výhra",
+    "badgeFail": "Zkus znovu",
+    "titleSuccess": "Skvělá práce",
+    "titleFail": "Kolo dokončeno",
+    "subtitleFindCircleSuccess": "Našel/a jsi všechny správné objekty. Tady je přehled výsledku kola.",
+    "subtitleFindCircleFail": "Kolo skončilo. Podívej se na hlavní výsledky a zkus to znovu.",
+    "subtitleTrackSuccess": "Správně! Sledoval/a jsi označený symbol až do konce.",
+    "subtitleTrackFail": "Tentokrát to nevyšlo. Zkus to znovu.",
+    "summaryResult": "Výsledek",
+    "summaryCorrectFound": "Správně nalezeno",
+    "stats": {
+      "accuracy": "Přesnost",
+      "correctTaps": "Počet správných kliknutí",
+      "wrongTaps": "Počet špatných kliknutí",
+      "timeUsed": "Použitý čas"
+    },
+    "actions": {
+      "backToGames": "Zpět na hry",
+      "home": "Domů",
+      "downloadPdf": "Stáhnout PDF",
+      "playAgain": "Hrát znovu"
+    },
+    "pills": {
+      "game": "Hra: {{value}}",
+      "difficulty": "Obtížnost: {{value}}",
+      "previewTime": "Doba náhledu: {{value}}",
+      "maxGameTime": "Maximální čas hry: {{value}}",
+      "contentMode": "Režim obsahu: {{value}}",
+      "placementMode": "Rozložení objektů: {{value}}",
+      "gridSize": "Velikost mřížky: {{value}}",
+      "correctObjectCount": "Počet správných objektů: {{value}}",
+      "figureSizePercent": "Velikost objektů v procentech: {{value}}",
+      "figureSizeMode": "Režim velikosti objektů: {{value}}",
+      "swapCount": "Počet přesunů: {{value}}",
+      "swapDurationMs": "Rychlost přesunu: {{value}}",
+      "symbolSize": "Velikost symbolů: {{value}}"
+    }
+  }
+}

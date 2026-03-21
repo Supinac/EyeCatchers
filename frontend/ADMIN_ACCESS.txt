@@ -1,0 +1,14 @@
+Default seeded accounts
+======================
+
+Admin:
+- login: admin
+- password: admin
+
+Sample students:
+- emma
+- karel
+- mia
+- alex
+
+New student/admin accounts can be created in the admin dashboard.

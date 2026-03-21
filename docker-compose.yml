@@ -1,0 +1,98 @@
+services:
+  root-proxy:
+    image: traefik:latest
+    restart: unless-stopped
+    depends_on:
+      - client
+      - api
+    command:
+      - "--log.level=INFO"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      # - "--entrypoints.websecure.address=:443"
+      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      # - "--certificatesresolvers.myresolver.acme.email=ruzickak@students.zcu.cz"
+      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      # - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      # - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+      # - "8080:8080" # dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # - "./letsencrypt:/letsencrypt"
+    networks:
+      - proxy
+
+  client:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost/api
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.routers.client.rule: PathPrefix(`/`) && !PathPrefix(`/api`)
+      traefik.http.services.client.loadbalancer.server.port: 5173
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["--root-path", "/api"]
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: eyecatchers
+      DB_USER: eyecatchers
+      DB_PASSWORD: pja98fbe
+      CORS_ORIGIN: http://localhost:80
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - proxy
+      - backend
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.routers.api.rule: PathPrefix(`/api`)
+      traefik.http.middlewares.api-strip-prefix.stripprefix.prefixes: /api
+      traefik.http.routers.api.middlewares: api-strip-prefix
+      traefik.http.services.api.loadbalancer.server.port: 80
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: eyecatchers
+      MYSQL_USER: eyecatchers
+      MYSQL_PASSWORD: pja98fbe
+      MYSQL_ROOT_PASSWORD: pja98fbe
+    volumes:
+      - ./db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - backend
+
+      
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+  backend:
+    name: backend
+    driver: bridge
+

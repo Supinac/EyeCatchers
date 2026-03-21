@@ -1,0 +1,406 @@
+{
+  "entry": {
+    "badge": "Welcome",
+    "title": "Who is playing today?",
+    "subtitle": "Students enter only their login. Administrators use the separate admin screen.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Enter login",
+    "helper": "Use the login created in the admin panel.",
+    "signingIn": "Signing in...",
+    "continue": "Continue",
+    "admin": "Admin"
+  },
+  "adminLogin": {
+    "badge": "Administrator",
+    "title": "Admin access",
+    "subtitle": "Use login and password to enter the administrator dashboard.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Enter admin login",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "helper": "Only administrator accounts can enter here.",
+    "signingIn": "Signing in...",
+    "login": "Login",
+    "studentLogin": "Student login"
+  },
+  "admin": {
+    "eyebrow": "Administration",
+    "title": "Users",
+    "subtitle": "Switch between students and admins, create new accounts, review student results, and remove users when needed.",
+    "userRoleLabel": "Administrator",
+    "logout": "Logout",
+    "students": "Students",
+    "admins": "Admins",
+    "roleAdmin": "Admin",
+    "roleStudent": "Student",
+    "roleAdminLower": "admin",
+    "roleStudentLower": "student",
+    "roleAdmins": "admins",
+    "roleStudents": "students",
+    "userFallback": "user",
+    "messages": {
+      "removed": "{{role}} {{login}} was removed.",
+      "created": "{{role}} {{login}} was created.",
+      "createFailed": "Failed to create {{role}}.",
+      "removeFailed": "Failed to remove {{role}}.",
+      "loadFailed": "Failed to load users.",
+      "cannotRemoveOwnAccount": "You cannot remove your own admin account."
+    },
+    "table": {
+      "fullName": "Full name",
+      "login": "Login",
+      "gamesPlayed": "Games played",
+      "bestScore": "Best score",
+      "lastPlayed": "Last played",
+      "action": "Action",
+      "empty": "No {{role}} found.",
+      "loading": "Loading {{role}}..."
+    },
+    "actions": {
+      "view": "View",
+      "remove": "Remove",
+      "createNew": "Create new {{role}}"
+    },
+    "session": {
+      "statusFinished": "Finished",
+      "statusNotFinished": "Not finished",
+      "playedAt": "Played {{value}}",
+      "correctFound": "Correct found",
+      "accuracy": "Accuracy",
+      "correctTaps": "Correct taps",
+      "wrongTaps": "Wrong taps",
+      "timeUsed": "Time used",
+      "pillGame": "Game: {{value}}",
+      "pillDifficulty": "Difficulty: {{value}}",
+      "pillPreview": "Preview: {{value}}s",
+      "pillMaxTime": "Max time: {{value}}s",
+      "pillMode": "Mode: {{value}}",
+      "pillGridSize": "Grid size: {{value}}",
+      "pillRightObjects": "Right objects: {{value}}",
+      "pillFigureSize": "Figure size: {{value}}",
+      "pillTarget": "Target: {{value}}"
+    },
+    "modal": {
+      "createAccount": "Create account",
+      "createNew": "Create new {{role}}",
+      "labelLogin": "Login",
+      "labelFullName": "Full name",
+      "labelPassword": "Password",
+      "placeholderLogin": "e.g. oliver",
+      "placeholderFullName": "e.g. Oliver Smith",
+      "placeholderPassword": "Admin password",
+      "helperAdmin": "Admins require login, full name, and password.",
+      "helperStudent": "Students require login and full name.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "removing": "Removing...",
+      "create": "Create {{role}}",
+      "deleteUser": "Delete user",
+      "removeRole": "Remove {{role}}?",
+      "deleteWarning": "This action will permanently remove the user account.",
+      "deleteWarningWithResults": "This action will permanently remove the user account and all saved game results.",
+      "removeUser": "Remove user",
+      "userResults": "User results",
+      "createdAt": "Created {{value}}",
+      "playedGames": "Played games",
+      "historySubtitle": "Each round now follows the same stat language as the active game result view.",
+      "total": "{{value}} total",
+      "noGames": "This user has not played any games yet."
+    }
+  },
+  "home": {
+    "greeting": "Hello, {{name}}",
+    "childFallback": "Child",
+    "logout": "Logout",
+    "title": "Choose a game",
+    "subtitle": "Large calm tiles with a black and white design.",
+    "footerHint": "Tap a tile to continue."
+  },
+  "games": {
+    "readyToOpen": "Ready to open",
+    "play": "Play",
+    "locked": "Locked",
+    "items": {
+      "find-circle": {
+        "title": "Memory Game",
+        "description": "Memorize the target object and then find all correct matches."
+      },
+      "track-the-circle": {
+        "title": "Follow the Marked Symbol",
+        "description": "Follow the marked symbol during swaps and choose its final position."
+      },
+      "shape-match": {
+        "title": "Shape Match",
+        "description": "Choose the correct shape with large clear targets."
+      },
+      "memory-pairs": {
+        "title": "Memory Pairs"
+      },
+      "count-items": {
+        "title": "Count Items"
+      },
+      "find-different": {
+        "title": "Find Different"
+      },
+      "repeat-sequence": {
+        "title": "Repeat Sequence"
+      }
+    }
+  },
+  "values": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "fixed": "Fixed",
+    "random": "Random",
+    "figures": "Shapes",
+    "letters": "Letters",
+    "numbers": "Numbers",
+    "grid": "Grid",
+    "unlimited": "Unlimited",
+    "true": "Yes",
+    "false": "No",
+    "circle": "Circle",
+    "square": "Square",
+    "triangle": "Triangle",
+    "star": "Star",
+    "diamond": "Diamond",
+    "rectangle": "Rectangle",
+    "hexagon": "Hexagon",
+    "random positions": "Random positions",
+    "czech letters": "Letters"
+  },
+  "config": {
+    "back": "Back",
+    "title": "Game configuration",
+    "start": "Start game",
+    "labels": {
+      "difficulty": "Difficulty",
+      "previewTime": "Preview time",
+      "maxGameTime": "Max game time",
+      "gridSize": "Grid size",
+      "correctObjectCount": "Correct object count",
+      "figureSizeMode": "Figure size mode",
+      "figureSizePercent": "Figure size in percent",
+      "contentMode": "Content mode",
+      "placementMode": "Placement mode",
+      "swapCount": "Swap count",
+      "swapDurationMs": "Swap speed",
+      "symbolSize": "Symbol size"
+    },
+    "hints": {
+      "correctObjectCount": "Choose how many correct objects will appear on the screen.",
+      "figureSizePercent": "100% almost fills the whole object area. 50% makes it about half that size.",
+      "symbolSize": "Adjust the size of letters, numbers, and shapes on screen."
+    },
+    "options": {
+      "previewTime": {
+        "1": {
+          "label": "1 s",
+          "description": "Very short preview before the game starts."
+        },
+        "2": {
+          "label": "2 s",
+          "description": "Short preview for a harder round."
+        },
+        "5": {
+          "label": "5 s",
+          "description": "Balanced memory time."
+        },
+        "10": {
+          "label": "10 s",
+          "description": "Longest and calmest preview."
+        }
+      },
+      "maxGameTime": {
+        "30": {
+          "label": "30 s",
+          "description": "Fast round with quick decisions."
+        },
+        "60": {
+          "label": "60 s",
+          "description": "Balanced time for most players."
+        },
+        "90": {
+          "label": "90 s",
+          "description": "More time for larger grids."
+        },
+        "unlimited": {
+          "label": "Unlimited",
+          "description": "The round ends only after all correct objects are found."
+        }
+      },
+      "gridSize": {
+        "2": {
+          "label": "2 × 2",
+          "description": "4 objects on screen."
+        },
+        "3": {
+          "label": "3 × 3",
+          "description": "9 objects on screen."
+        },
+        "4": {
+          "label": "4 × 4",
+          "description": "16 objects on screen."
+        },
+        "5": {
+          "label": "5 × 5",
+          "description": "25 objects on screen."
+        }
+      },
+      "contentMode": {
+        "figures": {
+          "label": "Shapes",
+          "description": "Circle, square, triangle, and other simple shapes."
+        },
+        "letters": {
+          "label": "Letters",
+          "description": "Large bold letters for kids."
+        },
+        "numbers": {
+          "label": "Numbers",
+          "description": "Large bold digits from 0 to 9."
+        }
+      },
+      "placementMode": {
+        "grid": {
+          "label": "Grid",
+          "description": "Objects are placed in a clean grid."
+        },
+        "random": {
+          "label": "Random positions",
+          "description": "Objects are scattered across the whole view."
+        }
+      },
+      "figureSizeMode": {
+        "fixed": {
+          "label": "Fixed",
+          "description": "All objects keep the same size."
+        },
+        "random": {
+          "label": "Random",
+          "description": "Objects vary in size within the chosen percentage."
+        }
+      },
+      "difficulty": {
+        "easy": {
+          "label": "Easy",
+          "description": "3 symbols on screen."
+        },
+        "medium": {
+          "label": "Medium",
+          "description": "5 symbols on screen."
+        },
+        "hard": {
+          "label": "Hard",
+          "description": "8 symbols on screen."
+        }
+      },
+      "swapCount": {
+        "5": {
+          "label": "5",
+          "description": "Very easy."
+        },
+        "10": {
+          "label": "10",
+          "description": "Easy level."
+        },
+        "15": {
+          "label": "15",
+          "description": "Medium difficulty."
+        },
+        "20": {
+          "label": "20",
+          "description": "More demanding tracking."
+        },
+        "25": {
+          "label": "25",
+          "description": "Hard."
+        },
+        "30": {
+          "label": "30",
+          "description": "Maximum difficulty."
+        }
+      },
+      "swapDurationMs": {
+        "200": {
+          "label": "0.2 s",
+          "description": "Very fast."
+        },
+        "400": {
+          "label": "0.4 s",
+          "description": "Fast."
+        },
+        "600": {
+          "label": "0.6 s",
+          "description": "Medium."
+        },
+        "800": {
+          "label": "0.8 s",
+          "description": "Slow."
+        },
+        "1000": {
+          "label": "1.0 s",
+          "description": "Very slow."
+        },
+        "1200": {
+          "label": "1.2 s",
+          "description": "Slowest."
+        }
+      }
+    },
+    "meta": {
+      "previewTime": "{{value}} preview",
+      "maxGameTimeLimited": "{{value}} max time",
+      "maxGameTimeUnlimited": "Unlimited time",
+      "gridSize": "{{value}} items",
+      "correctObjectCount": "{{value}} correct",
+      "figureSizePercent": "{{value}} {{mode}} size",
+      "swapCount": "{{value}} swaps",
+      "swapDurationMs": "{{value}} speed",
+      "symbolSize": "{{value}} symbols"
+    }
+  },
+  "resultPage": {
+    "emptyBadge": "No result yet",
+    "emptyTitle": "Start a game first",
+    "emptySubtitle": "There is no finished round to show on this screen.",
+    "badgeSuccess": "You won",
+    "badgeFail": "Try again",
+    "titleSuccess": "Great job",
+    "titleFail": "Round finished",
+    "subtitleFindCircleSuccess": "You found all correct objects. Here is an overview of the round.",
+    "subtitleFindCircleFail": "The round has ended. Check the main results below and try again.",
+    "subtitleTrackSuccess": "Correct! You followed the marked symbol to the end.",
+    "subtitleTrackFail": "Not this time. Try again.",
+    "summaryResult": "Result",
+    "summaryCorrectFound": "Correct found",
+    "stats": {
+      "accuracy": "Accuracy",
+      "correctTaps": "Correct taps",
+      "wrongTaps": "Wrong taps",
+      "timeUsed": "Time used"
+    },
+    "actions": {
+      "backToGames": "Back to games",
+      "home": "Home",
+      "downloadPdf": "Download PDF",
+      "playAgain": "Play again"
+    },
+    "pills": {
+      "game": "Game: {{value}}",
+      "difficulty": "Difficulty: {{value}}",
+      "previewTime": "Preview time: {{value}}",
+      "maxGameTime": "Max game time: {{value}}",
+      "contentMode": "Content mode: {{value}}",
+      "placementMode": "Placement mode: {{value}}",
+      "gridSize": "Grid size: {{value}}",
+      "correctObjectCount": "Correct object count: {{value}}",
+      "figureSizePercent": "Figure size in percent: {{value}}",
+      "figureSizeMode": "Figure size mode: {{value}}",
+      "swapCount": "Swap count: {{value}}",
+      "swapDurationMs": "Swap speed: {{value}}",
+      "symbolSize": "Symbol size: {{value}}"
+    }
+  }
+}

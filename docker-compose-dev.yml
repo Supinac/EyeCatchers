@@ -1,0 +1,13 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eyecatchers-backend
+    environment:
+      DB_HOST: sqlite
+      DB_NAME: test.db
+      CORS_ORIGIN: http://localhost:5173,http://localhost:8000
+    ports:
+      - "8000:80"
+    restart: unless-stopped

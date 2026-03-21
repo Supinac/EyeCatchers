@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from . import admin,user,login,results
+
+from . import admin, user, login, results
 
 
 router = APIRouter(prefix="/admin")

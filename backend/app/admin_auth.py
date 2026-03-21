@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from . import db
 from .config import settings
+from .tables import Admin
 
 # --- Password hashing ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -54,7 +55,6 @@ def auth_admin(request: Request, session: Session = Depends(db.session)):
 
 def login_admin(login: str, password: str, response: Response, session: Session):
     """Authenticate admin and set auth cookie. Callable from endpoint."""
-    from .tables import Admin  # local import to avoid circular imports
 
     admin = session.execute(
         select(Admin).where(Admin.login == login)
@@ -79,3 +79,7 @@ def login_admin(login: str, password: str, response: Response, session: Session)
     )
 
     return admin
+
+def logout_admin(response: Response):
+    """Clear auth cookie. Callable from endpoint."""
+    response.delete_cookie(key=COOKIE_NAME)

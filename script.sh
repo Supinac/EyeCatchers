@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-# Raspberry Pi 4 - Access Point + NAT Only
-# Services run in Docker — this script just sets up the network.
+# Raspberry Pi 5 (Bookworm) - Access Point + NAT Only
+# Uses NetworkManager (not dhcpcd). Docker handles services.
 # ============================================================
 
 set -euo pipefail
@@ -12,11 +12,13 @@ AP_PASSPHRASE="stropoffka"
 AP_CHANNEL=7
 AP_INTERFACE="wlan0"
 AP_IP="192.168.50.1"
-AP_NETMASK="255.255.255.0"
+AP_PREFIX="24"
 DHCP_RANGE_START="192.168.50.10"
 DHCP_RANGE_END="192.168.50.50"
+AP_NETMASK="255.255.255.0"
 DHCP_LEASE_TIME="24h"
 UPSTREAM_INTERFACE="eth0"
+NM_CON_NAME="ap-piserver"
 # --------------------------
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -34,8 +36,9 @@ if [[ "${1:-}" == "--uninstall" ]]; then
     rm -f /etc/hostapd/hostapd.conf
     rm -rf /etc/systemd/system/hostapd.service.d
 
-    DHCPCD_CONF="/etc/dhcpcd.conf"
-    [[ -f "$DHCPCD_CONF" ]] && sed -i '/# --- rpi4-ap ---/,/nohook wpa_supplicant/d' "$DHCPCD_CONF"
+    # Re-enable NetworkManager on wlan0
+    nmcli connection delete "$NM_CON_NAME" 2>/dev/null || true
+    nmcli device set "$AP_INTERFACE" managed yes 2>/dev/null || true
 
     iptables -t nat -D POSTROUTING -o "$UPSTREAM_INTERFACE" -j MASQUERADE 2>/dev/null || true
     iptables -D FORWARD -i "$AP_INTERFACE" -o "$UPSTREAM_INTERFACE" -j ACCEPT 2>/dev/null || true
@@ -60,24 +63,27 @@ apt-get update -qq
 apt-get install -y hostapd dnsmasq iptables
 systemctl stop hostapd dnsmasq 2>/dev/null || true
 
-# ---- Static IP for wlan0 ----
-log "Setting static IP on $AP_INTERFACE..."
+# ---- Release wlan0 from NetworkManager ----
+log "Releasing $AP_INTERFACE from NetworkManager..."
 
-# NetworkManager — hands off
-systemctl is-active --quiet NetworkManager &&
-    nmcli device set "$AP_INTERFACE" managed no 2>/dev/null || true
-
-# dhcpcd (Raspberry Pi OS < Bookworm)
-DHCPCD_CONF="/etc/dhcpcd.conf"
-if [[ -f "$DHCPCD_CONF" ]] && ! grep -q "# --- rpi4-ap ---" "$DHCPCD_CONF"; then
-    cat >> "$DHCPCD_CONF" <<EOF
-
-# --- rpi4-ap ---
-interface $AP_INTERFACE
-    static ip_address=${AP_IP}/24
-    nohook wpa_supplicant
-EOF
+# Drop any existing wifi connection on wlan0
+ACTIVE_CON=$(nmcli -t -f NAME,DEVICE connection show --active | grep ":${AP_INTERFACE}$" | cut -d: -f1)
+if [[ -n "$ACTIVE_CON" ]]; then
+    nmcli connection down "$ACTIVE_CON" 2>/dev/null || true
 fi
+
+# Tell NM to leave wlan0 alone
+nmcli device set "$AP_INTERFACE" managed no
+
+# Kill any leftover wpa_supplicant on wlan0
+pkill -f "wpa_supplicant.*${AP_INTERFACE}" 2>/dev/null || true
+
+# Assign static IP
+ip link set "$AP_INTERFACE" down
+ip addr flush dev "$AP_INTERFACE"
+ip addr add "${AP_IP}/${AP_PREFIX}" dev "$AP_INTERFACE"
+ip link set "$AP_INTERFACE" up
+log "Static IP ${AP_IP}/${AP_PREFIX} set on $AP_INTERFACE"
 
 # ---- hostapd ----
 log "Configuring hostapd..."
@@ -135,13 +141,46 @@ iptables -C FORWARD -i "$UPSTREAM_INTERFACE" -o "$AP_INTERFACE" -m state --state
 apt-get install -y iptables-persistent
 netfilter-persistent save
 
-# ---- Bring up interface + start services ----
-log "Starting AP..."
-ip link set "$AP_INTERFACE" down 2>/dev/null || true
-ip addr flush dev "$AP_INTERFACE" 2>/dev/null || true
-ip addr add "${AP_IP}/24" dev "$AP_INTERFACE"
-ip link set "$AP_INTERFACE" up
+# ---- Persist the static IP across reboots ----
+# Create a NetworkManager connection that holds the IP but doesn't run wpa_supplicant
+log "Creating persistent NM connection for static IP..."
+nmcli connection delete "$NM_CON_NAME" 2>/dev/null || true
+nmcli connection add \
+    type wifi \
+    ifname "$AP_INTERFACE" \
+    con-name "$NM_CON_NAME" \
+    ssid "$AP_SSID" \
+    autoconnect no \
+    ipv4.method manual \
+    ipv4.addresses "${AP_IP}/${AP_PREFIX}" \
+    wifi.mode ap 2>/dev/null || true
 
+# Write a small systemd unit that re-applies the IP + NM unmanage on boot
+cat > /etc/systemd/system/rpi-ap-network.service <<EOF
+[Unit]
+Description=Set up wlan0 for AP mode
+Before=hostapd.service dnsmasq.service
+After=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c '\
+    nmcli device set $AP_INTERFACE managed no 2>/dev/null; \
+    pkill -f "wpa_supplicant.*$AP_INTERFACE" 2>/dev/null; \
+    ip addr flush dev $AP_INTERFACE 2>/dev/null; \
+    ip addr add ${AP_IP}/${AP_PREFIX} dev $AP_INTERFACE; \
+    ip link set $AP_INTERFACE up'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable rpi-ap-network.service
+
+# ---- Start services ----
+log "Starting AP..."
 systemctl unmask hostapd
 systemctl daemon-reload
 systemctl enable --now hostapd dnsmasq
@@ -154,7 +193,7 @@ systemctl is-active --quiet dnsmasq && log "dnsmasq: running" || warn "dnsmasq f
 
 echo ""
 echo "=============================================="
-echo -e " ${GREEN}AP Ready${NC}"
+echo -e " ${GREEN}AP Ready (RPi 5 / Bookworm)${NC}"
 echo "=============================================="
 echo " SSID:       $AP_SSID"
 echo " Password:   $AP_PASSPHRASE"
