@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 100
     DB_POOL_OVERFLOW: int = 100
 
+    TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    SECRET_KEY: str = "oijahowa6"
+
     model_config = SettingsConfigDict(env_file='.env')
 
 settings = Settings() # type: ignore
