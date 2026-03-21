@@ -8,7 +8,7 @@ services:
       - api
     command:
       - "--log.level=INFO"
-      - "--api.dashboard=true"
+      # - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       # - "--entrypoints.websecure.address=:443"
@@ -57,7 +57,7 @@ services:
       DB_NAME: eyecatchers
       DB_USER: eyecatchers
       DB_PASSWORD: pja98fbe
-      CORS_ORIGIN: http://192.168.30.176:80
+      CORS_ORIGIN: ""
     depends_on:
       db:
         condition: service_healthy
