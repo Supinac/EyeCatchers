@@ -1,11 +1,14 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    DB_USER: str = 'eyecatchers'
-    DB_PASSWORD: str = 'eyecatchers'
-    DB_HOST: str = 'eyecatchers'
-    DB_PORT: int = 3306
-    DB_NAME: str = 'eyecatchers'
+    DB_TYPE: Literal["mysql", "sqlite"] = "sqlite"
+    DB_USER: str = ''
+    DB_PASSWORD: str = ''
+    DB_HOST: str = ''
+    DB_PORT: int = 0
+    DB_NAME: str = ''
     DB_POOL_SIZE: int = 100
     DB_POOL_OVERFLOW: int = 100
 
