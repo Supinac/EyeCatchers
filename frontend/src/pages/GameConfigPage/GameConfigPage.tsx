@@ -3,21 +3,23 @@ import { useNavigate, useParams } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { getGameByKey, getGameDifficulties } from "../../api/gamesApi";
 import type { GameCatalogItem, GameDifficulty } from "../../games/core/types/GameDefinition";
+import type { FigureSizeMode, GridSize, PreviewSeconds } from "../../games/core/types/GameConfig";
 import { useGameSession } from "../../features/game-session/hooks/useGameSession";
 import { ArcadeIcon, PuzzleIcon, StrategyIcon } from "../../features/game-catalog/components/GameIcons";
 import type { GameMode, GameTimer } from "../../features/game-session/model/sessionTypes";
+import { defaultFindCircleConfig } from "../../games/find-circle/FindCircleConfig";
 import styles from "./GameConfigPage.module.css";
 
-type ConfigOption<T extends string> = {
+type ConfigOption<T extends string | number> = {
   id: T;
   label: string;
   description: string;
 };
 
 const difficultyDescriptions: Record<GameDifficulty, string> = {
-  easy: "Large targets and the calmest pace.",
-  medium: "A balanced challenge with a few more choices.",
-  hard: "More focus and more items on screen.",
+  easy: "Fewer correct objects to find.",
+  medium: "Balanced focus and memory challenge.",
+  hard: "More matching objects to remember.",
 };
 
 const modeOptions: ConfigOption<GameMode>[] = [
@@ -56,13 +58,32 @@ const timerOptions: ConfigOption<GameTimer>[] = [
   },
 ];
 
+const previewOptions: ConfigOption<PreviewSeconds>[] = [
+  { id: 5, label: "5 sec", description: "Quick preview before the grid appears." },
+  { id: 10, label: "10 sec", description: "Balanced memory time." },
+  { id: 15, label: "15 sec", description: "More time to look carefully." },
+  { id: 20, label: "20 sec", description: "Longest and calmest preview." },
+];
+
+const gridOptions: ConfigOption<GridSize>[] = [
+  { id: 2, label: "2 × 2", description: "4 objects on screen." },
+  { id: 3, label: "3 × 3", description: "9 objects on screen." },
+  { id: 4, label: "4 × 4", description: "16 objects on screen." },
+  { id: 5, label: "5 × 5", description: "25 objects on screen." },
+];
+
+const figureSizeOptions: ConfigOption<FigureSizeMode>[] = [
+  { id: "static", label: "Static", description: "All figures keep the same size." },
+  { id: "random", label: "Random", description: "Figure sizes vary in the grid." },
+];
+
 function getGameIcon(gameKey: string) {
   if (gameKey === "memory-pairs") return <StrategyIcon className={styles.gameIcon} />;
   if (gameKey === "shape-match") return <ArcadeIcon className={styles.gameIcon} />;
   return <PuzzleIcon className={styles.gameIcon} />;
 }
 
-function ConfigTile<T extends string>({
+function ConfigTile<T extends string | number>({
   option,
   selected,
   onClick,
@@ -93,6 +114,9 @@ export function GameConfigPage() {
   const [difficulty, setDifficulty] = useState<GameDifficulty>("easy");
   const [mode, setMode] = useState<GameMode>("guided");
   const [timer, setTimer] = useState<GameTimer>("none");
+  const [previewSeconds, setPreviewSeconds] = useState<PreviewSeconds>(defaultFindCircleConfig.previewSeconds);
+  const [gridSize, setGridSize] = useState<GridSize>(defaultFindCircleConfig.gridSize);
+  const [figureSizeMode, setFigureSizeMode] = useState<FigureSizeMode>(defaultFindCircleConfig.figureSizeMode);
 
   useEffect(() => {
     void getGameByKey(gameKey).then(setGame);
@@ -111,8 +135,28 @@ export function GameConfigPage() {
   }, [difficulties]);
 
   function handleStart() {
-    saveSessionState({ gameKey, difficulty, mode, timer });
-    navigate(`/play/${gameKey}?difficulty=${difficulty}&mode=${mode}&timer=${timer}`);
+    saveSessionState({
+      gameKey,
+      difficulty,
+      mode,
+      timer,
+      findCircle: {
+        previewSeconds,
+        gridSize,
+        figureSizeMode,
+      },
+    });
+
+    const params = new URLSearchParams({
+      difficulty,
+      mode,
+      timer,
+      preview: String(previewSeconds),
+      grid: String(gridSize),
+      sizeMode: figureSizeMode,
+    });
+
+    navigate(`/play/${gameKey}?${params.toString()}`);
   }
 
   function handleBack() {
@@ -131,7 +175,7 @@ export function GameConfigPage() {
       <div className={styles.header}>
         <div className={styles.iconBox}>{getGameIcon(gameKey)}</div>
         <h1 className={styles.title}>{game?.name ?? "Game"}</h1>
-        <p className={styles.subtitle}>Choose calm settings before you start playing.</p>
+        <p className={styles.subtitle}>Set the preview time, grid size and figure sizing before the round starts.</p>
       </div>
 
       <div className={styles.panel}>
@@ -144,6 +188,43 @@ export function GameConfigPage() {
                 option={option}
                 selected={difficulty === option.id}
                 onClick={() => setDifficulty(option.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Preview time</h2>
+          <div className={styles.grid}>
+            {previewOptions.map((option) => (
+              <ConfigTile
+                key={option.id}
+                option={option}
+                selected={previewSeconds === option.id}
+                onClick={() => setPreviewSeconds(option.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Grid size</h2>
+          <div className={styles.grid}>
+            {gridOptions.map((option) => (
+              <ConfigTile key={option.id} option={option} selected={gridSize === option.id} onClick={() => setGridSize(option.id)} />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Figure size</h2>
+          <div className={styles.grid}>
+            {figureSizeOptions.map((option) => (
+              <ConfigTile
+                key={option.id}
+                option={option}
+                selected={figureSizeMode === option.id}
+                onClick={() => setFigureSizeMode(option.id)}
               />
             ))}
           </div>

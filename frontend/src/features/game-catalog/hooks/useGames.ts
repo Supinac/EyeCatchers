@@ -3,17 +3,17 @@ import type { GameCardViewModel } from "../types";
 const games: GameCardViewModel[] = [
   {
     key: "find-circle",
-    name: "Find Circle",
-    description: "Tap the circle. A calm first game to test the flow and start playing.",
+    name: "Memory Game",
+    description: "Memorize icon and then try to find it. A calm first game to test the flow.",
     implemented: true,
-    icon: "puzzle",
+    icon: "strategy",
   },
   {
     key: "memory-pairs",
     name: "Memory Pairs",
     description: "Match simple pairs with a slow, predictable rhythm and minimal distractions.",
     implemented: false,
-    icon: "strategy",
+    icon: "puzzle",
   },
   {
     key: "shape-match",
