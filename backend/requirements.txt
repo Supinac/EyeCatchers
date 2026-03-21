@@ -1,0 +1,7 @@
+fastapi[standard]
+sqlalchemy[standard]
+mysql-connector-python
+pydantic-settings
+passlib[bcrypt]
+bcrypt<4.1
+python-jose[cryptography]

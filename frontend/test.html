@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EyeCatchers API Tester</title>
+</head>
+<body>
+
+<h1>EyeCatchers API Tester</h1>
+<p>Base URL: <input id="baseUrl" value="http://localhost:8000" size="30"></p>
+<hr>
+
+<h2>Register</h2>
+<label>Username: <input id="regUserName"></label><br>
+<label>Name: <input id="regName"></label><br>
+<button onclick="register()">Register</button>
+<pre id="regRes"></pre>
+
+<hr>
+
+<h2>Login</h2>
+<label>Username: <input id="loginName"></label><br>
+<label>Password: <input id="loginPass" type="password"></label><br>
+<button onclick="login()">Login</button>
+<pre id="loginRes"></pre>
+
+<hr>
+
+<h2>My Profile</h2>
+<button onclick="getMe()">Get Profile</button>
+<pre id="meRes"></pre>
+
+<hr>
+
+<h2>Submit Score</h2>
+<label>Score: <input id="scoreVal" type="number" value="0"></label><br>
+<button onclick="submitScore()">Submit Score</button>
+<pre id="scoreRes"></pre>
+
+<hr>
+
+<h2>Leaderboard</h2>
+<button onclick="getLeaderboard()">Load Leaderboard</button>
+<table id="lbTable" border="1">
+  <thead><tr><th>#</th><th>Name</th><th>Top Score</th><th>Last Score</th></tr></thead>
+  <tbody></tbody>
+</table>
+<pre id="lbRes"></pre>
+
+<script>
+let token = null;
+
+function base() {
+  return document.getElementById('baseUrl').value.replace(/\/+$/, '');
+}
+
+function show(id, data) {
+  document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+}
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(base() + path, { ...opts, headers });
+  return await res.json();
+}
+
+async function register() {
+  const data = await api('/users/register', {
+    method: 'POST',
+    body: JSON.stringify({ name: document.getElementById('regName').value, password: document.getElementById('regPass').value })
+  });
+  show('regRes', data);
+  if (data.id) {
+    document.getElementById('loginName').value = document.getElementById('regName').value;
+    document.getElementById('loginPass').value = document.getElementById('regPass').value;
+  }
+}
+
+async function login() {
+  const data = await api('/users/login', {
+    method: 'POST',
+    body: JSON.stringify({ name: document.getElementById('loginName').value, password: document.getElementById('loginPass').value })
+  });
+  if (data.access_token) token = data.access_token;
+  show('loginRes', data);
+}
+
+async function getMe() {
+  if (!token) return show('meRes', 'Log in first');
+  show('meRes', await api('/users/me'));
+}
+
+async function submitScore() {
+  if (!token) return show('scoreRes', 'Log in first');
+  const data = await api('/users/me/score', {
+    method: 'POST',
+    body: JSON.stringify({ score: parseInt(document.getElementById('scoreVal').value) || 0 })
+  });
+  show('scoreRes', data);
+}
+
+async function getLeaderboard() {
+  const data = await api('/users/leaderboard');
+  show('lbRes', data);
+  const tbody = document.querySelector('#lbTable tbody');
+  tbody.innerHTML = '';
+  if (Array.isArray(data)) {
+    data.forEach((u, i) => {
+      const row = tbody.insertRow();
+      row.insertCell().textContent = i + 1;
+      row.insertCell().textContent = u.name;
+      row.insertCell().textContent = u.top_score;
+      row.insertCell().textContent = u.last_score;
+    });
+  }
+}
+</script>
+</body>
+</html>
