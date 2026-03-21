@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { routes } from "../../app/router/routes";
+import { formatTokenLabel } from "../../app/i18n/text";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { deleteAdmin, deleteStudent, getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
 import { getAdminResults, normalizeAdminResults, type AdminGameResult, type SubmitScoreEntry } from "../../api/resultsApi";
@@ -23,46 +24,6 @@ import {
   validatePassword,
 } from "../../features/auth/utils/authValidation";
 import styles from "./AdminDashboardPage.module.css";
-
-const ENTRY_VALUE_LABELS: Record<string, string> = {
-  easy: "Lehká",
-  medium: "Střední",
-  hard: "Těžká",
-  fixed: "Pevná",
-  random: "Náhodná",
-  figures: "Tvary",
-  letters: "Písmena",
-  numbers: "Čísla",
-  grid: "Mřížka",
-  unlimited: "Bez omezení",
-  true: "Ano",
-  false: "Ne",
-  circle: "Kruh",
-  square: "Čtverec",
-  triangle: "Trojúhelník",
-  star: "Hvězda",
-  diamond: "Kosočtverec",
-  rectangle: "Obdélník",
-  hexagon: "Šestiúhelník",
-};
-
-function localizeValue(value: string) {
-  const normalized = value.trim();
-  if (!normalized) {
-    return "—";
-  }
-
-  const lower = normalized.toLowerCase();
-  return ENTRY_VALUE_LABELS[lower] ?? normalized;
-}
-
-function formatLabel(value: string | undefined) {
-
-  if (!value) return "—";
-  return value
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 const SETTING_PREFERRED_ORDER = [
   "difficulty",
@@ -145,8 +106,7 @@ function formatEntryValue(entry: SubmitScoreEntry) {
   }
 
   if (/^[a-z][a-z0-9_-]*$/i.test(normalizedValue)) {
-    const localized = localizeValue(normalizedValue);
-    return localized === normalizedValue ? formatLabel(normalizedValue) : localized;
+    return formatTokenLabel(normalizedValue);
   }
 
   return normalizedValue;
