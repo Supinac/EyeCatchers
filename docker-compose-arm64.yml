@@ -48,7 +48,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      platform: linux/arm64
+    platform: linux/arm64
     command: ["--root-path", "/api"]
     environment:
       DB_HOST: db
