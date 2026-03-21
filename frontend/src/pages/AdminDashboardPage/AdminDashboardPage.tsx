@@ -2,7 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { routes } from "../../app/router/routes";
 import { useAuth } from "../../features/auth/hooks/useAuth";
-import { getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
+import {
+  deleteAdmin,
+  deleteStudent,
+  getAdmins,
+  getStudents,
+  registerAdmin,
+  registerStudent,
+  type UserListItemResponse,
+} from "../../api/authApi";
 import { getApiErrorMessage } from "../../api/client";
 import {
   deleteUser,
@@ -137,6 +145,7 @@ export function AdminDashboardPage() {
   const [messageType, setMessageType] = useState<"success" | "error" | "">("");
   const [version, setVersion] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [studentRows, setStudentRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
   const [adminRows, setAdminRows] = useState<ReturnType<typeof mapApiUsersToRows>>([]);
   const [isTableLoading, setIsTableLoading] = useState(false);
@@ -229,40 +238,64 @@ export function AdminDashboardPage() {
     setDeleteTargetId("");
   }
 
-  function handleDeleteUser() {
-    if (!deleteTargetId) {
+  async function handleDeleteUser() {
+    if (!deleteTargetId || !deleteTarget) {
       return;
     }
 
-    const result = deleteUser(deleteTargetId);
-    if (!result.ok) {
-      setMessage(result.message);
+    const targetId = Number(deleteTargetId);
+    if (Number.isNaN(targetId)) {
+      setMessage("Invalid user id.");
       setMessageType("error");
       handleCloseDeleteModal();
       return;
     }
 
-    const deletedOwnAccount = auth?.userId === deleteTargetId;
+    setIsDeleting(true);
 
-    if (viewedUserId === deleteTargetId) {
-      setViewedUserId("");
-      setIsUserModalOpen(false);
-    }
+    try {
+      if (deleteTarget.role === "admin") {
+        await deleteAdmin(targetId);
+      } else {
+        await deleteStudent(targetId);
+      }
 
-    if (deleteTarget?.role === "admin") {
-      setAdminRows((current) => current.filter((row) => row.id !== deleteTargetId));
-    } else {
-      setStudentRows((current) => current.filter((row) => row.id !== deleteTargetId));
-    }
+      const result = deleteUser(deleteTargetId);
+      if (!result.ok) {
+        setMessage(result.message);
+        setMessageType("error");
+        handleCloseDeleteModal();
+        return;
+      }
 
-    setVersion((current) => current + 1);
-    setMessage(`${deleteTarget?.role === "admin" ? "Admin" : "Student"} ${deleteTarget?.login ?? "user"} was removed.`);
-    setMessageType("success");
-    handleCloseDeleteModal();
+      const deletedOwnAccount = auth?.userId === deleteTargetId;
 
-    if (deletedOwnAccount) {
-      logout();
-      navigate(routes.entry);
+      if (viewedUserId === deleteTargetId) {
+        setViewedUserId("");
+        setIsUserModalOpen(false);
+      }
+
+      if (deleteTarget.role === "admin") {
+        setAdminRows((current) => current.filter((row) => row.id !== deleteTargetId));
+      } else {
+        setStudentRows((current) => current.filter((row) => row.id !== deleteTargetId));
+      }
+
+      setVersion((current) => current + 1);
+      setMessage(`${deleteTarget.role === "admin" ? "Admin" : "Student"} ${deleteTarget.login} was removed.`);
+      setMessageType("success");
+      handleCloseDeleteModal();
+
+      if (deletedOwnAccount) {
+        logout();
+        navigate(routes.entry);
+      }
+    } catch (apiError) {
+      setMessage(getApiErrorMessage(apiError, `Failed to delete ${deleteTarget.role === "admin" ? "admin" : "student"}.`));
+      setMessageType("error");
+      handleCloseDeleteModal();
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -546,7 +579,7 @@ export function AdminDashboardPage() {
 
 
       {deleteTarget ? (
-        <div className={styles.modalOverlay} onClick={handleCloseDeleteModal}>
+        <div className={styles.modalOverlay} onClick={isDeleting ? undefined : handleCloseDeleteModal}>
           <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
@@ -556,7 +589,7 @@ export function AdminDashboardPage() {
                   {`${deleteTarget.name} ${deleteTarget.surname}`.trim() || deleteTarget.login} · @{deleteTarget.login}
                 </p>
               </div>
-              <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal}>
+              <button type="button" className={styles.closeButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>
                 ×
               </button>
             </div>
@@ -567,11 +600,11 @@ export function AdminDashboardPage() {
               </p>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal}>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteModal} disabled={isDeleting}>
                   Cancel
                 </button>
-                <button type="button" className={styles.dangerButton} onClick={handleDeleteUser}>
-                  Remove user
+                <button type="button" className={styles.dangerButton} onClick={handleDeleteUser} disabled={isDeleting}>
+                  {isDeleting ? "Removing..." : "Remove user"}
                 </button>
               </div>
             </div>
