@@ -14,12 +14,12 @@ router = APIRouter(prefix="/admin", tags=["Admin - admin"])
 
 
 
-@router.get("/", status_code=200, response_model=List[AdminResponse])
+@router.get("", status_code=200, response_model=List[AdminResponse])
 def get_admins(session: Session = Depends(db.session)):
     admin_list = session.execute(select(tables.Admin)).scalars().all()
     return admin_list
 
-@router.post("/", status_code=201, response_model=AdminResponse)
+@router.post("", status_code=201, response_model=AdminResponse)
 def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
     admin = session.execute(select(tables.Admin)).scalar_one_or_none()
     if admin:
@@ -36,8 +36,8 @@ def register_admin(user: AdminCreate, session: Session = Depends(db.session)):
     session.refresh(admin)
     return admin
 
-@router.patch("/", status_code=200, response_model=AdminResponse)
-def update_admin(user: AdminUpdate, session: Session = Depends(db.session)):
+@router.patch("/{id}", status_code=200, response_model=AdminResponse)
+def update_admin(id: int, user: AdminUpdate, session: Session = Depends(db.session)):
     AdminUpdate = session.execute(select(tables.Admin)).scalar_one_or_none()
     if not AdminUpdate:
         raise HTTPException(
@@ -52,6 +52,9 @@ def update_admin(user: AdminUpdate, session: Session = Depends(db.session)):
     return AdminUpdate
 
 
+@router.delete("/{id}", status_code=204, response_model=None)
+def remove_admin(id: int, session: Session = Depends(db.session)):
+    pass
 # @router.post("/register", status_code=201, response_model=UserResponse)
 # def register(request: UserRegister, session: Session = Depends(db.session)):
 #     """Create a new user account."""

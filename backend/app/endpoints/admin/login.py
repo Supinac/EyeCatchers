@@ -11,6 +11,6 @@ from ...auth import hash_password, verify_password, create_token, get_current_us
 router = APIRouter(prefix="/login", tags=["Admin - login"])
 
 
-@router.post("/", status_code=201, response_model=AdminResponse)
+@router.post("", status_code=200, response_model=AdminResponse)
 def login_admin(user: AdminLogin, session: Session = Depends(db.session)):
     pass
