@@ -1,0 +1,26 @@
+{
+  "entry": {
+    "badge": "Vítej",
+    "title": "Kdo hraje?",
+    "subtitle": "Studenti zadávají pouze login. Administrátoři se přihlašují jménem a heslem v samostatné administrátorské sekci.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Zadej login",
+    "helper": "Použij login vytvořený administrátorem.",
+    "signingIn": "Přihlašuji...",
+    "continue": "Pokračovat",
+    "admin": "Admin"
+  },
+  "adminLogin": {
+    "badge": "Administrátor",
+    "title": "Přístup administrátora",
+    "subtitle": "Použij login a heslo pro vstup na administrátorský panel.",
+    "loginLabel": "Login",
+    "loginPlaceholder": "Zadej administrátorský login",
+    "passwordLabel": "Heslo",
+    "passwordPlaceholder": "Zadej heslo",
+    "helper": "Sem se mohou přihlásit pouze administrátorské účty.",
+    "signingIn": "Přihlašuji...",
+    "login": "Přihlásit",
+    "studentLogin": "Login pro studenty"
+  }
+}
