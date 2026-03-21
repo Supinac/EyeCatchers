@@ -43,6 +43,14 @@ const seedData: UserStoreData = {
       createdAt: "2026-03-15T08:10:00.000Z",
     },
     {
+      id: "student-66",
+      role: "child",
+      login: "andrei",
+      name: "Andrei",
+      surname: "Akhramchuk",
+      createdAt: "2026-03-15T08:10:00.000Z",
+    },
+    {
       id: "student-3",
       role: "child",
       login: "mia",
