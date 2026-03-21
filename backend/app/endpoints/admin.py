@@ -2,12 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from . import db
-from .models import User, UserRegister, UserLogin, UserResponse, ScoreSubmit
-from .auth import hash_password, verify_password, create_token, get_current_user
+from ..models import User, UserRegister, UserLogin, UserResponse, ScoreSubmit
+from ..auth import hash_password, verify_password, create_token, get_current_user
 
 
-router = APIRouter(prefix="/users", tags=["users"])
-
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.post("/register", status_code=201, response_model=UserResponse)
 def register(request: UserRegister, session: Session = Depends(db.session)):
