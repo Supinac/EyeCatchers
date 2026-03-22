@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { request, requestFile, type ApiFileResponse } from "./client";
 import { translateGameTitle } from "../app/i18n/text";
 import type { GameResult } from "../games/core/types/GameResult";
 
@@ -315,4 +315,24 @@ export function getAdminResults() {
   return request<AdminResultResponse[]>("/admin/results", {
     method: "GET",
   });
+}
+
+
+export type ExportAdminResultsPdfParams = {
+  userId?: number | string | null;
+  lastDate: boolean;
+};
+
+export function exportAdminResultsPdf({ userId, lastDate }: ExportAdminResultsPdfParams) {
+  const searchParams = new URLSearchParams();
+
+  if (userId != null && `${userId}`.trim() !== '') {
+    searchParams.set('user_id', String(userId));
+  }
+
+  searchParams.set('last_date', String(lastDate));
+
+  return requestFile(`/admin/results/export/pdf?${searchParams.toString()}`, {
+    method: 'GET',
+  }) as Promise<ApiFileResponse>;
 }

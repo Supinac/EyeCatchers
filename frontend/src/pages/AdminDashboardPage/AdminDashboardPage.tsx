@@ -5,8 +5,8 @@ import { routes } from "../../app/router/routes";
 import { formatTokenLabel } from "../../app/i18n/text";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { deleteAdmin, deleteStudent, getAdmins, getStudents, registerAdmin, registerStudent, type UserListItemResponse } from "../../api/authApi";
-import { getAdminResults, normalizeAdminResults, type AdminGameResult, type SubmitScoreEntry } from "../../api/resultsApi";
-import { getApiErrorMessage } from "../../api/client";
+import { exportAdminResultsPdf, getAdminResults, normalizeAdminResults, type AdminGameResult, type SubmitScoreEntry } from "../../api/resultsApi";
+import { getApiErrorMessage, triggerBrowserFileDownload } from "../../api/client";
 import {
   deleteUser,
   formatDateTime,
@@ -173,6 +173,11 @@ function isSameAdminAccount(
   return candidateId === auth.userId || candidate.login === auth.login;
 }
 
+function buildUserPdfFileName(login: string, lastDate: boolean) {
+  const safeLogin = login.trim().replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '') || 'user';
+  return `${safeLogin}-${lastDate ? 'latest' : 'all'}-results.pdf`;
+}
+
 function AdminStatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.sessionStatCard}>
@@ -281,6 +286,8 @@ export function AdminDashboardPage() {
   const [adminResults, setAdminResults] = useState<AdminGameResult[]>([]);
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [tableError, setTableError] = useState("");
+  const [exportError, setExportError] = useState("");
+  const [exportMode, setExportMode] = useState<"latest" | "all" | "">("");
 
   const hiddenDeletedIdsSet = useMemo(() => new Set(hiddenDeletedIds), [hiddenDeletedIds]);
   const allTableRows = useMemo(
@@ -315,6 +322,8 @@ export function AdminDashboardPage() {
     () => (viewedRow && viewedRow.role === "child" ? adminResults.filter((session) => session.userId === viewedRow.apiId) : []),
     [adminResults, viewedRow],
   );
+  const isExportingLatest = exportMode === "latest";
+  const isExportingAll = exportMode === "all";
 
   async function loadUsers(hiddenIdsOverride?: string[]) {
     setIsTableLoading(true);
@@ -387,7 +396,16 @@ export function AdminDashboardPage() {
 
   function handleOpenUserModal(userId: string) {
     setViewedUserId(userId);
+    setExportError("");
+    setExportMode("");
     setIsUserModalOpen(true);
+  }
+
+  function handleCloseUserModal() {
+    setIsUserModalOpen(false);
+    setViewedUserId("");
+    setExportError("");
+    setExportMode("");
   }
 
   function handleOpenDeleteModal(userId: string) {
@@ -476,6 +494,34 @@ export function AdminDashboardPage() {
       setMessageType("error");
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleExportUserPdf(lastDate: boolean) {
+    if (!viewedRow || viewedRow.role !== 'child') {
+      return;
+    }
+
+    const userId = Number(viewedRow.apiId);
+    if (!Number.isFinite(userId)) {
+      setExportError(t('admin.messages.exportFailed'));
+      return;
+    }
+
+    setExportError('');
+    setExportMode(lastDate ? 'latest' : 'all');
+
+    try {
+      const file = await exportAdminResultsPdf({
+        userId,
+        lastDate,
+      });
+
+      triggerBrowserFileDownload(file.blob, file.fileName ?? buildUserPdfFileName(viewedRow.login, lastDate));
+    } catch (apiError) {
+      setExportError(getApiErrorMessage(apiError, t('admin.messages.exportFailed')));
+    } finally {
+      setExportMode('');
     }
   }
 
@@ -793,7 +839,7 @@ export function AdminDashboardPage() {
       ) : null}
 
       {isUserModalOpen && viewedRow ? (
-        <div className={styles.modalOverlay} onClick={() => setIsUserModalOpen(false)}>
+        <div className={styles.modalOverlay} onClick={handleCloseUserModal}>
           <div className={`${styles.modalCard} ${styles.userModalCard}`} onClick={(event) => event.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
@@ -803,7 +849,7 @@ export function AdminDashboardPage() {
                   @{viewedRow.login} · {getRoleLabel(viewedRow.role === "admin" ? "admin" : "child")} · {t("admin.modal.createdAt", { value: viewedCreatedAtLabel })}
                 </p>
               </div>
-              <button type="button" className={styles.closeButton} onClick={() => setIsUserModalOpen(false)}>
+              <button type="button" className={styles.closeButton} onClick={handleCloseUserModal}>
                 ×
               </button>
             </div>
@@ -815,8 +861,30 @@ export function AdminDashboardPage() {
                     <h3>{t("admin.modal.playedGames")}</h3>
                     <p className={styles.historySubtitle}>{t("admin.modal.historySubtitle")}</p>
                   </div>
-                  <span>{t("admin.modal.total", { value: viewedSessions.length })}</span>
+                  <div className={styles.historyActions}>
+                    <span>{t("admin.modal.total", { value: viewedSessions.length })}</span>
+                    <div className={styles.exportButtons}>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => void handleExportUserPdf(true)}
+                        disabled={!viewedSessions.length || isExportingAll || isExportingLatest}
+                      >
+                        {isExportingLatest ? t("admin.modal.exporting") : t("admin.modal.exportLatestPdf")}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.secondaryButton}
+                        onClick={() => void handleExportUserPdf(false)}
+                        disabled={!viewedSessions.length || isExportingAll || isExportingLatest}
+                      >
+                        {isExportingAll ? t("admin.modal.exporting") : t("admin.modal.exportAllPdf")}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {exportError ? <div className={`${styles.feedback} ${styles.feedbackError}`}>{exportError}</div> : null}
 
                 {viewedSessions.length ? (
                   <div className={styles.historyList}>

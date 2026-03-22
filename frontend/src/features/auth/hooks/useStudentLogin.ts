@@ -1,10 +1,12 @@
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { studentLogin } from "../../../api/authApi";
-import { getApiErrorMessage } from "../../../api/client";
+import { ApiError, getApiErrorMessage } from "../../../api/client";
 import { validateLogin } from "../utils/authValidation";
 import { useAuth } from "./useAuth";
 
 export function useStudentLogin() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,13 +36,17 @@ export function useStudentLogin() {
 
         return true;
       } catch (apiError) {
-        setError(getApiErrorMessage(apiError, "Student login failed."));
+        if (apiError instanceof ApiError && apiError.status === 401) {
+          setError(t("entry.errors.invalidLogin"));
+        } else {
+          setError(getApiErrorMessage(apiError, t("entry.errors.failed")));
+        }
         return false;
       } finally {
         setIsLoading(false);
       }
     },
-    [login],
+    [login, t],
   );
 
   return {

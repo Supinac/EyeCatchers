@@ -107,3 +107,129 @@ export async function simulateDelay<T>(value: T, delay = 200): Promise<T> {
     window.setTimeout(() => resolve(value), delay);
   });
 }
+
+
+export type ApiFileResponse = {
+  blob: Blob;
+  fileName: string | null;
+  contentType: string;
+};
+
+function parseContentDispositionFileName(contentDisposition: string | null) {
+  if (!contentDisposition) {
+    return null;
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      return utf8Match[1];
+    }
+  }
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1];
+  }
+
+  const plainMatch = contentDisposition.match(/filename=([^;]+)/i);
+  return plainMatch?.[1]?.trim() ?? null;
+}
+
+function normalizeBase64(value: string) {
+  return value.replace(/^data:application\/pdf;base64,/i, '').replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+}
+
+function isBase64Pdf(value: string) {
+  const normalized = normalizeBase64(value);
+  return /^JVBERi0/i.test(normalized);
+}
+
+function decodeBase64Pdf(value: string) {
+  const normalized = normalizeBase64(value);
+  const binary = window.atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+async function parseFileBody(response: Response): Promise<ApiFileResponse> {
+  const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
+  const fileName = parseContentDispositionFileName(response.headers.get('content-disposition'));
+
+  if (contentType.includes('application/json') || contentType.startsWith('text/')) {
+    const text = await response.text();
+    let serialized = text.trim();
+
+    if (contentType.includes('application/json')) {
+      try {
+        const parsed = JSON.parse(text) as unknown;
+        if (typeof parsed === 'string') {
+          serialized = parsed;
+        }
+      } catch {
+        serialized = text.trim();
+      }
+    }
+
+    if (isBase64Pdf(serialized)) {
+      return {
+        blob: decodeBase64Pdf(serialized),
+        fileName,
+        contentType: 'application/pdf',
+      };
+    }
+
+    return {
+      blob: new Blob([text], { type: contentType || 'text/plain' }),
+      fileName,
+      contentType,
+    };
+  }
+
+  const blob = await response.blob();
+  return {
+    blob,
+    fileName,
+    contentType: blob.type || contentType,
+  };
+}
+
+export async function requestFile(path: string, init?: RequestInit): Promise<ApiFileResponse> {
+  const response = await fetch(buildUrl(path), {
+    credentials: 'include',
+    ...init,
+    headers: {
+      Accept: 'application/pdf, application/octet-stream, application/json, text/plain, */*',
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const body = await parseResponseBody(response);
+    throw new ApiError(`Request failed with status ${response.status}.`, response.status, body);
+  }
+
+  return parseFileBody(response);
+}
+
+export function triggerBrowserFileDownload(blob: Blob, fileName: string) {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(objectUrl);
+  }, 0);
+}

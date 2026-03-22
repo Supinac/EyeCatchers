@@ -8,7 +8,11 @@
     "helper": "Use the login created in the admin panel.",
     "signingIn": "Signing in...",
     "continue": "Continue",
-    "admin": "Admin"
+    "admin": "Admin",
+    "errors": {
+      "invalidLogin": "Login was not found.",
+      "failed": "Student login failed."
+    }
   },
   "adminLogin": {
     "badge": "Administrator",
@@ -21,7 +25,11 @@
     "helper": "Only administrator accounts can enter here.",
     "signingIn": "Signing in...",
     "login": "Login",
-    "studentLogin": "Student login"
+    "studentLogin": "Student login",
+    "errors": {
+      "invalidCredentials": "Wrong login or password.",
+      "failed": "Admin login failed."
+    }
   },
   "admin": {
     "eyebrow": "Administration",
@@ -44,7 +52,8 @@
       "createFailed": "Failed to create {{role}}.",
       "removeFailed": "Failed to remove {{role}}.",
       "loadFailed": "Failed to load users.",
-      "cannotRemoveOwnAccount": "You cannot remove your own admin account."
+      "cannotRemoveOwnAccount": "You cannot remove your own admin account.",
+      "exportFailed": "Failed to export PDF."
     },
     "table": {
       "fullName": "Full name",
@@ -105,7 +114,10 @@
       "playedGames": "Played games",
       "historySubtitle": "Each round now follows the same stat language as the active game result view.",
       "total": "{{value}} total",
-      "noGames": "This user has not played any games yet."
+      "noGames": "This user has not played any games yet.",
+      "exportLatestPdf": "Export latest PDF",
+      "exportAllPdf": "Export full history PDF",
+      "exporting": "Exporting..."
     }
   },
   "home": {

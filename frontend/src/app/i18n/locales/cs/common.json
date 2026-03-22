@@ -8,7 +8,11 @@
     "helper": "Použij login vytvořený administrátorem.",
     "signingIn": "Přihlašuji...",
     "continue": "Pokračovat",
-    "admin": "Admin"
+    "admin": "Admin",
+    "errors": {
+      "invalidLogin": "Login nebyl nalezen.",
+      "failed": "Přihlášení studenta se nepodařilo."
+    }
   },
   "adminLogin": {
     "badge": "Administrátor",
@@ -21,7 +25,11 @@
     "helper": "Sem se mohou přihlásit pouze administrátorské účty.",
     "signingIn": "Přihlašuji...",
     "login": "Přihlásit",
-    "studentLogin": "Login pro studenty"
+    "studentLogin": "Login pro studenty",
+    "errors": {
+      "invalidCredentials": "Nesprávný login nebo heslo.",
+      "failed": "Přihlášení administrátora se nepodařilo."
+    }
   },
   "admin": {
     "eyebrow": "Administrace",
@@ -44,7 +52,8 @@
       "createFailed": "Nepodařilo se vytvořit {{role}}.",
       "removeFailed": "Nepodařilo se odstranit {{role}}.",
       "loadFailed": "Nepodařilo se načíst uživatele.",
-      "cannotRemoveOwnAccount": "Nemůžeš odstranit svůj vlastní administrátorský účet."
+      "cannotRemoveOwnAccount": "Nemůžeš odstranit svůj vlastní administrátorský účet.",
+      "exportFailed": "Nepodařilo se exportovat PDF."
     },
     "table": {
       "fullName": "Celé jméno",
@@ -104,7 +113,10 @@
       "playedGames": "Odehrané hry",
       "historySubtitle": "Přehled odehraných her a jejich nastavení.",
       "total": "Celkem {{value}}",
-      "noGames": "Tento uživatel ještě neodehrál žádnou hru."
+      "noGames": "Tento uživatel ještě neodehrál žádnou hru.",
+      "exportLatestPdf": "Exportovat poslední PDF",
+      "exportAllPdf": "Exportovat PDF celé historie",
+      "exporting": "Exportuji..."
     }
   },
   "home": {

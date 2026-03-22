@@ -279,6 +279,26 @@
   color: rgba(255, 255, 255, 0.58);
 }
 
+.historyActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.exportButtons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.exportButtons .secondaryButton {
+  min-height: 42px;
+  padding: 0 16px;
+}
+
 .historySubtitle {
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.56);

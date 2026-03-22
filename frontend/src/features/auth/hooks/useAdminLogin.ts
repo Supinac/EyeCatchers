@@ -1,10 +1,12 @@
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { adminLogin } from "../../../api/authApi";
-import { getApiErrorMessage } from "../../../api/client";
+import { ApiError, getApiErrorMessage } from "../../../api/client";
 import { validateLogin, validatePassword } from "../utils/authValidation";
 import { useAuth } from "./useAuth";
 
 export function useAdminLogin() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -44,13 +46,17 @@ export function useAdminLogin() {
 
         return true;
       } catch (apiError) {
-        setError(getApiErrorMessage(apiError, "Admin login failed."));
+        if (apiError instanceof ApiError && apiError.status === 401) {
+          setError(t("adminLogin.errors.invalidCredentials"));
+        } else {
+          setError(getApiErrorMessage(apiError, t("adminLogin.errors.failed")));
+        }
         return false;
       } finally {
         setIsLoading(false);
       }
     },
-    [login],
+    [login, t],
   );
 
   return {
