@@ -4,10 +4,11 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Table, TableStyle
@@ -130,6 +131,37 @@ def build_userscores_pdf(user_scores: Sequence[Any], user_name_by_id: Mapping[in
     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     styles["Heading2"].fontName = bold_font
+
+    header_cell_style = ParagraphStyle(
+        "HeaderCell",
+        parent=styles["BodyText"],
+        fontName=bold_font,
+        fontSize=11,
+        leading=13,
+        alignment=1,
+        wordWrap="CJK",
+    )
+    key_cell_style = ParagraphStyle(
+        "KeyCell",
+        parent=styles["BodyText"],
+        fontName=regular_font,
+        fontSize=10,
+        leading=12,
+        wordWrap="CJK",
+    )
+    value_cell_style = ParagraphStyle(
+        "ValueCell",
+        parent=styles["BodyText"],
+        fontName=regular_font,
+        fontSize=10,
+        leading=12,
+        wordWrap="CJK",
+    )
+
+    def _cell(text: object, style: ParagraphStyle) -> Paragraph:
+        safe_text = escape(str(text)).replace("\n", "<br/>")
+        return Paragraph(safe_text, style)
+
     story = []
 
     for idx, score in enumerate(user_scores):
@@ -141,12 +173,12 @@ def build_userscores_pdf(user_scores: Sequence[Any], user_name_by_id: Mapping[in
 
         story.append(Paragraph(f"{username} - {game_type}, {created_text}", styles["Heading2"]))
         table_data = [
-            ["Položka", "Hodnota"],
-            ["Uživatel", username],
-            ["Typ hry", game_type],
-            ["Nastavení", settings_text],
-            ["Výsledky", results_text],
-            ["Vytvořeno", created_text],
+            [_cell("Položka", header_cell_style), _cell("Hodnota", header_cell_style)],
+            [_cell("Uživatel", key_cell_style), _cell(username, value_cell_style)],
+            [_cell("Typ hry", key_cell_style), _cell(game_type, value_cell_style)],
+            [_cell("Nastavení", key_cell_style), _cell(settings_text, value_cell_style)],
+            [_cell("Výsledky", key_cell_style), _cell(results_text, value_cell_style)],
+            [_cell("Vytvořeno", key_cell_style), _cell(created_text, value_cell_style)],
         ]
 
         table = Table(table_data, colWidths=[140, 380])
@@ -157,10 +189,6 @@ def build_userscores_pdf(user_scores: Sequence[Any], user_name_by_id: Mapping[in
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
                     ("ALIGN", (0, 0), (-1, 0), "CENTER"),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("FONTNAME", (0, 0), (-1, 0), bold_font),
-                    ("FONTNAME", (0, 1), (-1, -1), regular_font),
-                    ("FONTSIZE", (0, 0), (-1, 0), 11),
-                    ("FONTSIZE", (0, 1), (-1, -1), 10),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
                     ("TOPPADDING", (0, 0), (-1, -1), 6),
                     ("BOTTOMPADDING", (0, 1), (-1, -1), 6),
