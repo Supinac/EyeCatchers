@@ -1,5 +1,6 @@
 import { request, requestFile, type ApiFileResponse } from "./client";
 import { translateGameTitle } from "../app/i18n/text";
+import i18n from "../app/i18n/i18n";
 import type { GameResult } from "../games/core/types/GameResult";
 
 export type SubmitScoreEntry = {
@@ -103,6 +104,24 @@ function toEntry(key: string, tranlations: string, value: unknown): SubmitScoreE
     tranlations,
     value: String(value),
   };
+}
+
+function translateSubmitValueToCzech(value: unknown) {
+  if (value == null) {
+    return value;
+  }
+
+  const normalized = String(value).trim();
+  if (!normalized) {
+    return value;
+  }
+
+  const translationKey = `values.${normalized.toLowerCase()}`;
+  return i18n.exists(translationKey, { lng: "cs" }) ? i18n.t(translationKey, { lng: "cs" }) : value;
+}
+
+function toLocalizedEntry(key: string, tranlations: string, value: unknown): SubmitScoreEntry | null {
+  return toEntry(key, tranlations, translateSubmitValueToCzech(value));
 }
 
 function toMap(entries: Array<SubmitScoreEntry | null>): SubmitScoreMap {
@@ -276,16 +295,16 @@ export function buildSubmitScoreRequest(result: GameResult): SubmitScoreRequest 
   return {
     game_type: mapGameType(result.gameKey),
     settings: toMap([
-      toEntry("difficulty", "Obtížnost", result.difficulty),
+      toLocalizedEntry("difficulty", "Obtížnost", result.difficulty),
       stats?.previewSeconds != null ? toEntry("previewTime", "Doba náhledu", stats.previewSeconds) : null,
-      stats?.maxGameSeconds != null ? toEntry("maxGameTime", "Maximální čas hry", stats.maxGameSeconds) : null,
+      stats?.maxGameSeconds != null ? toLocalizedEntry("maxGameTime", "Maximální čas hry", stats.maxGameSeconds) : null,
       stats?.gridSize != null ? toEntry("gridSize", "Velikost mřížky", `${stats.gridSize}x${stats.gridSize}`) : null,
       stats?.correctObjectCount != null ? toEntry("correctObjectCount", "Počet správných objektů", stats.correctObjectCount) : null,
-      stats?.figureSizeMode ? toEntry("figureSizeMode", "Režim velikosti objektů", stats.figureSizeMode) : null,
+      stats?.figureSizeMode ? toLocalizedEntry("figureSizeMode", "Režim velikosti objektů", stats.figureSizeMode) : null,
       stats?.figureSizePercent != null ? toEntry("figureSizePercent", "Velikost objektů v procentech", stats.figureSizePercent) : null,
-      stats?.contentMode ? toEntry("contentMode", "Režim obsahu", stats.contentMode) : null,
-      stats?.placementMode ? toEntry("placementMode", "Rozložení objektů", stats.placementMode) : null,
-      stats?.targetValue ? toEntry("targetValue", "Hledaný objekt", stats.targetValue) : null,
+      stats?.contentMode ? toLocalizedEntry("contentMode", "Režim obsahu", stats.contentMode) : null,
+      stats?.placementMode ? toLocalizedEntry("placementMode", "Rozložení objektů", stats.placementMode) : null,
+      stats?.targetValue ? toLocalizedEntry("targetValue", "Hledaný objekt", stats.targetValue) : null,
       stats?.swapCount != null ? toEntry("swapCount", "Počet přesunů", stats.swapCount) : null,
       stats?.swapDurationMs != null ? toEntry("swapDurationMs", "Rychlost přesunu", stats.swapDurationMs) : null,
       stats?.symbolSize != null ? toEntry("symbolSize", "Velikost symbolů", stats.symbolSize) : null,

@@ -138,12 +138,6 @@ export function ResultPage() {
           <ButtonLink to={routes.games} variant="secondary" className={`${styles.actionButton} ${styles.actionButtonSecondary}`}>
             {t("resultPage.actions.home")}
           </ButtonLink>
-          <button
-            type="button"
-            className={`${styles.actionButton} ${styles.actionButtonSecondary}`}
-          >
-            {t("resultPage.actions.downloadPdf")}
-          </button>
           {result.gameKey ? (
             <ButtonLink to={`/game/${result.gameKey}`} className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
               {t("resultPage.actions.playAgain")}
