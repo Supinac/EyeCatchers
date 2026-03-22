@@ -16,12 +16,12 @@ const games: GameCardViewModel[] = [
     icon: "puzzle",
   },
   {
-    key: "shape-match",
-    name: "Shape Match",
-    description: "Choose the correct shape with large clear targets and a very simple layout.",
-    implemented: false,
-    icon: "arcade",
-  },
+    key: "keys",
+    name: "Klíče",
+    description: "Najdi správný klíč podle počtu zubů a prostorové orientace.",
+    implemented: true,
+    icon: "puzzle",
+  }
 ];
 
 export function useGames() {

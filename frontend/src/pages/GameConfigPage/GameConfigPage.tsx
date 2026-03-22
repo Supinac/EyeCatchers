@@ -107,51 +107,36 @@ export function GameConfigPage() {
     setCorrectObjectCount((current) => getFindCircleCorrectCount(gridSize, current));
   }, [gridSize]);
 
-  function handleStart() {
-    saveSessionState({
-      gameKey,
-      difficulty,
-      findCircle: { previewSeconds, maxGameSeconds, gridSize, correctObjectCount, figureSizeMode, figureSizePercent, contentMode, placementMode },
-      trackTheCircle: { swapCount, symbolSize, swapDurationMs }, // <-- TADY NESMÍ CHYBĚT ČÁRKA
-      keys: {
-        gridSize: keysGridSize,
-        targetTeethCount,
-        // Automaticky vygeneruje pole distraktorů (1-5) bez cílového zubu
-        distractorTeethPool: [1, 2, 3, 4, 5].filter(t => t !== targetTeethCount),
-        requiredMatches,
-        rotationEnabled: rotationEnabled === "true",
-        mirroringEnabled: mirroringEnabled === "true",
-        scaleVariation: scaleVariation / 100,
-        maxGameSeconds: maxGameSeconds // Využívá již existující proměnnou ze začátku souboru
-}
-    });
-    
+  const handleStart = () => {
+  // 1. Příprava parametrů
+  const params = new URLSearchParams({ 
+    difficulty,
+    grid: String(keysGridSize),
+    rot: String(rotationEnabled), // "true"/"false"
+    mir: String(mirroringEnabled), // "true"/"false"
+    scale: String(scaleVariation),
+    matches: String(requiredMatches),
+    maxTime: String(maxGameSeconds)
+  });
 
-    const params = new URLSearchParams({
-      preview: String(previewSeconds),
-      maxTime: String(maxGameSeconds),
-      grid: String(gridSize),
-      correctCount: String(correctObjectCount),
-      sizeMode: figureSizeMode,
-      sizePercent: String(figureSizePercent),
-      contentMode,
-      placementMode,
-      swapCount: String(swapCount),
-      symbolSize: String(symbolSize),
-      swapDurationMs: String(swapDurationMs),
-      difficulty,
-    });
-    if (gameKey === "keys") {
-    params.set("grid", String(keysGridSize));
-    params.set("teeth", String(targetTeethCount));
-    params.set("matches", String(requiredMatches));
-    params.set("rot", rotationEnabled);
-    params.set("mir", mirroringEnabled);
-    params.set("scale", String(scaleVariation));
-  }
+  // 2. Uložení stavu pro session (volitelné, ale doporučené)
+  saveSessionState({
+    gameKey,
+    difficulty,
+    keys: {
+      gridSize: keysGridSize,
+      requiredMatches,
+      rotationEnabled: rotationEnabled === "true",
+      mirroringEnabled: mirroringEnabled === "true",
+      scaleVariation: scaleVariation / 100,
+      maxGameSeconds,
+      distractorTeethPool: []
+    }
+  });
 
-    navigate(`/play/${gameKey}?${params.toString()}`);
-  }
+  // 3. Navigace na hru s parametry
+  navigate(`${routes.play.replace(":gameKey", gameKey)}?${params.toString()}`);
+};
 
   return (
     <main className={styles.page}>
@@ -223,14 +208,6 @@ export function GameConfigPage() {
         {gameKey === "keys" && (
   <>
     <ConfigTileGroup title="Grid size" options={gridOptions} selected={keysGridSize} onChange={setKeysGridSize} />
-    
-    <ConfigSlider
-      title="Target teeth count"
-      hint="Počet zubů definujících správný klíč."
-      min={1} max={5} step={1}
-      value={targetTeethCount}
-      onChange={setTargetTeethCount}
-    />
     
     <ConfigSlider
       title="Required matches"

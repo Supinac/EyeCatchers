@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { KeyBlueprint } from './KeysLogic';
+import { KeyBlueprint } from './KeysGameConfig';
 
 export class KeyGraphics extends PIXI.Container {
   private body: PIXI.Graphics;
@@ -54,6 +54,10 @@ export class KeyGraphics extends PIXI.Container {
     const { rotation, isMirrored, scale } = this.blueprint.visualMetadata;
     
     this.rotation = rotation;
+    // V KeyGraphics.ts při aplikaci metadat:
+    if (this.blueprint.visualMetadata.isMirrored) {
+      this.scale.x *= -1; // Překlopení podél vertikální osy
+}
     this.scale.set(scale, isMirrored ? -scale : scale);
   }
 }
