@@ -14,7 +14,7 @@ async def export_userscores_pdf(
     session: Session = Depends(db.session),
     admin=Depends(auth_admin),
     user_id: int | None = None,
-    last_date: bool = Query(..., description="When true, return only rows from the latest created_at."),
+    last_date: bool = Query(False, description="When true, return only rows from the latest created_at."),
 ):
     # Start from all scores and apply optional user filter.
     stmt = select(tables.UserScore)
